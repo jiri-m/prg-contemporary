@@ -544,6 +544,7 @@
     </div>
 
     <div class="section">
+      <button class="btn btn-secondary" id="btn-preview-text">Preview</button>
       <button class="btn btn-primary" id="btn-render-text">Render &amp; Apply (R)</button>
     </div>
   </div>
@@ -567,7 +568,14 @@
         <div class="align-btns" id="draw-tool-btns">
           <button class="align-btn active" data-tool="brush">Brush</button>
           <button class="align-btn" data-tool="eraser">Eraser</button>
+          <button class="align-btn" data-tool="blur">Blur</button>
         </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>Blur Str.</label>
+        <input type="range" id="inp-blur-strength" min="2" max="40" value="12"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">12</span>
       </div>
     </div>
     <div class="section">
