@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEADOW</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;700;900&family=Cormorant+Garamond:wght@300;400;600&family=Anton&family=Inter:wght@400;700;900&family=Bebas+Neue&family=DM+Serif+Display&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #EF3330;
+      --black:  #111111;
+      --gray1:  #888888;
+      --gray2:  #CCCCCC;
+      --gray3:  #E8E8E8;
+      --white:  #FFFFFF;
+      --bg:     #F5F5F5;
+      --mono:   'Space Mono', monospace;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--white);
+      font-family: var(--mono);
+      color: var(--black);
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg);
+      border-right: 1px solid var(--gray3);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 0 32px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--gray3) var(--white);
+    }
+    #sidebar::-webkit-scrollbar { width: 3px; }
+    #sidebar::-webkit-scrollbar-track { background: var(--white); }
+    #sidebar::-webkit-scrollbar-thumb { background: var(--gray3); }
+
+    /* ── Fixed toggle tab — always visible ── */
+    #ui-toggle-tab {
+      position: fixed;
+      top: 0;
+      left: 260px;
+      width: 20px;
+      height: 100vh;
+      z-index: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: left 0.2s ease;
+    }
+    #ui-toggle-tab::before {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 100%;
+      background: var(--gray3);
+      position: absolute;
+      left: 0;
+    }
+    #ui-toggle-tab-btn {
+      width: 18px;
+      height: 44px;
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      border-left: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--gray1);
+      writing-mode: vertical-rl;
+      letter-spacing: 0.08em;
+      transition: background 0.15s, color 0.15s;
+      border-radius: 0 2px 2px 0;
+    }
+    #ui-toggle-tab-btn:hover {
+      background: var(--gray3);
+      color: var(--black);
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      background: var(--white);
+    }
+    #canvas-container canvas { display: block; }
+
+    /* ── Mode toggle ── */
+    .mode-toggle {
+      display: flex;
+      border-bottom: 1px solid var(--gray3);
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 10px 0;
+      font-size: 9px;
+      font-family: var(--mono);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: var(--white);
+      color: var(--gray2);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .mode-btn.active {
+      color: var(--black);
+      border-bottom-color: var(--red);
+    }
+    .mode-btn:hover:not(.active) { color: var(--gray1); }
+
+    /* ── Sections ── */
+    .section {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--gray3);
+    }
+    .section-title {
+      font-size: 8px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--red);
+      margin-bottom: 9px;
+    }
+
+    /* ── Slider rows ── */
+    .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 6px;
+    }
+    .row label {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray1);
+      flex: 0 0 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .row input[type=range] {
+      flex: 1;
+      height: 2px;
+      accent-color: var(--black);
+      cursor: pointer;
+      background: var(--gray3);
+      border-radius: 0;
+    }
+    .row .val {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray1);
+      width: 30px;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .row input[type=number] {
+      flex: 1;
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      color: var(--black);
+      font-size: 9px;
+      font-family: var(--mono);
+      padding: 4px 6px;
+      border-radius: 0;
+    }
+    .row input[type=number]:focus { outline: none; border-color: var(--black); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 8px 0;
+      font-size: 9px;
+      font-family: var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 0;
+      margin-bottom: 5px;
+      transition: background 0.12s, color 0.12s;
+    }
+    .btn-primary {
+      background: var(--black);
+      border: 1px solid var(--black);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: #333; }
+    .btn-red {
+      background: var(--red);
+      border: 1px solid var(--red);
+      color: var(--white);
+    }
+    .btn-red:hover { background: #c82020; border-color: #c82020; }
+    .btn-secondary {
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      color: var(--gray1);
+    }
+    .btn-secondary:hover { border-color: var(--black); color: var(--black); }
+
+    /* ── Tiers table ── */
+    .tier-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .tier-table th {
+      font-size: 7px;
+      font-family: var(--mono);
+      font-weight: normal;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gray2);
+      text-align: center;
+      padding-bottom: 5px;
+    }
+    .tier-table th:first-child { text-align: left; }
+    .tier-table td { padding: 2px; vertical-align: middle; }
+    .tier-label {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray1);
+      padding-right: 4px !important;
+      white-space: nowrap;
+    }
+    .tier-table input[type=range] {
+      width: 100%;
+      height: 2px;
+      accent-color: var(--black);
+      cursor: pointer;
+    }
+    .tier-val {
+      font-size: 7px;
+      font-family: var(--mono);
+      color: var(--gray2);
+      display: block;
+      text-align: center;
+    }
+
+    /* ── Text mode ── */
+    #text-mode-panel { display: none; }
+
+    .text-field {
+      margin-bottom: 9px;
+    }
+    .text-field label {
+      display: block;
+      font-size: 8px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gray1);
+      margin-bottom: 3px;
+    }
+    .text-field textarea,
+    .text-field select,
+    .text-field input[type=text] {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      color: var(--black);
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 5px 7px;
+      border-radius: 0;
+      resize: vertical;
+    }
+    .text-field textarea:focus,
+    .text-field select:focus,
+    .text-field input[type=text]:focus { outline: none; border-color: var(--black); }
+    .text-field select option { background: var(--white); }
+
+    .inline-input {
+      display: flex;
+      gap: 4px;
+    }
+    .inline-input input[type=text] { flex: 1; }
+    .inline-input button {
+      padding: 4px 8px;
+      font-size: 9px;
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      color: var(--gray1);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .inline-input button:hover { border-color: var(--black); color: var(--black); }
+
+    .align-btns { display: flex; gap: 4px; }
+    .align-btn {
+      flex: 1;
+      padding: 6px 0;
+      font-size: 9px;
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      border: 1px solid var(--gray3);
+      background: var(--white);
+      color: var(--gray1);
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .align-btn.active {
+      background: var(--black);
+      border-color: var(--black);
+      color: var(--white);
+    }
+    .align-btn:hover:not(.active) { border-color: var(--black); color: var(--black); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--gray3);
+      margin: 10px 0;
+    }
+
+    .file-input-label {
+      display: block;
+      font-size: 8px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gray1);
+      margin-bottom: 3px;
+    }
+    input[type=file] {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray1);
+      width: 100%;
+    }
+
+    /* ── Status indicator ── */
+    /* Recording indicator */
+    #rec-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gray2);
+      margin-right: 5px;
+      vertical-align: middle;
+      transition: background 0.2s;
+    }
+    #rec-dot.active {
+      background: var(--red);
+      animation: recpulse 0.9s ease-in-out infinite;
+    }
+    @keyframes recpulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.2; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Always-visible sidebar toggle -->
+<div id="ui-toggle-tab">
+  <button id="ui-toggle-tab-btn" onclick="window.toggleUI()">HIDE</button>
+</div>
+
+<div id="sidebar">
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button id="btn-image-mode" class="mode-btn active">Image</button>
+    <button id="btn-text-mode"  class="mode-btn">Text</button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="section">
+    <div class="section-title">Canvas</div>
+    <div class="row">
+      <label>Artboard W</label>
+      <input type="number" id="inp-artboard-w" value="1200" min="100" max="8000" step="50">
+    </div>
+    <div class="row">
+      <label>Artboard H</label>
+      <input type="number" id="inp-artboard-h" value="800" min="100" max="8000" step="50">
+    </div>
+    <div class="row">
+      <label>Master Scale</label>
+      <input type="range" id="sld-master-scale" min="0.25" max="3.0" value="1.0" step="0.05"
+             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+      <span class="val">1.00</span>
+    </div>
+  </div>
+
+  <!-- Image Mode hint -->
+  <div id="image-mode-section" class="section">
+    <div class="section-title">Source</div>
+    <div style="font-size:9px; font-family:var(--mono); color:var(--gray2); line-height:1.6;">
+      Drop an image<br>onto the canvas
+    </div>
+  </div>
+
+  <!-- Text Mode Panel -->
+  <div id="text-mode-panel">
+    <div class="section">
+      <div class="section-title">Typography</div>
+
+      <div class="text-field">
+        <label>Text</label>
+        <textarea id="txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+      </div>
+
+      <div class="text-field">
+        <label>Font Family</label>
+        <select id="txt-font-family">
+          <option value="'Playfair Display', serif">Playfair Display</option>
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          <option value="'Space Mono', monospace">Space Mono</option>
+          <option value="'Anton', sans-serif">Anton</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+          <option value="'DM Serif Display', serif">DM Serif Display</option>
+          <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+        </select>
+      </div>
+
+      <div class="text-field">
+        <label>Custom Google Font</label>
+        <div class="inline-input">
+          <input type="text" id="txt-custom-font" placeholder="e.g. Oswald">
+          <button id="btn-load-custom-font">Load</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Font Size</label>
+        <input type="range" id="txt-font-size" min="10" max="800" value="200" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">200</span>
+      </div>
+
+      <div class="text-field">
+        <label>Font Weight</label>
+        <select id="txt-font-weight">
+          <option value="100">Thin — 100</option>
+          <option value="300">Light — 300</option>
+          <option value="400" selected>Regular — 400</option>
+          <option value="600">SemiBold — 600</option>
+          <option value="700">Bold — 700</option>
+          <option value="900">Black — 900</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Letter Spc.</label>
+        <input type="range" id="txt-letter-spacing" min="-20" max="200" value="0" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+
+      <div class="row">
+        <label>Line Height</label>
+        <input type="range" id="txt-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">1.20</span>
+      </div>
+
+      <div class="text-field">
+        <label>Alignment</label>
+        <div class="align-btns" id="txt-alignment-btns">
+          <button class="align-btn" data-align="left">Left</button>
+          <button class="align-btn active" data-align="center">Center</button>
+          <button class="align-btn" data-align="right">Right</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Text X</label>
+        <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>Text Y</label>
+        <input type="range" id="txt-pos-y" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Background Photo</div>
+      <div class="text-field">
+        <label>Image (clips inside letters)</label>
+        <input type="file" id="txt-photo-input" accept="image/*">
+      </div>
+      <div class="row">
+        <label>Photo X</label>
+        <input type="range" id="txt-photo-x" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>Photo Y</label>
+        <input type="range" id="txt-photo-y" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>Photo Scale</label>
+        <input type="range" id="txt-photo-scale" min="0.1" max="3.0" value="1.0" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'×'">
+        <span class="val">1.00×</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="btn btn-primary" id="btn-render-text">Render &amp; Apply (R)</button>
+    </div>
+  </div>
+
+  <!-- Growth -->
+  <div class="section">
+    <div class="section-title">Growth</div>
+    <div class="row">
+      <label>Density</label>
+      <input type="range" id="sld-density" min="1" max="100" value="41"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">41</span>
+    </div>
+    <div class="row">
+      <label>Spawn Freq.</label>
+      <input type="range" id="sld-spawn-freq" min="1" max="50" value="5"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">5</span>
+    </div>
+    <div class="row">
+      <label>Draw Vel.</label>
+      <input type="range" id="sld-draw-speed" min="0.1" max="10.0" value="2.0" step="0.1"
+             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+      <span class="val">2.0</span>
+    </div>
+  </div>
+
+  <!-- Interaction -->
+  <div class="section">
+    <div class="section-title">Interaction</div>
+    <div class="row">
+      <label>Strength</label>
+      <input type="range" id="sld-mouse-strength" min="0" max="3.0" value="1.5" step="0.1"
+             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+      <span class="val">1.5</span>
+    </div>
+    <div class="row">
+      <label>Radius</label>
+      <input type="range" id="sld-mouse-radius" min="0.05" max="0.8" value="0.3" step="0.05"
+             oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+      <span class="val">30%</span>
+    </div>
+    <div class="text-field" style="margin-bottom:0">
+      <label>Mode</label>
+      <div class="align-btns" id="mouse-mode-btns">
+        <button class="align-btn active" data-mode="repel">Repel</button>
+        <button class="align-btn" data-mode="attract">Attract</button>
+        <button class="align-btn" data-mode="wind">Wind</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appearance -->
+  <div class="section">
+    <div class="section-title">Appearance</div>
+    <div class="row">
+      <label>Length</label>
+      <input type="range" id="sld-len" min="50" max="1500" value="450"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">450</span>
+    </div>
+    <div class="row">
+      <label>Line Weight</label>
+      <input type="range" id="sld-weight" min="0.05" max="2.0" value="1.18" step="0.01"
+             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+      <span class="val">1.18</span>
+    </div>
+    <div class="row">
+      <label>Wind Force</label>
+      <input type="range" id="sld-sway" min="0" max="5.0" value="2.16" step="0.01"
+             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+      <span class="val">2.16</span>
+    </div>
+    <div class="row">
+      <label>Wind Speed</label>
+      <input type="range" id="sld-wind-speed" min="0" max="100" value="14"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">14</span>
+    </div>
+    <div class="row">
+      <label>White Filter</label>
+      <input type="range" id="sld-threshold" min="100" max="255" value="255"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">255</span>
+    </div>
+    <div class="row">
+      <label>Margin</label>
+      <input type="range" id="sld-margin" min="0" max="500" value="20"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">20</span>
+    </div>
+    <div class="row">
+      <label>Displacement</label>
+      <input type="range" id="sld-displace" min="0" max="100" value="1"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">1</span>
+    </div>
+    <div class="row">
+      <label>Cluster</label>
+      <input type="range" id="sld-cluster" min="0" max="100" value="0"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">0</span>
+    </div>
+  </div>
+
+  <!-- Tiers -->
+  <div class="section">
+    <div class="section-title">Tiers</div>
+    <table class="tier-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Size</th>
+          <th>Chance</th>
+          <th>Rand.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tier-label">T1</td>
+          <td>
+            <input type="range" id="sld-s1" min="0" max="1.0" value="0.05" step="0.01"
+                   oninput="document.getElementById('v-s1').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-s1">0.05</span>
+          </td>
+          <td>
+            <input type="range" id="sld-c1" min="0" max="100" value="62"
+                   oninput="document.getElementById('v-c1').textContent=this.value">
+            <span class="tier-val" id="v-c1">62</span>
+          </td>
+          <td>
+            <input type="range" id="sld-r1" min="0" max="1.0" value="1.0" step="0.01"
+                   oninput="document.getElementById('v-r1').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-r1">1.00</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="tier-label">T2</td>
+          <td>
+            <input type="range" id="sld-s2" min="0" max="1.0" value="0.18" step="0.01"
+                   oninput="document.getElementById('v-s2').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-s2">0.18</span>
+          </td>
+          <td>
+            <input type="range" id="sld-c2" min="0" max="100" value="34"
+                   oninput="document.getElementById('v-c2').textContent=this.value">
+            <span class="tier-val" id="v-c2">34</span>
+          </td>
+          <td>
+            <input type="range" id="sld-r2" min="0" max="1.0" value="0.43" step="0.01"
+                   oninput="document.getElementById('v-r2').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-r2">0.43</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="tier-label">T3</td>
+          <td>
+            <input type="range" id="sld-s3" min="0" max="1.0" value="0.25" step="0.01"
+                   oninput="document.getElementById('v-s3').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-s3">0.25</span>
+          </td>
+          <td>
+            <input type="range" id="sld-c3" min="0" max="100" value="0"
+                   oninput="document.getElementById('v-c3').textContent=this.value">
+            <span class="tier-val" id="v-c3">0</span>
+          </td>
+          <td>
+            <input type="range" id="sld-r3" min="0" max="1.0" value="0.15" step="0.01"
+                   oninput="document.getElementById('v-r3').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-r3">0.15</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="tier-label">T4</td>
+          <td>
+            <input type="range" id="sld-s4" min="0" max="1.0" value="0.54" step="0.01"
+                   oninput="document.getElementById('v-s4').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-s4">0.54</span>
+          </td>
+          <td>
+            <input type="range" id="sld-c4" min="0" max="100" value="1"
+                   oninput="document.getElementById('v-c4').textContent=this.value">
+            <span class="tier-val" id="v-c4">1</span>
+          </td>
+          <td>
+            <input type="range" id="sld-r4" min="0" max="1.0" value="0.24" step="0.01"
+                   oninput="document.getElementById('v-r4').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="tier-val" id="v-r4">0.24</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Actions -->
+  <div class="section">
+    <div class="section-title">Actions</div>
+    <button class="btn btn-primary"   onclick="window.applyAndRestart()">Apply &amp; Restart (R)</button>
+    <button class="btn btn-red"       id="btn-stop-grow" onclick="window.toggleGrowth()">Stop Growing</button>
+    <button class="btn btn-primary"   onclick="window.saveHighRes()" style="background:#fff;color:#111;border-color:#111;">Save High-Res (S)</button>
+    <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
+    <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
+    <button class="btn btn-secondary" onclick="window.logSettings()">Log Settings</button>
+  </div>
+
+</div>
+
+<div id="canvas-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<script src="sketch.js"></script>
+
+</body>
+</html>

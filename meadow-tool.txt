@@ -1,0 +1,289 @@
+
+let img;
+let canvasBuffer;
+let imgLoaded = false;
+let exportScale = 4; 
+
+// UI Management
+let uiElements = []; 
+let uiVisible = true;
+let btnToggleUI;
+
+// Sliders
+let sldMargin, sldLen, sldWeight, sldSway, sldSpawnDelay, sldGrowth, sldDensity, sldCluster, sldThreshold, sldWindSpeed, sldDisplace;
+let sldS1, sldS2, sldS3, sldS4; 
+let sldC1, sldC2, sldC3, sldC4; 
+let sldR1, sldR2, sldR3, sldR4; 
+
+// --- NEW SLIDERS ---
+let sldSpawnFreq; // How many strands per frame
+let sldDrawSpeed; // How fast the tip of the line moves
+
+let allSeeds = []; 
+let activeBlades = [];
+let seedIndex = 0;
+let windTime = 0; 
+
+function setup() {
+  let canvas = createCanvas(windowWidth, windowHeight);
+  background(255);
+  canvas.drop(handleFile);
+  
+  let uiX = 20;
+  
+  let title = createP('<b>MEADOW CONTROLS</b>');
+  title.position(uiX, 0);
+  uiElements.push(title);
+  
+  // --- CORE CONTROLS ---
+  let p1 = createP('Margin'); p1.position(uiX, 35); uiElements.push(p1);
+  sldMargin = createSlider(0, 500, 20); sldMargin.position(uiX + 110, 50); uiElements.push(sldMargin);
+  
+  let p2 = createP('Density (Qty)'); p2.position(uiX, 65); uiElements.push(p2);
+  sldDensity = createSlider(1, 100, 41); sldDensity.position(uiX + 110, 80); uiElements.push(sldDensity);
+
+  let p3 = createP('Cluster Bias'); p3.position(uiX, 95); uiElements.push(p3);
+  sldCluster = createSlider(0, 100, 0); sldCluster.position(uiX + 110, 110); uiElements.push(sldCluster);
+
+  let p4 = createP('Displacement'); p4.position(uiX, 125); uiElements.push(p4);
+  sldDisplace = createSlider(0, 100, 1); sldDisplace.position(uiX + 110, 140); uiElements.push(sldDisplace);
+  
+  let p5 = createP('White Filter'); p5.position(uiX, 155); uiElements.push(p5);
+  sldThreshold = createSlider(100, 255, 255); sldThreshold.position(uiX + 110, 170); uiElements.push(sldThreshold);
+  
+  let p6 = createP('Overall Length'); p6.position(uiX, 185); uiElements.push(p6);
+  sldLen = createSlider(50, 1500, 450); sldLen.position(uiX + 110, 200); uiElements.push(sldLen);
+  
+  let p7 = createP('Line Weight'); p7.position(uiX, 215); uiElements.push(p7);
+  sldWeight = createSlider(0.05, 2.0, 1.18, 0.01); sldWeight.position(uiX + 110, 230); uiElements.push(sldWeight);
+  
+  let p8 = createP('Wind Force'); p8.position(uiX, 245); uiElements.push(p8);
+  sldSway = createSlider(0, 5.0, 2.16, 0.01); sldSway.position(uiX + 110, 260); uiElements.push(sldSway);
+
+  // --- NEW DRAWING SEQUENCE CONTROLS ---
+  let p9 = createP('Spawn Frequency'); p9.position(uiX, 275); uiElements.push(p9);
+  sldSpawnFreq = createSlider(1, 50, 5); sldSpawnFreq.position(uiX + 110, 290); uiElements.push(sldSpawnFreq);
+
+  let p11 = createP('Drawing Velocity'); p11.position(uiX, 305); uiElements.push(p11);
+  sldDrawSpeed = createSlider(0.1, 10.0, 2.0, 0.1); sldDrawSpeed.position(uiX + 110, 320); uiElements.push(sldDrawSpeed);
+
+  let p10 = createP('Wind Speed'); p10.position(uiX, 335); uiElements.push(p10);
+  sldWindSpeed = createSlider(0, 100, 14); sldWindSpeed.position(uiX + 110, 350); uiElements.push(sldWindSpeed);
+
+  // --- TIER CONTROLS ---
+  let t1 = createP('Tier Sizes (1-4)'); t1.position(uiX + 310, 5); uiElements.push(t1);
+  sldS1 = createSlider(0, 1.0, 0.05, 0.01); sldS1.position(uiX + 310, 50); uiElements.push(sldS1);
+  sldS2 = createSlider(0, 1.0, 0.18, 0.01); sldS2.position(uiX + 310, 80); uiElements.push(sldS2);
+  sldS3 = createSlider(0, 1.0, 0.25, 0.01); sldS3.position(uiX + 310, 110); uiElements.push(sldS3);
+  sldS4 = createSlider(0, 1.0, 0.54, 0.01); sldS4.position(uiX + 310, 140); uiElements.push(sldS4);
+
+  let t2 = createP('Tier Chances (1-4)'); t2.position(uiX + 460, 5); uiElements.push(t2);
+  sldC1 = createSlider(0, 100, 62); sldC1.position(uiX + 460, 50); uiElements.push(sldC1);
+  sldC2 = createSlider(0, 100, 34); sldC2.position(uiX + 460, 80); uiElements.push(sldC2);
+  sldC3 = createSlider(0, 100, 0);  sldC3.position(uiX + 460, 110); uiElements.push(sldC3);
+  sldC4 = createSlider(0, 100, 1);  sldC4.position(uiX + 460, 140); uiElements.push(sldC4);
+
+  let t3 = createP('Tier Randomness (1-4)'); t3.position(uiX + 610, 5); uiElements.push(t3);
+  sldR1 = createSlider(0, 1.0, 1.0, 0.01);  sldR1.position(uiX + 610, 50); uiElements.push(sldR1);
+  sldR2 = createSlider(0, 1.0, 0.43, 0.01); sldR2.position(uiX + 610, 80); uiElements.push(sldR2);
+  sldR3 = createSlider(0, 1.0, 0.15, 0.01); sldR3.position(uiX + 610, 110); uiElements.push(sldR3);
+  sldR4 = createSlider(0, 1.0, 0.24, 0.01); sldR4.position(uiX + 610, 140); uiElements.push(sldR4);
+
+  // --- BUTTONS ---
+  let btnRestart = createButton('Apply & Restart (R)');
+  btnRestart.position(uiX, 380);
+  btnRestart.mousePressed(restartGrowth);
+  
+  btnToggleUI = createButton('Hide UI');
+  btnToggleUI.position(uiX, 460);
+  btnToggleUI.mousePressed(toggleUI);
+  
+  let btnSave = createButton('Save High-Res (S)');
+  btnSave.position(uiX + 140, 380);
+  btnSave.mousePressed(downloadHighRes);
+  uiElements.push(btnSave);
+
+  let btnCopy = createButton('Log Current Settings');
+  btnCopy.position(uiX, 420);
+  btnCopy.mousePressed(logSettings);
+  uiElements.push(btnCopy);
+}
+
+function toggleUI() {
+  uiVisible = !uiVisible;
+  for (let el of uiElements) {
+    uiVisible ? el.show() : el.hide();
+  }
+  btnToggleUI.html(uiVisible ? 'Hide UI' : 'Show UI');
+}
+
+function logSettings() {
+  console.log("Settings Logged to Console.");
+}
+
+function handleFile(file) {
+  if (file.type === 'image') {
+    img = loadImage(file.data, () => {
+      restartGrowth();
+    });
+  }
+}
+
+function restartGrowth() {
+  if (!img) return;
+  let mVal = sldMargin.value();
+  img.resize(width - (mVal * 2), 0);
+  if (img.height > height - (mVal * 2)) img.resize(0, height - (mVal * 2));
+  
+  let bufferW = (img.width + (mVal * 2)) * exportScale;
+  let bufferH = (img.height + (mVal * 2)) * exportScale;
+  
+  canvasBuffer = createGraphics(bufferW, bufferH);
+  canvasBuffer.clear(); 
+  
+  allSeeds = [];
+  activeBlades = [];
+  seedIndex = 0;
+  windTime = 0;
+  imgLoaded = true;
+  findSeeds();
+}
+
+function findSeeds() {
+  let step = 2;
+  let mVal = sldMargin.value();
+  let densityThreshold = sldDensity.value();
+  let clusterStrength = sldCluster.value() / 100;
+  let whiteLimit = sldThreshold.value(); 
+  let displaceAmount = sldDisplace.value();
+  
+  img.loadPixels(); 
+  
+  for (let x = step; x < img.width - step; x += step) {
+    for (let y = step; y < img.height - step; y += step) {
+      let currentCol = img.get(x, y);
+      let br = (red(currentCol) + green(currentCol) + blue(currentCol)) / 3;
+
+      if (br >= whiteLimit) continue; 
+
+      let clusterNoise = noise(x * 0.04, y * 0.04);
+      let finalChance = map(clusterNoise, 0, 1, -clusterStrength, clusterStrength);
+      
+      if (random(100) < (densityThreshold + (finalChance * 100))) {
+        let offsetX = random(-displaceAmount, displaceAmount);
+        let offsetY = random(-displaceAmount, displaceAmount);
+        
+        allSeeds.push({
+          x: (x + mVal + offsetX) * exportScale,
+          y: (y + mVal + offsetY) * exportScale,
+          col: currentCol
+        });
+      }
+    }
+  }
+  allSeeds = shuffle(allSeeds);
+}
+
+function draw() {
+  if (!imgLoaded) return;
+  windTime += sldWindSpeed.value() * 0.0005;
+
+  // --- SPAWN LOGIC ---
+  // Controls how many new strands are added to the "active" list per frame
+  for (let i = 0; i < sldSpawnFreq.value(); i++) {
+    if (seedIndex < allSeeds.length) {
+      let s = allSeeds[seedIndex];
+      activeBlades.push(new Blade(s.x, s.y, s.col));
+      seedIndex++;
+    }
+  }
+
+  canvasBuffer.clear(); 
+  canvasBuffer.strokeWeight(sldWeight.value() * exportScale);
+  canvasBuffer.noFill(); 
+
+  for (let i = 0; i < activeBlades.length; i++) {
+    activeBlades[i].update();
+    activeBlades[i].show();
+  }
+
+  background(255); 
+  imageMode(CENTER);
+  let displayW = width;
+  let displayH = (canvasBuffer.height / canvasBuffer.width) * width;
+  if (displayH > height) {
+    displayH = height;
+    displayW = (canvasBuffer.width / canvasBuffer.height) * height;
+  }
+  image(canvasBuffer, width/2, height/2, displayW, displayH);
+}
+
+class Blade {
+  constructor(x, y, c) {
+    this.root = createVector(x, y);
+    this.color = c;
+
+    let roll = random(0, sldC1.value() + sldC2.value() + sldC3.value() + sldC4.value());
+    let basePct, tierJitter;
+
+    if (roll < sldC1.value()) {
+      basePct = sldS1.value();
+      tierJitter = sldR1.value();
+    } else if (roll < sldC1.value() + sldC2.value()) {
+      basePct = sldS2.value();
+      tierJitter = sldR2.value();
+    } else if (roll < sldC1.value() + sldC2.value() + sldC3.value()) {
+      basePct = sldS3.value();
+      tierJitter = sldR3.value();
+    } else {
+      basePct = sldS4.value();
+      tierJitter = sldR4.value();
+    }
+
+    let jitter = random(1 - tierJitter, 1 + tierJitter);
+    this.maxLen = (basePct * jitter) * sldLen.value() * exportScale;
+    this.windSensitivity = noise(x * 0.01, y * 0.01); 
+    
+    this.currentLen = 0;
+    this.baseGrowthRate = random(5, 15) * exportScale;
+    this.baseAngle = -HALF_PI + random(-0.2, 0.2);
+    this.alpha = random(80, 160);
+  }
+
+  update() {
+    // --- LINE DRAW SPEED LOGIC ---
+    if (this.currentLen < this.maxLen) {
+      this.currentLen += (this.baseGrowthRate * sldDrawSpeed.value() * 0.1);
+    }
+  }
+
+  show() {
+    let c = this.color;
+    canvasBuffer.stroke(red(c), green(c), blue(c), this.alpha);
+    
+    let cpX = this.root.x + cos(this.baseAngle) * (this.currentLen * 0.5);
+    let cpY = this.root.y + sin(this.baseAngle) * (this.currentLen * 0.5);
+
+    let noiseVal = noise((this.root.x/exportScale)*0.005, (this.root.y/exportScale)*0.005, windTime);
+    let currentSway = sldSway.value() * this.windSensitivity;
+    let windBend = map(noiseVal, 0, 1, -currentSway, currentSway);
+    let finalAngle = this.baseAngle + windBend;
+
+    let tipX = this.root.x + cos(finalAngle) * this.currentLen;
+    let tipY = this.root.y + sin(finalAngle) * this.currentLen;
+
+    canvasBuffer.beginShape();
+    canvasBuffer.vertex(this.root.x, this.root.y);
+    canvasBuffer.quadraticVertex(cpX, cpY, tipX, tipY);
+    canvasBuffer.endShape();
+  }
+}
+
+function downloadHighRes() {
+  save(canvasBuffer, 'swaying_meadow.png');
+}
+
+function keyPressed() {
+  if (key === 's' || key === 'S') downloadHighRes();
+  if (key === 'r' || key === 'R') restartGrowth();
+}
