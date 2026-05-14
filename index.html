@@ -261,6 +261,7 @@
 
     /* ── Text mode ── */
     #text-mode-panel { display: none; }
+    #draw-mode-panel { display: none; }
 
     .text-field {
       margin-bottom: 9px;
@@ -353,7 +354,6 @@
     }
 
     /* ── Status indicator ── */
-    /* Recording indicator */
     #rec-dot {
       display: inline-block;
       width: 6px; height: 6px;
@@ -371,6 +371,16 @@
       0%,100% { opacity: 1; }
       50%      { opacity: 0.2; }
     }
+
+    /* ── Draw mode colour swatch ── */
+    #inp-brush-color {
+      flex: 1;
+      height: 24px;
+      border: 1px solid var(--gray3);
+      border-radius: 0;
+      cursor: pointer;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -386,6 +396,7 @@
   <div class="mode-toggle">
     <button id="btn-image-mode" class="mode-btn active">Image</button>
     <button id="btn-text-mode"  class="mode-btn">Text</button>
+    <button id="btn-draw-mode"  class="mode-btn">Draw</button>
   </div>
 
   <!-- Canvas -->
@@ -509,6 +520,9 @@
         <label>Image (clips inside letters)</label>
         <input type="file" id="txt-photo-input" accept="image/*">
       </div>
+      <div style="font-size:8px; font-family:var(--mono); color:var(--gray2); line-height:1.7; margin-bottom:8px;">
+        Drag photo on canvas to reposition.<br>Scroll on canvas to scale.
+      </div>
       <div class="row">
         <label>Photo X</label>
         <input type="range" id="txt-photo-x" min="0" max="100" value="50" step="1"
@@ -531,6 +545,34 @@
 
     <div class="section">
       <button class="btn btn-primary" id="btn-render-text">Render &amp; Apply (R)</button>
+    </div>
+  </div>
+
+  <!-- Draw Mode Panel -->
+  <div id="draw-mode-panel">
+    <div class="section">
+      <div class="section-title">Brush</div>
+      <div class="row">
+        <label>Size</label>
+        <input type="range" id="inp-brush-size" min="2" max="120" value="20"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">20</span>
+      </div>
+      <div class="row">
+        <label>Color</label>
+        <input type="color" id="inp-brush-color" value="#111111">
+      </div>
+      <div class="text-field" style="margin-bottom:0">
+        <label>Tool</label>
+        <div class="align-btns" id="draw-tool-btns">
+          <button class="align-btn active" data-tool="brush">Brush</button>
+          <button class="align-btn" data-tool="eraser">Eraser</button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <button class="btn btn-secondary" onclick="window.clearDrawing()">Clear Canvas</button>
+      <button class="btn btn-primary" onclick="window.applyDrawingAsSource()">Apply as Source</button>
     </div>
   </div>
 

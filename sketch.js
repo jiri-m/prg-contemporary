@@ -17,6 +17,7 @@ let activeBlades = [];
 let seedIndex = 0;
 let windTime = 0;
 let growthPaused = false;
+let showGrowth = false; // true once growth has been started; false = show text preview
 
 // Display geometry (computed in draw, used by Blade.show for cursor interaction)
 let dispW = 0, dispH = 0, dispOX = 0, dispOY = 0;
@@ -26,8 +27,8 @@ let bMouseX = 0, bMouseY = 0;
 let sldMouseStrength, sldMouseRadius;
 let interactMode = 'repel'; // 'repel' | 'attract' | 'wind'
 let mouseVelX = 0, mouseVelY = 0, _prevMX = 0, _prevMY = 0;
-let windMagnitude = 0; // [0..1] speed-based wind strength, used by Blade.show()
-let windDirX = 0;      // normalised horizontal direction of cursor movement
+let windMagnitude = 0;
+let windDirX = 0;
 
 // Recording
 let isRecording = false;
@@ -43,11 +44,26 @@ let currentMode = 'image';
 let textPhotoElement = null;
 let textAlignment = 'center';
 
+// Text preview
+let textPreviewCanvas = null;
+let _previewTimer = null;
+
+// Photo drag (in text preview mode)
+let isDraggingPhoto = false;
+let _photoDragMX = 0, _photoDragMY = 0;
+let _photoDragStartX = 50, _photoDragStartY = 50;
+
+// Draw mode
+let drawLayer = null;
+let isDrawingOnCanvas = false;
+let _drawLastBX = -1, _drawLastBY = -1;
+let isErasing = false;
+
 // Sidebar
 let sidebarVisible = true;
 const SIDEBAR_W = 260;
 
-// ── DOM helpers ────────────────────────────────────────────────────────────────
+// ── DOM helpers ──────────────────────────────────────────────────────────────────────────────
 
 function domSlider(id) {
   return { value: () => parseFloat(document.getElementById(id).value) };
@@ -55,7 +71,7 @@ function domSlider(id) {
 function getArtboardW() { return parseInt(document.getElementById('inp-artboard-w').value) || 1200; }
 function getArtboardH() { return parseInt(document.getElementById('inp-artboard-h').value) || 800; }
 
-// ── p5 lifecycle ───────────────────────────────────────────────────────────────
+// ── p5 lifecycle ─────────────────────────────────────────────────────────────────────────────────
 
 function setup() {
   let canvas = createCanvas(windowWidth - SIDEBAR_W, windowHeight);
@@ -91,7 +107,7 @@ function windowResized() {
   resizeCanvas(windowWidth - (sidebarVisible ? SIDEBAR_W : 0), windowHeight);
 }
 
-// ── File handling ──────────────────────────────────────────────────────────────
+// ── File handling ──────────────────────────────────────────────────────────────────────────
 
 function handleFile(file) {
   if (file.type === 'image' && currentMode === 'image') {
@@ -99,7 +115,7 @@ function handleFile(file) {
   }
 }
 
-// ── Growth ─────────────────────────────────────────────────────────────────────
+// ── Growth ────────────────────────────────────────────────────────────────────────────────────
 
 function restartGrowth() {
   if (!img) return;
@@ -118,15 +134,15 @@ function restartGrowth() {
 
   allSeeds = []; activeBlades = []; seedIndex = 0; windTime = 0;
   imgLoaded = true;
+  showGrowth = true; // switch canvas display to growth view
   findSeeds();
 
-  // Capture source image for embed export (after resize to artboard dims)
   try {
     const tmpC = document.createElement('canvas');
     tmpC.width = img.width; tmpC.height = img.height;
     tmpC.getContext('2d').drawImage(img.canvas, 0, 0);
     embedSourceBase64 = tmpC.toDataURL('image/jpeg', 0.92);
-  } catch (e) { /* silent — embed export just won't work if this fails */ }
+  } catch (e) { /* silent */ }
 }
 
 function findSeeds() {
@@ -153,10 +169,47 @@ function findSeeds() {
   allSeeds = shuffle(allSeeds);
 }
 
-// ── Draw loop ──────────────────────────────────────────────────────────────────
+// ── Draw loop ───────────────────────────────────────────────────────────────────────────────────
 
 function draw() {
-  if (!imgLoaded) return;
+  // — Draw mode ———————————————————————————————————————————————————————————————
+  if (currentMode === 'draw') {
+    if (!drawLayer) { background(245); cursor(CROSS); return; }
+    background(245);
+    const arD = drawLayer.width / drawLayer.height;
+    let dWd = width, dHd = width / arD;
+    if (dHd > height) { dHd = height; dWd = height * arD; }
+    dispOX = (width - dWd) / 2; dispOY = (height - dHd) / 2;
+    dispW = dWd; dispH = dHd;
+    image(drawLayer, dispOX, dispOY, dWd, dHd);
+    cursor(CROSS);
+    return;
+  }
+
+  // — Text preview mode (before or between growths) ——————————————————————————————
+  if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
+    background(250);
+    const arT = textPreviewCanvas.width / textPreviewCanvas.height;
+    let dWt = width, dHt = width / arT;
+    if (dHt > height) { dHt = height; dWt = height * arT; }
+    dispOX = (width - dWt) / 2; dispOY = (height - dHt) / 2;
+    dispW = dWt; dispH = dHt;
+    drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dWt, dHt);
+    if (textPhotoElement) {
+      cursor(isDraggingPhoto ? 'grabbing' : 'grab');
+    } else {
+      cursor(ARROW);
+    }
+    return;
+  }
+
+  // — Standard growth display ——————————————————————————————————————————————————————
+  if (!imgLoaded) {
+    background(255);
+    cursor(ARROW);
+    return;
+  }
+  cursor(ARROW);
   windTime += sldWindSpeed.value() * 0.0005;
 
   if (!growthPaused) {
@@ -177,7 +230,6 @@ function draw() {
     activeBlades[i].show();
   }
 
-  // Compute display geometry (used by Blade.show interaction + recording)
   dispW = width;
   dispH = (canvasBuffer.height / canvasBuffer.width) * width;
   if (dispH > height) { dispH = height; dispW = (canvasBuffer.width / canvasBuffer.height) * height; }
@@ -186,28 +238,22 @@ function draw() {
   bMouseX = map(mouseX, dispOX, dispOX + dispW, 0, canvasBuffer.width);
   bMouseY = map(mouseY, dispOY, dispOY + dispH, 0, canvasBuffer.height);
 
-  // Mouse velocity for Wind mode (in buffer coordinates).
-  // 1. Clamp raw per-frame magnitude so sudden bursts/direction-changes can't spike through.
-  // 2. EMA smooths the clamped signal so it ramps up/down gradually.
   const bScale  = canvasBuffer.width / dispW;
   const rawVelX = (mouseX - _prevMX) * bScale;
   const rawVelY = (mouseY - _prevMY) * bScale;
   _prevMX = mouseX;
   _prevMY = mouseY;
   const rawMag    = Math.sqrt(rawVelX * rawVelX + rawVelY * rawVelY);
-  const maxRaw    = canvasBuffer.width * 0.025; // hard cap: 2.5% of buffer width per frame
+  const maxRaw    = canvasBuffer.width * 0.025;
   const clamp     = rawMag > maxRaw ? maxRaw / rawMag : 1;
-  const velSmooth = 0.90;                        // high = more inertia / longer decay
+  const velSmooth = 0.90;
   mouseVelX = mouseVelX * velSmooth + rawVelX * clamp * (1 - velSmooth);
   mouseVelY = mouseVelY * velSmooth + rawVelY * clamp * (1 - velSmooth);
 
-  // Derive normalised speed [0..1] and direction — used by Blade.show() in Wind mode.
-  // windMagnitude reaches 1 at maxRaw speed and decays to 0 while the mouse is still.
   const smoothMag = Math.sqrt(mouseVelX * mouseVelX + mouseVelY * mouseVelY);
   windMagnitude   = Math.min(smoothMag / maxRaw, 1);
   windDirX        = smoothMag > 0.5 ? mouseVelX / smoothMag : 0;
 
-  // Recording frame capture (after full buffer is drawn, before display scale)
   if (isRecording && recordingCanvas) {
     const rctx = recordingCanvas.getContext('2d');
     rctx.fillStyle = '#f5f5f5';
@@ -220,7 +266,207 @@ function draw() {
   image(canvasBuffer, width / 2, height / 2, dispW, dispH);
 }
 
-// ── Blade ──────────────────────────────────────────────────────────────────────
+// ── Text preview ───────────────────────────────────────────────────────────────────────────────
+
+function renderTextPreviewSync() {
+  const lines        = document.getElementById('txt-content').value.split('\n');
+  const fontFamily   = document.getElementById('txt-font-family').value;
+  const fontSize     = parseInt(document.getElementById('txt-font-size').value);
+  const fontWeight   = document.getElementById('txt-font-weight').value;
+  const letterSpc    = parseInt(document.getElementById('txt-letter-spacing').value);
+  const lineHMult    = parseFloat(document.getElementById('txt-line-height').value);
+  const textXPct     = parseInt(document.getElementById('txt-pos-x').value) / 100;
+  const textYPct     = parseInt(document.getElementById('txt-pos-y').value) / 100;
+  const photoXPct    = parseInt(document.getElementById('txt-photo-x').value) / 100;
+  const photoYPct    = parseInt(document.getElementById('txt-photo-y').value) / 100;
+  const photoSc      = parseFloat(document.getElementById('txt-photo-scale').value);
+
+  const artW = getArtboardW(), artH = getArtboardH();
+  const lineHeight = fontSize * lineHMult;
+  const fontStr = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
+
+  if (!textPreviewCanvas) textPreviewCanvas = document.createElement('canvas');
+  textPreviewCanvas.width  = artW;
+  textPreviewCanvas.height = artH;
+  const fc = textPreviewCanvas.getContext('2d');
+  fc.fillStyle = '#ffffff';
+  fc.fillRect(0, 0, artW, artH);
+
+  if (textPhotoElement) {
+    const comp = document.createElement('canvas');
+    comp.width = artW; comp.height = artH;
+    const cc = comp.getContext('2d');
+    const srcW = textPhotoElement.naturalWidth, srcH = textPhotoElement.naturalHeight;
+    const cov  = Math.max(artW / srcW, artH / srcH);
+    const fsc  = cov * Math.max(photoSc, 1.0);
+    const dw   = srcW * fsc, dh = srcH * fsc;
+    const px   = (photoXPct - 0.5) * (dw - artW);
+    const py   = (photoYPct - 0.5) * (dh - artH);
+    cc.drawImage(textPhotoElement, artW / 2 - dw / 2 + px, artH / 2 - dh / 2 + py, dw, dh);
+
+    const mask = document.createElement('canvas');
+    mask.width = artW; mask.height = artH;
+    const mc = mask.getContext('2d');
+    mc.fillStyle = 'black';
+    mc.font = fontStr; mc.textBaseline = 'top';
+    if ('letterSpacing' in mc) mc.letterSpacing = letterSpc + 'px';
+    const totalH  = lines.length * lineHeight;
+    const blockTop = textYPct * artH - totalH / 2;
+    for (let i = 0; i < lines.length; i++) {
+      const lw = _measureLine(mc, lines[i], letterSpc);
+      const bx = textXPct * artW;
+      const y  = blockTop + i * lineHeight;
+      const x  = textAlignment === 'center' ? bx - lw / 2
+               : textAlignment === 'right'  ? bx - lw : bx;
+      if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
+      else _drawSpaced(mc, lines[i], x, y, letterSpc);
+    }
+    cc.globalCompositeOperation = 'destination-in';
+    cc.drawImage(mask, 0, 0);
+    cc.globalCompositeOperation = 'source-over';
+    fc.drawImage(comp, 0, 0);
+  } else {
+    // No photo: just show dark text on white for positioning reference
+    fc.fillStyle = '#111111';
+    fc.font = fontStr; fc.textBaseline = 'top';
+    if ('letterSpacing' in fc) fc.letterSpacing = letterSpc + 'px';
+    const totalH   = lines.length * lineHeight;
+    const blockTop = textYPct * artH - totalH / 2;
+    for (let i = 0; i < lines.length; i++) {
+      const lw = _measureLine(fc, lines[i], letterSpc);
+      const bx = textXPct * artW;
+      const y  = blockTop + i * lineHeight;
+      const x  = textAlignment === 'center' ? bx - lw / 2
+               : textAlignment === 'right'  ? bx - lw : bx;
+      if ('letterSpacing' in fc) fc.fillText(lines[i], x, y);
+      else _drawSpaced(fc, lines[i], x, y, letterSpc);
+    }
+  }
+}
+
+function _scheduleTextPreview(delay) {
+  if (typeof delay === 'undefined') delay = 250;
+  if (_previewTimer) clearTimeout(_previewTimer);
+  if (delay === 0) {
+    renderTextPreviewSync();
+  } else {
+    _previewTimer = setTimeout(function () {
+      renderTextPreviewSync();
+      _previewTimer = null;
+    }, delay);
+  }
+}
+
+// ── Mouse events (photo drag + drawing) ──────────────────────────────────────────────
+
+function mousePressed() {
+  // Photo drag in text preview
+  if (currentMode === 'text' && textPreviewCanvas && !showGrowth && textPhotoElement) {
+    isDraggingPhoto = true;
+    _photoDragMX = mouseX; _photoDragMY = mouseY;
+    _photoDragStartX = parseInt(document.getElementById('txt-photo-x').value);
+    _photoDragStartY = parseInt(document.getElementById('txt-photo-y').value);
+    return false;
+  }
+  // Drawing
+  if (currentMode === 'draw' && drawLayer) {
+    isDrawingOnCanvas = true;
+    const bx = map(mouseX, dispOX, dispOX + dispW, 0, drawLayer.width);
+    const by = map(mouseY, dispOY, dispOY + dispH, 0, drawLayer.height);
+    _drawLastBX = bx; _drawLastBY = by;
+    _doDrawBrush(bx, by, bx, by);
+    return false;
+  }
+}
+
+function mouseDragged() {
+  // Photo drag
+  if (isDraggingPhoto) {
+    const dx = mouseX - _photoDragMX;
+    const dy = mouseY - _photoDragMY;
+    const dxPct = (dx / dispW) * 100;
+    const dyPct = (dy / dispH) * 100;
+    const nx = Math.min(100, Math.max(0, _photoDragStartX + dxPct));
+    const ny = Math.min(100, Math.max(0, _photoDragStartY + dyPct));
+    const sx = document.getElementById('txt-photo-x');
+    const sy = document.getElementById('txt-photo-y');
+    sx.value = Math.round(nx); sx.nextElementSibling.textContent = Math.round(nx) + '%';
+    sy.value = Math.round(ny); sy.nextElementSibling.textContent = Math.round(ny) + '%';
+    _scheduleTextPreview(0);
+    return false;
+  }
+  // Drawing
+  if (isDrawingOnCanvas && drawLayer) {
+    const bx = map(mouseX, dispOX, dispOX + dispW, 0, drawLayer.width);
+    const by = map(mouseY, dispOY, dispOY + dispH, 0, drawLayer.height);
+    _doDrawBrush(_drawLastBX, _drawLastBY, bx, by);
+    _drawLastBX = bx; _drawLastBY = by;
+    return false;
+  }
+}
+
+function mouseReleased() {
+  if (isDraggingPhoto) { isDraggingPhoto = false; }
+  isDrawingOnCanvas = false;
+  _drawLastBX = -1; _drawLastBY = -1;
+}
+
+function mouseWheel(event) {
+  // Scroll on canvas scales the background photo in text preview
+  if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
+    const sl = document.getElementById('txt-photo-scale');
+    let v = parseFloat(sl.value) - event.delta * 0.0005;
+    v = Math.min(3.0, Math.max(0.1, v));
+    sl.value = v.toFixed(2);
+    sl.nextElementSibling.textContent = v.toFixed(2) + '×';
+    _scheduleTextPreview(0);
+    return false;
+  }
+}
+
+// ── Drawing canvas helpers ──────────────────────────────────────────────────────────────────
+
+function _doDrawBrush(x1, y1, x2, y2) {
+  if (!drawLayer) return;
+  const scale  = drawLayer.width / dispW;
+  const brushD = parseInt(document.getElementById('inp-brush-size').value) * scale * 2;
+
+  if (isErasing) {
+    // Erase = paint white (keeps brightness high so seeds are skipped by findSeeds)
+    drawLayer.noStroke();
+    drawLayer.fill(255, 255, 255, 255);
+  } else {
+    const hex = document.getElementById('inp-brush-color').value;
+    const r   = parseInt(hex.slice(1, 3), 16);
+    const g   = parseInt(hex.slice(3, 5), 16);
+    const b   = parseInt(hex.slice(5, 7), 16);
+    drawLayer.noStroke();
+    drawLayer.fill(r, g, b, 255);
+  }
+
+  const dx = x2 - x1, dy = y2 - y1;
+  const dist  = Math.sqrt(dx * dx + dy * dy);
+  const steps = Math.max(1, Math.ceil(dist / (brushD * 0.3)));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    drawLayer.ellipse(x1 + dx * t, y1 + dy * t, brushD, brushD);
+  }
+}
+
+window.clearDrawing = function () {
+  if (drawLayer) drawLayer.background(255);
+};
+
+window.applyDrawingAsSource = function () {
+  if (!drawLayer) return;
+  const dataURL = drawLayer.elt.toDataURL('image/png');
+  loadImage(dataURL, function (loaded) {
+    img = loaded;
+    restartGrowth();
+  });
+};
+
+// ── Blade ────────────────────────────────────────────────────────────────────────────────────────
 
 class Blade {
   constructor(x, y, c) {
@@ -260,7 +506,6 @@ class Blade {
     let noiseVal   = noise(this.root.x / exportScale * 0.005, this.root.y / exportScale * 0.005, windTime);
     let windBend   = map(noiseVal, 0, 1, -sldSway.value() * this.windSensitivity, sldSway.value() * this.windSensitivity);
 
-    // Cursor interaction (mode-aware)
     let dx = this.root.x - bMouseX;
     let dy = this.root.y - bMouseY;
     let d  = max(1, sqrt(dx * dx + dy * dy));
@@ -269,14 +514,11 @@ class Blade {
     let strength     = sldMouseStrength.value();
     let mouseBend;
     if (interactMode === 'attract') {
-      mouseBend = mouseFalloff * strength * (-dx / d);              // pull toward cursor
+      mouseBend = mouseFalloff * strength * (-dx / d);
     } else if (interactMode === 'wind') {
-      // windMagnitude  : 0 = cursor still, 1 = cursor at full speed  (easing via EMA)
-      // windDirX       : normalised horizontal direction of movement
-      // strength slider: overall sensitivity ceiling
       mouseBend = mouseFalloff * strength * windDirX * windMagnitude;
     } else {
-      mouseBend = mouseFalloff * strength * (dx / d);               // repel (default)
+      mouseBend = mouseFalloff * strength * (dx / d);
     }
 
     let finalAngle = this.baseAngle + windBend + mouseBend;
@@ -292,7 +534,7 @@ class Blade {
   }
 }
 
-// ── Video recording ────────────────────────────────────────────────────────────
+// ── Video recording ──────────────────────────────────────────────────────────────────────────────
 
 function startRecording() {
   if (!imgLoaded || !canvasBuffer) {
@@ -305,7 +547,6 @@ function startRecording() {
     alert('Video recording is not supported in this browser.\nUse Chrome or Firefox.');
     return;
   }
-  // Cap at 1920 wide — the 4800px buffer is too large for reliable encoding
   const bufAR = canvasBuffer.width / canvasBuffer.height;
   const recW  = Math.min(canvasBuffer.width, 1920);
   const recH  = Math.round(recW / bufAR);
@@ -340,7 +581,7 @@ function stopRecording() {
   _updateRecordBtn();
 }
 
-// ── Export & keys ──────────────────────────────────────────────────────────────
+// ── Export & keys ─────────────────────────────────────────────────────────────────────────────
 
 function downloadHighRes() {
   if (canvasBuffer) save(canvasBuffer, 'meadow.png');
@@ -349,7 +590,9 @@ function downloadHighRes() {
 function keyPressed() {
   if (key === 's' || key === 'S') downloadHighRes();
   if (key === 'r' || key === 'R') {
-    currentMode === 'text' ? renderTextComposition() : restartGrowth();
+    if (currentMode === 'text') renderTextComposition();
+    else if (currentMode === 'draw') window.applyDrawingAsSource();
+    else restartGrowth();
   }
 }
 
@@ -366,22 +609,22 @@ function logSettings() {
   console.log(JSON.stringify(out, null, 2));
 }
 
-// ── Global wiring ──────────────────────────────────────────────────────────────
+// ── Global wiring ────────────────────────────────────────────────────────────────────────────
 
 window.applyAndRestart = restartGrowth;
 window.saveHighRes     = downloadHighRes;
 window.logSettings     = logSettings;
 
-window.toggleGrowth = function() {
+window.toggleGrowth = function () {
   growthPaused = !growthPaused;
   _updateStopBtn();
 };
 
-window.toggleRecording = function() {
+window.toggleRecording = function () {
   isRecording ? stopRecording() : startRecording();
 };
 
-window.exportEmbed = function() {
+window.exportEmbed = function () {
   if (!embedSourceBase64) {
     alert('Please load an image or render text first, then click Apply & Restart.');
     return;
@@ -427,7 +670,7 @@ window.exportEmbed = function() {
   URL.revokeObjectURL(a.href);
 };
 
-window.toggleUI = function() {
+window.toggleUI = function () {
   const sidebar = document.getElementById('sidebar');
   const tab     = document.getElementById('ui-toggle-tab');
   const tabBtn  = document.getElementById('ui-toggle-tab-btn');
@@ -438,7 +681,7 @@ window.toggleUI = function() {
   resizeCanvas(windowWidth - (sidebarVisible ? SIDEBAR_W : 0), windowHeight);
 };
 
-// ── Internal button state helpers ──────────────────────────────────────────────
+// ── Internal button state helpers ───────────────────────────────────────────────────────
 
 function _updateStopBtn() {
   const btn = document.getElementById('btn-stop-grow');
@@ -468,28 +711,51 @@ function _updateRecordBtn() {
   }
 }
 
-// ── Mode toggle & text UI ──────────────────────────────────────────────────────
+// ── Mode toggle & text UI ──────────────────────────────────────────────────────────────────
 
 function initModeToggle() {
   const btnImage   = document.getElementById('btn-image-mode');
   const btnText    = document.getElementById('btn-text-mode');
+  const btnDraw    = document.getElementById('btn-draw-mode');
   const textPanel  = document.getElementById('text-mode-panel');
   const imagePanel = document.getElementById('image-mode-section');
+  const drawPanel  = document.getElementById('draw-mode-panel');
 
-  btnImage.addEventListener('click', () => {
-    currentMode = 'image';
-    btnImage.classList.add('active');
-    btnText.classList.remove('active');
-    textPanel.style.display  = 'none';
-    imagePanel.style.display = 'block';
-  });
+  function setMode(mode) {
+    currentMode = mode;
+    btnImage.classList.toggle('active', mode === 'image');
+    btnText.classList.toggle('active',  mode === 'text');
+    if (btnDraw) btnDraw.classList.toggle('active', mode === 'draw');
+    imagePanel.style.display = mode === 'image' ? 'block' : 'none';
+    textPanel.style.display  = mode === 'text'  ? 'block' : 'none';
+    if (drawPanel) drawPanel.style.display = mode === 'draw' ? 'block' : 'none';
+  }
+
+  btnImage.addEventListener('click', () => setMode('image'));
 
   btnText.addEventListener('click', () => {
-    currentMode = 'text';
-    btnText.classList.add('active');
-    btnImage.classList.remove('active');
-    textPanel.style.display  = 'block'; // must be 'block', not '' (CSS overrides '')
-    imagePanel.style.display = 'none';
+    setMode('text');
+    showGrowth = false;       // switch canvas to preview
+    _scheduleTextPreview(50); // render preview
+  });
+
+  if (btnDraw) {
+    btnDraw.addEventListener('click', () => {
+      setMode('draw');
+      if (!drawLayer) {
+        drawLayer = createGraphics(getArtboardW(), getArtboardH());
+        drawLayer.background(255);
+      }
+    });
+  }
+
+  // Draw tool buttons (Brush / Eraser)
+  document.querySelectorAll('#draw-tool-btns .align-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#draw-tool-btns .align-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      isErasing = btn.dataset.tool === 'eraser';
+    });
   });
 
   document.getElementById('btn-render-text').addEventListener('click', renderTextComposition);
@@ -502,7 +768,10 @@ function initModeToggle() {
     const file = e.target.files[0];
     if (!file) return;
     const htmlImg = new Image();
-    htmlImg.onload = () => { textPhotoElement = htmlImg; };
+    htmlImg.onload = () => {
+      textPhotoElement = htmlImg;
+      _scheduleTextPreview(0);
+    };
     htmlImg.src = URL.createObjectURL(file);
   });
 
@@ -511,6 +780,7 @@ function initModeToggle() {
       document.querySelectorAll('#txt-alignment-btns .align-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       textAlignment = btn.dataset.align;
+      _scheduleTextPreview(0);
     });
   });
 
@@ -521,9 +791,28 @@ function initModeToggle() {
       interactMode = btn.dataset.mode;
     });
   });
+
+  // Wire all text controls to auto-preview
+  const previewSliders = [
+    'txt-font-size', 'txt-letter-spacing', 'txt-line-height',
+    'txt-pos-x', 'txt-pos-y', 'txt-photo-x', 'txt-photo-y', 'txt-photo-scale'
+  ];
+  previewSliders.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => _scheduleTextPreview(150));
+  });
+  const previewOther = ['txt-content'];
+  previewOther.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => _scheduleTextPreview(300));
+  });
+  ['txt-font-family', 'txt-font-weight'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => _scheduleTextPreview(100));
+  });
 }
 
-// ── Text compositing ───────────────────────────────────────────────────────────
+// ── Text compositing ────────────────────────────────────────────────────────────────────────────
 
 function renderTextComposition() {
   const lines          = document.getElementById('txt-content').value.split('\n');
@@ -543,14 +832,12 @@ function renderTextComposition() {
   const lineHeight = fontSize * lineHeightMult;
   const fontString = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
 
-  // compCanvas: draw photo then clip to letterforms
   const compCanvas    = document.createElement('canvas');
   compCanvas.width    = artW;
   compCanvas.height   = artH;
   const cc            = compCanvas.getContext('2d');
 
   if (textPhotoElement) {
-    // Cover fill: always stretch photo to cover entire artboard, then pan with X/Y
     const srcW = textPhotoElement.naturalWidth;
     const srcH = textPhotoElement.naturalHeight;
     const coverScale = Math.max(artW / srcW, artH / srcH);
@@ -565,9 +852,6 @@ function renderTextComposition() {
     cc.fillRect(0, 0, artW, artH);
   }
 
-  // Build full text mask on a separate canvas — all lines drawn BEFORE applying
-  // destination-in. Drawing per-line directly onto cc with destination-in would
-  // INTERSECT each line with the previous, leaving nothing visible after line 1.
   const maskCanvas    = document.createElement('canvas');
   maskCanvas.width    = artW;
   maskCanvas.height   = artH;
@@ -591,12 +875,10 @@ function renderTextComposition() {
     else _drawSpaced(mc, lines[i], x, y, letterSpacing);
   }
 
-  // Apply the complete mask in a single pass — keeps photo/color where text exists
   cc.globalCompositeOperation = 'destination-in';
   cc.drawImage(maskCanvas, 0, 0);
   cc.globalCompositeOperation = 'source-over';
 
-  // finalCanvas: white background + clipped letterforms
   const finalCanvas  = document.createElement('canvas');
   finalCanvas.width  = artW;
   finalCanvas.height = artH;
@@ -606,7 +888,7 @@ function renderTextComposition() {
   fc.drawImage(compCanvas, 0, 0);
 
   const dataURL = finalCanvas.toDataURL('image/jpeg', 0.92);
-  embedSourceBase64 = dataURL; // store for embed export before p5 gets it
+  embedSourceBase64 = dataURL;
   loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
 }
 
@@ -641,10 +923,13 @@ function loadCustomFont(name) {
   opt.textContent = trimmed + ' (custom)';
   opt.selected    = true;
   sel.appendChild(opt);
-  document.fonts.load('700 40px \'' + trimmed + '\'').then(() => console.log('Font "' + trimmed + '" ready.'));
+  document.fonts.load('700 40px \'' + trimmed + '\'').then(() => {
+    console.log('Font "' + trimmed + '" ready.');
+    if (currentMode === 'text') _scheduleTextPreview(0);
+  });
 }
 
-// ── Embed HTML generator ───────────────────────────────────────────────────────
+// ── Embed HTML generator ───────────────────────────────────────────────────────────────────────
 
 function buildEmbedHTML(base64, S) {
   const cfg = JSON.stringify(S);
