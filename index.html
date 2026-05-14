@@ -372,14 +372,58 @@
       50%      { opacity: 0.2; }
     }
 
-    /* ── Draw mode colour swatch ── */
-    #inp-brush-color {
+    /* ── Default mode panel ── */
+    #default-mode-panel { display: none; }
+
+    /* ── Gradient editor ── */
+    #grad-editor-wrap { position: relative; margin-bottom: 6px; }
+    #grad-bar {
+      height: 28px;
+      border-radius: 2px;
+      border: 1px solid var(--gray3);
+      cursor: crosshair;
+    }
+    #grad-stops-row {
+      position: relative;
+      height: 18px;
+      margin-top: 5px;
+    }
+    .grad-stop {
+      position: absolute;
+      width: 13px;
+      height: 18px;
+      top: 0;
+      transform: translateX(-50%);
+      border-radius: 2px;
+      cursor: ew-resize;
+      border: 2px solid rgba(255,255,255,0.95);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.22), 0 2px 4px rgba(0,0,0,0.18);
+      transition: box-shadow 0.1s;
+    }
+    .grad-stop.selected {
+      border-color: var(--black);
+      box-shadow: 0 0 0 1.5px var(--black);
+    }
+    .grad-action-btn {
+      flex: 0 0 24px;
+      height: 24px;
+      font-size: 14px;
+      line-height: 1;
+      font-family: var(--mono);
+      background: var(--white);
+      border: 1px solid var(--gray3);
+      color: var(--gray1);
+      cursor: pointer;
+      padding: 0;
+    }
+    .grad-action-btn:hover { border-color: var(--black); color: var(--black); }
+    #inp-grad-color {
       flex: 1;
       height: 24px;
       border: 1px solid var(--gray3);
       border-radius: 0;
-      cursor: pointer;
       padding: 0;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -394,8 +438,9 @@
 
   <!-- Mode Toggle -->
   <div class="mode-toggle">
-    <button id="btn-image-mode" class="mode-btn">Image</button>
-    <button id="btn-text-mode"  class="mode-btn active">Text</button>
+    <button id="btn-default-mode" class="mode-btn active">Default</button>
+    <button id="btn-text-mode"    class="mode-btn">Text</button>
+    <button id="btn-image-mode"   class="mode-btn">Image</button>
   </div>
 
   <!-- Canvas -->
@@ -414,6 +459,40 @@
       <input type="range" id="sld-master-scale" min="0.25" max="3.0" value="1.0" step="0.05"
              oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
       <span class="val">1.00</span>
+    </div>
+  </div>
+
+  <!-- Default Mode Panel -->
+  <div id="default-mode-panel">
+    <div class="section">
+      <div class="section-title">Text</div>
+      <div class="text-field">
+        <textarea id="def-txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Gradient</div>
+      <div id="grad-editor-wrap">
+        <div id="grad-bar"></div>
+        <div id="grad-stops-row"></div>
+      </div>
+      <div class="row" style="align-items:center; margin-bottom:6px">
+        <label>Color</label>
+        <input type="color" id="inp-grad-color" value="#6c8d79">
+        <button class="grad-action-btn" id="btn-grad-add" title="Add stop">+</button>
+        <button class="grad-action-btn" id="btn-grad-del" title="Remove stop">−</button>
+      </div>
+      <div class="row">
+        <label>Angle</label>
+        <input type="range" id="inp-grad-angle" min="0" max="360" value="135"
+               oninput="this.nextElementSibling.textContent=this.value+'°'">
+        <span class="val">135°</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="btn btn-primary" id="btn-def-render">Apply &amp; Render (R)</button>
     </div>
   </div>
 
