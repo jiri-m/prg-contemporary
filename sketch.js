@@ -17,7 +17,7 @@ let activeBlades = [];
 let seedIndex = 0;
 let windTime = 0;
 let growthPaused = false;
-let showGrowth = false; // true once growth has been started; false = show text preview
+let showGrowth = false;
 
 // Display geometry (computed in draw, used by Blade.show for cursor interaction)
 let dispW = 0, dispH = 0, dispOX = 0, dispOY = 0;
@@ -25,7 +25,7 @@ let bMouseX = 0, bMouseY = 0;
 
 // Cursor interaction
 let sldMouseStrength, sldMouseRadius;
-let interactMode = 'repel'; // 'repel' | 'attract' | 'wind'
+let interactMode = 'repel';
 let mouseVelX = 0, mouseVelY = 0, _prevMX = 0, _prevMY = 0;
 let windMagnitude = 0;
 let windDirX = 0;
@@ -53,11 +53,17 @@ let isDraggingPhoto = false;
 let _photoDragMX = 0, _photoDragMY = 0;
 let _photoDragStartX = 50, _photoDragStartY = 50;
 
+// Photo frame resize (text preview mode)
+let isResizingPhoto = false;
+let _resizeInitScale = 1.0;
+let _resizeInitDist = 1.0;
+let _resizePhotoCX = 0, _resizePhotoCY = 0;
+
 // Draw mode
 let drawLayer = null;
 let isDrawingOnCanvas = false;
 let _drawLastBX = -1, _drawLastBY = -1;
-let isErasing = false;
+let drawTool = 'brush'; // 'brush' | 'eraser' | 'blur'
 
 // Sidebar
 let sidebarVisible = true;
@@ -134,7 +140,7 @@ function restartGrowth() {
 
   allSeeds = []; activeBlades = []; seedIndex = 0; windTime = 0;
   imgLoaded = true;
-  showGrowth = true; // switch canvas display to growth view
+  showGrowth = true;
   findSeeds();
 
   try {
@@ -174,8 +180,8 @@ function findSeeds() {
 function draw() {
   // — Draw mode ———————————————————————————————————————————————————————————————
   if (currentMode === 'draw') {
-    if (!drawLayer) { background(245); cursor(CROSS); return; }
     background(245);
+    if (!drawLayer) { cursor(CROSS); return; }
     const arD = drawLayer.width / drawLayer.height;
     let dWd = width, dHd = width / arD;
     if (dHd > height) { dHd = height; dWd = height * arD; }
@@ -186,7 +192,7 @@ function draw() {
     return;
   }
 
-  // — Text preview mode (before or between growths) ——————————————————————————————
+  // — Text preview mode ——————————————————————————————————————————————————————————
   if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
     background(250);
     const arT = textPreviewCanvas.width / textPreviewCanvas.height;
@@ -195,8 +201,9 @@ function draw() {
     dispOX = (width - dWt) / 2; dispOY = (height - dHt) / 2;
     dispW = dWt; dispH = dHt;
     drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dWt, dHt);
+
     if (textPhotoElement) {
-      cursor(isDraggingPhoto ? 'grabbing' : 'grab');
+      _drawPhotoFrame();
     } else {
       cursor(ARROW);
     }
@@ -293,24 +300,28 @@ function renderTextPreviewSync() {
   fc.fillRect(0, 0, artW, artH);
 
   if (textPhotoElement) {
-    const comp = document.createElement('canvas');
-    comp.width = artW; comp.height = artH;
-    const cc = comp.getContext('2d');
     const srcW = textPhotoElement.naturalWidth, srcH = textPhotoElement.naturalHeight;
     const cov  = Math.max(artW / srcW, artH / srcH);
     const fsc  = cov * Math.max(photoSc, 1.0);
     const dw   = srcW * fsc, dh = srcH * fsc;
     const px   = (photoXPct - 0.5) * (dw - artW);
     const py   = (photoYPct - 0.5) * (dh - artH);
-    cc.drawImage(textPhotoElement, artW / 2 - dw / 2 + px, artH / 2 - dh / 2 + py, dw, dh);
+    const drawX = artW / 2 - dw / 2 + px;
+    const drawY = artH / 2 - dh / 2 + py;
 
+    // Full photo at 75% opacity (visible outside letters)
+    fc.globalAlpha = 0.75;
+    fc.drawImage(textPhotoElement, drawX, drawY, dw, dh);
+    fc.globalAlpha = 1.0;
+
+    // Build text mask (letters = opaque, rest = transparent)
     const mask = document.createElement('canvas');
     mask.width = artW; mask.height = artH;
     const mc = mask.getContext('2d');
     mc.fillStyle = 'black';
     mc.font = fontStr; mc.textBaseline = 'top';
     if ('letterSpacing' in mc) mc.letterSpacing = letterSpc + 'px';
-    const totalH  = lines.length * lineHeight;
+    const totalH   = lines.length * lineHeight;
     const blockTop = textYPct * artH - totalH / 2;
     for (let i = 0; i < lines.length; i++) {
       const lw = _measureLine(mc, lines[i], letterSpc);
@@ -321,12 +332,17 @@ function renderTextPreviewSync() {
       if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
       else _drawSpaced(mc, lines[i], x, y, letterSpc);
     }
+
+    // Photo clipped to letters at 100% opacity
+    const comp = document.createElement('canvas');
+    comp.width = artW; comp.height = artH;
+    const cc = comp.getContext('2d');
+    cc.drawImage(textPhotoElement, drawX, drawY, dw, dh);
     cc.globalCompositeOperation = 'destination-in';
     cc.drawImage(mask, 0, 0);
     cc.globalCompositeOperation = 'source-over';
     fc.drawImage(comp, 0, 0);
   } else {
-    // No photo: just show dark text on white for positioning reference
     fc.fillStyle = '#111111';
     fc.font = fontStr; fc.textBaseline = 'top';
     if ('letterSpacing' in fc) fc.letterSpacing = letterSpc + 'px';
@@ -345,6 +361,7 @@ function renderTextPreviewSync() {
 }
 
 function _scheduleTextPreview(delay) {
+  if (currentMode === 'text') showGrowth = false; // always show preview when settings change
   if (typeof delay === 'undefined') delay = 250;
   if (_previewTimer) clearTimeout(_previewTimer);
   if (delay === 0) {
@@ -357,11 +374,95 @@ function _scheduleTextPreview(delay) {
   }
 }
 
-// ── Mouse events (photo drag + drawing) ──────────────────────────────────────────────
+// ── Photo frame helpers ──────────────────────────────────────────────────────────────────────
+
+function _getPhotoFrameInfo() {
+  if (!textPhotoElement || dispW <= 0) return null;
+  const artW = getArtboardW(), artH = getArtboardH();
+  const photoXPct = parseInt(document.getElementById('txt-photo-x').value) / 100;
+  const photoYPct = parseInt(document.getElementById('txt-photo-y').value) / 100;
+  const photoSc   = parseFloat(document.getElementById('txt-photo-scale').value);
+  const srcW = textPhotoElement.naturalWidth, srcH = textPhotoElement.naturalHeight;
+  const cov = Math.max(artW / srcW, artH / srcH);
+  const fsc = cov * Math.max(photoSc, 1.0);
+  const dw  = srcW * fsc, dh = srcH * fsc;
+  const panX = (photoXPct - 0.5) * (dw - artW);
+  const panY = (photoYPct - 0.5) * (dh - artH);
+  const scX = dispW / artW, scY = dispH / artH;
+  return {
+    fx: dispOX + (artW / 2 - dw / 2 + panX) * scX,
+    fy: dispOY + (artH / 2 - dh / 2 + panY) * scY,
+    fw: dw * scX,
+    fh: dh * scY,
+    cx: dispOX + (artW / 2 + panX) * scX,
+    cy: dispOY + (artH / 2 + panY) * scY
+  };
+}
+
+function _drawPhotoFrame() {
+  const info = _getPhotoFrameInfo();
+  if (!info) { cursor('grab'); return; }
+  const { fx, fy, fw, fh, cx, cy } = info;
+
+  push();
+  noFill();
+  stroke(80, 100, 220, 180);
+  strokeWeight(1.5);
+  drawingContext.setLineDash([6, 4]);
+  rect(fx, fy, fw, fh);
+  drawingContext.setLineDash([]);
+
+  const hS = 9;
+  const corners = [
+    { x: fx,      y: fy      },
+    { x: fx + fw, y: fy      },
+    { x: fx,      y: fy + fh },
+    { x: fx + fw, y: fy + fh },
+  ];
+  fill(255, 255, 255, 230);
+  stroke(60, 80, 200);
+  strokeWeight(1.5);
+  for (const c of corners) {
+    rect(c.x - hS / 2, c.y - hS / 2, hS, hS);
+  }
+  pop();
+
+  // Cursor based on state
+  let onHandle = false;
+  for (const c of corners) {
+    if (abs(mouseX - c.x) < 12 && abs(mouseY - c.y) < 12) { onHandle = true; break; }
+  }
+  if (isResizingPhoto || onHandle) cursor('nwse-resize');
+  else if (isDraggingPhoto)        cursor('grabbing');
+  else                             cursor('grab');
+}
+
+// ── Mouse events ──────────────────────────────────────────────────────────────────
 
 function mousePressed() {
-  // Photo drag in text preview
+  // Text preview — check resize handles before drag
   if (currentMode === 'text' && textPreviewCanvas && !showGrowth && textPhotoElement) {
+    const info = _getPhotoFrameInfo();
+    if (info) {
+      const { fx, fy, fw, fh, cx, cy } = info;
+      const corners = [
+        { x: fx,      y: fy      },
+        { x: fx + fw, y: fy      },
+        { x: fx,      y: fy + fh },
+        { x: fx + fw, y: fy + fh },
+      ];
+      for (const c of corners) {
+        if (abs(mouseX - c.x) < 12 && abs(mouseY - c.y) < 12) {
+          isResizingPhoto = true;
+          _resizePhotoCX  = cx;
+          _resizePhotoCY  = cy;
+          _resizeInitScale = parseFloat(document.getElementById('txt-photo-scale').value);
+          _resizeInitDist  = Math.max(1, Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2));
+          return false;
+        }
+      }
+    }
+    // Photo drag
     isDraggingPhoto = true;
     _photoDragMX = mouseX; _photoDragMY = mouseY;
     _photoDragStartX = parseInt(document.getElementById('txt-photo-x').value);
@@ -380,6 +481,17 @@ function mousePressed() {
 }
 
 function mouseDragged() {
+  // Photo resize
+  if (isResizingPhoto) {
+    const curDist = Math.sqrt((mouseX - _resizePhotoCX) ** 2 + (mouseY - _resizePhotoCY) ** 2);
+    let newScale = _resizeInitScale * (curDist / _resizeInitDist);
+    newScale = Math.min(3.0, Math.max(0.1, newScale));
+    const sl = document.getElementById('txt-photo-scale');
+    sl.value = newScale.toFixed(2);
+    sl.nextElementSibling.textContent = newScale.toFixed(2) + '×';
+    _scheduleTextPreview(0);
+    return false;
+  }
   // Photo drag
   if (isDraggingPhoto) {
     const dx = mouseX - _photoDragMX;
@@ -406,13 +518,13 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
-  if (isDraggingPhoto) { isDraggingPhoto = false; }
+  if (isDraggingPhoto)   isDraggingPhoto   = false;
+  if (isResizingPhoto) { isResizingPhoto   = false; }
   isDrawingOnCanvas = false;
   _drawLastBX = -1; _drawLastBY = -1;
 }
 
 function mouseWheel(event) {
-  // Scroll on canvas scales the background photo in text preview
   if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
     const sl = document.getElementById('txt-photo-scale');
     let v = parseFloat(sl.value) - event.delta * 0.0005;
@@ -428,11 +540,24 @@ function mouseWheel(event) {
 
 function _doDrawBrush(x1, y1, x2, y2) {
   if (!drawLayer) return;
+
+  if (drawTool === 'blur') {
+    const scale  = drawLayer.width / dispW;
+    const brushR = parseInt(document.getElementById('inp-brush-size').value) * scale;
+    const dx = x2 - x1, dy = y2 - y1;
+    const dist  = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.max(1, Math.ceil(dist / (brushR * 0.4)));
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      _doBlurBrush(x1 + dx * t, y1 + dy * t, brushR);
+    }
+    return;
+  }
+
   const scale  = drawLayer.width / dispW;
   const brushD = parseInt(document.getElementById('inp-brush-size').value) * scale * 2;
 
-  if (isErasing) {
-    // Erase = paint white (keeps brightness high so seeds are skipped by findSeeds)
+  if (drawTool === 'eraser') {
     drawLayer.noStroke();
     drawLayer.fill(255, 255, 255, 255);
   } else {
@@ -453,8 +578,40 @@ function _doDrawBrush(x1, y1, x2, y2) {
   }
 }
 
+function _doBlurBrush(cx, cy, brushR) {
+  if (!drawLayer) return;
+  const strength = parseInt(document.getElementById('inp-blur-strength').value);
+  const blurAmt  = Math.max(2, Math.round(brushR * strength * 0.03));
+  const dlCtx    = drawLayer.drawingContext;
+  const margin   = Math.ceil(blurAmt * 3);
+  const sx  = Math.max(0, Math.floor(cx - brushR - margin));
+  const sy  = Math.max(0, Math.floor(cy - brushR - margin));
+  const sx2 = Math.min(drawLayer.width,  Math.ceil(cx + brushR + margin));
+  const sy2 = Math.min(drawLayer.height, Math.ceil(cy + brushR + margin));
+  const sw = sx2 - sx, sh = sy2 - sy;
+  if (sw <= 0 || sh <= 0) return;
+
+  const tmp  = document.createElement('canvas');
+  tmp.width  = sw; tmp.height = sh;
+  const tctx = tmp.getContext('2d');
+  tctx.filter = `blur(${blurAmt}px)`;
+  tctx.drawImage(drawLayer.elt, sx, sy, sw, sh, 0, 0, sw, sh);
+  tctx.filter = 'none';
+
+  dlCtx.save();
+  dlCtx.beginPath();
+  dlCtx.arc(cx, cy, brushR, 0, Math.PI * 2);
+  dlCtx.clip();
+  dlCtx.drawImage(tmp, sx, sy);
+  dlCtx.restore();
+}
+
 window.clearDrawing = function () {
-  if (drawLayer) drawLayer.background(255);
+  if (drawLayer) {
+    drawLayer.background(255);
+    // Re-init with current source so clearing resets to original
+    _initDrawLayerFromSource();
+  }
 };
 
 window.applyDrawingAsSource = function () {
@@ -465,6 +622,20 @@ window.applyDrawingAsSource = function () {
     restartGrowth();
   });
 };
+
+function _initDrawLayerFromSource() {
+  if (!drawLayer) return;
+  drawLayer.background(255);
+  if (textPreviewCanvas && textPreviewCanvas.width > 0) {
+    try {
+      drawLayer.drawingContext.drawImage(textPreviewCanvas, 0, 0, drawLayer.width, drawLayer.height);
+    } catch (e) { /* silent */ }
+  } else if (img) {
+    try {
+      drawLayer.drawingContext.drawImage(img.canvas, 0, 0, drawLayer.width, drawLayer.height);
+    } catch (e) { /* silent */ }
+  }
+}
 
 // ── Blade ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -485,12 +656,12 @@ class Blade {
       basePct = sldS4.value(); tierJitter = sldR4.value();
     }
     let jitter = random(1 - tierJitter, 1 + tierJitter);
-    this.maxLen       = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale;
+    this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale;
     this.windSensitivity = noise(x * 0.01, y * 0.01);
-    this.currentLen   = 0;
-    this.baseGrowthRate = random(5, 15) * exportScale * sldMasterScale.value();
-    this.baseAngle    = -HALF_PI + random(-0.2, 0.2);
-    this.alpha        = random(80, 160);
+    this.currentLen      = 0;
+    this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value();
+    this.baseAngle       = -HALF_PI + random(-0.2, 0.2);
+    this.alpha           = random(80, 160);
   }
 
   update() {
@@ -735,30 +906,47 @@ function initModeToggle() {
 
   btnText.addEventListener('click', () => {
     setMode('text');
-    showGrowth = false;       // switch canvas to preview
-    _scheduleTextPreview(50); // render preview
+    showGrowth = false;
+    _scheduleTextPreview(50);
   });
 
   if (btnDraw) {
     btnDraw.addEventListener('click', () => {
-      setMode('draw');
-      if (!drawLayer) {
-        drawLayer = createGraphics(getArtboardW(), getArtboardH());
-        drawLayer.background(255);
+      // Initialize draw layer with current content BEFORE switching mode
+      const artW = getArtboardW(), artH = getArtboardH();
+      if (drawLayer) { drawLayer.remove(); drawLayer = null; }
+      drawLayer = createGraphics(artW, artH);
+      drawLayer.background(255);
+
+      if (textPreviewCanvas && textPreviewCanvas.width > 0) {
+        try {
+          drawLayer.drawingContext.drawImage(textPreviewCanvas, 0, 0, artW, artH);
+        } catch (e) { /* silent */ }
+      } else if (img) {
+        try {
+          drawLayer.drawingContext.drawImage(img.canvas, 0, 0, artW, artH);
+        } catch (e) { /* silent */ }
       }
+
+      setMode('draw');
     });
   }
 
-  // Draw tool buttons (Brush / Eraser)
+  // Draw tool buttons (Brush / Eraser / Blur)
   document.querySelectorAll('#draw-tool-btns .align-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#draw-tool-btns .align-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      isErasing = btn.dataset.tool === 'eraser';
+      drawTool = btn.dataset.tool;
     });
   });
 
   document.getElementById('btn-render-text').addEventListener('click', renderTextComposition);
+
+  document.getElementById('btn-preview-text').addEventListener('click', () => {
+    showGrowth = false;
+    _scheduleTextPreview(0);
+  });
 
   document.getElementById('btn-load-custom-font').addEventListener('click', () => {
     loadCustomFont(document.getElementById('txt-custom-font').value);
@@ -792,7 +980,7 @@ function initModeToggle() {
     });
   });
 
-  // Wire all text controls to auto-preview
+  // Wire all text controls to live preview
   const previewSliders = [
     'txt-font-size', 'txt-letter-spacing', 'txt-line-height',
     'txt-pos-x', 'txt-pos-y', 'txt-photo-x', 'txt-photo-y', 'txt-photo-scale'
