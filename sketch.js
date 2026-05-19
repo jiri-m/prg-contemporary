@@ -1317,6 +1317,13 @@ function initModeToggle() {
   ['triad-c0','triad-c1','triad-c2'].forEach((id, pos) => {
     const el = document.getElementById(id);
     if (!el) return;
+    // mousedown: apply this triad shade to the currently selected point immediately
+    el.addEventListener('mousedown', () => {
+      const pt = meshPoints.find(p => p.id === meshSelectedId);
+      if (pt) pt.color = meshGreenTriads[meshGreenTriad][pos];
+      _meshEditorUpdate();
+    });
+    // change: redefine the triad shade + update all matching points
     el.addEventListener('change', e => {
       const oldColor = meshGreenTriads[meshGreenTriad][pos];
       meshGreenTriads[meshGreenTriad][pos] = e.target.value;
@@ -1326,12 +1333,15 @@ function initModeToggle() {
     });
   });
 
-  // Accent color inputs: mousedown = select, change = update color
+  // Accent color inputs: mousedown = select + apply to selected point; change = redefine + update all matching
   document.querySelectorAll('#accent-btns .accent-btn').forEach(inp => {
     inp.addEventListener('mousedown', () => {
       meshAccentIdx = parseInt(inp.dataset.accent);
+      const pt = meshPoints.find(p => p.id === meshSelectedId);
+      if (pt) pt.color = meshAccents[meshAccentIdx];
       document.querySelectorAll('#accent-btns .accent-btn').forEach(b => b.classList.remove('active'));
       inp.classList.add('active');
+      _meshEditorUpdate();
     });
     inp.addEventListener('change', e => {
       const idx      = parseInt(inp.dataset.accent);
