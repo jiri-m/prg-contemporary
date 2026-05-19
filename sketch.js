@@ -41,7 +41,7 @@ let embedSourceBase64 = null;
 
 // Mode: 'gradient' | 'image'
 let currentMode = 'gradient';
-let gradientUseText = false; // Gradient tab: Full Texture by default
+let gradientUseText = true; // Gradient tab: On Text by default
 let imageUseText    = true;  // Image tab: On Text by default
 
 // Text / photo
@@ -72,11 +72,13 @@ const meshGreenTriads = [
   ['#525C29', '#ADBA6B', '#DDE3B6'],
   ['#417F34', '#749E5E', '#8FB47D'],
 ];
-const meshAccents = ['#8A6BD3', '#D297E8', '#C790DB', '#FF9FCC'];
+const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
+
+const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"color":"#525C29","weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"color":"#ADBA6B","weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"color":"#DDE3B6","weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"color":"#525C29","weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"color":"#ADBA6B","weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"color":"#DDE3B6","weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"color":"#525C29","weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"color":"#ADBA6B","weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"color":"#DDE3B6","weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"color":"#525C29","weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"color":"#ADBA6B","weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"color":"#de92fa","weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"color":"#de92fa","weight":1.207297232696769}]}};
 
 let meshPoints = [];
-let meshGreenTriad = 0;
-let meshAccentIdx  = 0;
+let meshGreenTriad = 1;
+let meshAccentIdx  = 2;
 let meshSelectedId = null;
 let _meshNextId    = 0;
 let _meshDragId    = null;
@@ -125,7 +127,6 @@ function setup() {
   sldMouseRadius   = domSlider('sld-mouse-radius');
 
   initModeToggle();
-  _meshRandomize();
   loadSettings();
 
   requestAnimationFrame(() => {
@@ -445,8 +446,7 @@ function _meshRandomize() {
     });
   });
 
-  const numAccents = 1 + Math.floor(Math.random() * 2);
-  for (let i = 0; i < numAccents; i++) {
+  for (let i = 0; i < 2; i++) {
     meshPoints.push({
       id: _meshNextId++,
       x: Math.random() * 0.8 + 0.1,
@@ -1021,8 +1021,10 @@ function saveSettings() {
 
 function loadSettings() {
   const raw = localStorage.getItem('meadow-settings');
-  if (!raw) return;
-  try { applySettings(JSON.parse(raw)); } catch(e) { /* ignore corrupt data */ }
+  if (raw) {
+    try { applySettings(JSON.parse(raw)); return; } catch(e) { /* ignore corrupt data */ }
+  }
+  applySettings(DEFAULT_SETTINGS);
 }
 
 function applySettings(data) {
@@ -1307,23 +1309,24 @@ function initModeToggle() {
 
   document.querySelectorAll('#triad-btns .triad-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      meshGreenTriad = parseInt(btn.dataset.triad);
+      const newIdx = parseInt(btn.dataset.triad);
+      if (newIdx === meshGreenTriad) return;
+      const oldTriad = meshGreenTriads[meshGreenTriad];
+      const newTriad = meshGreenTriads[newIdx];
+      meshPoints.forEach(pt => {
+        const slot = oldTriad.indexOf(pt.color);
+        if (slot !== -1) pt.color = newTriad[slot];
+      });
+      meshGreenTriad = newIdx;
       _updateTriadEditRow();
-      _meshRandomize();
+      _meshEditorUpdate();
     });
   });
 
-  // Triad color editing
+  // Triad color editing: change redefines the shade globally, updating all matching points
   ['triad-c0','triad-c1','triad-c2'].forEach((id, pos) => {
     const el = document.getElementById(id);
     if (!el) return;
-    // mousedown: apply this triad shade to the currently selected point immediately
-    el.addEventListener('mousedown', () => {
-      const pt = meshPoints.find(p => p.id === meshSelectedId);
-      if (pt) pt.color = meshGreenTriads[meshGreenTriad][pos];
-      _meshEditorUpdate();
-    });
-    // change: redefine the triad shade + update all matching points
     el.addEventListener('change', e => {
       const oldColor = meshGreenTriads[meshGreenTriad][pos];
       meshGreenTriads[meshGreenTriad][pos] = e.target.value;
@@ -1333,15 +1336,12 @@ function initModeToggle() {
     });
   });
 
-  // Accent color inputs: mousedown = select + apply to selected point; change = redefine + update all matching
+  // Accent color inputs: mousedown = select active accent; change = redefine globally across all matching points
   document.querySelectorAll('#accent-btns .accent-btn').forEach(inp => {
     inp.addEventListener('mousedown', () => {
       meshAccentIdx = parseInt(inp.dataset.accent);
-      const pt = meshPoints.find(p => p.id === meshSelectedId);
-      if (pt) pt.color = meshAccents[meshAccentIdx];
       document.querySelectorAll('#accent-btns .accent-btn').forEach(b => b.classList.remove('active'));
       inp.classList.add('active');
-      _meshEditorUpdate();
     });
     inp.addEventListener('change', e => {
       const idx      = parseInt(inp.dataset.accent);
