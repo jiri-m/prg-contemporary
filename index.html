@@ -114,6 +114,30 @@
     .mode-btn.active { color: var(--black); border-bottom-color: var(--red); }
     .mode-btn:hover:not(.active) { color: var(--gray1); }
 
+    /* ── Sub-toggle ── */
+    .sub-toggle {
+      display: flex;
+      margin-bottom: 10px;
+      border: 1px solid var(--gray3);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    .sub-btn {
+      flex: 1;
+      padding: 5px 0;
+      font-size: 8px;
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--gray1);
+      transition: background 0.12s, color 0.12s;
+    }
+    .sub-btn + .sub-btn { border-left: 1px solid var(--gray3); }
+    .sub-btn.active { background: var(--black); color: var(--white); }
+
     /* ── Sections ── */
     .section { padding: 10px 14px; border-bottom: 1px solid var(--gray3); }
     .section-title {
@@ -124,6 +148,28 @@
       color: var(--red);
       margin-bottom: 9px;
     }
+
+    /* ── Collapsible sections ── */
+    .section.collapsible { padding: 0; }
+    .section.collapsible .section-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section.collapsible .section-header:hover { background: rgba(0,0,0,0.025); }
+    .section.collapsible .section-header .section-title { margin-bottom: 0; }
+    .section.collapsible .section-body { display: none; padding: 0 14px 10px; }
+    .section.collapsible.open .section-body { display: block; }
+    .collapse-arrow {
+      font-size: 10px;
+      color: var(--gray2);
+      transition: transform 0.15s;
+      line-height: 1;
+    }
+    .section.collapsible.open .collapse-arrow { transform: rotate(90deg); }
 
     /* ── Slider rows ── */
     .row { display: flex; align-items: center; margin-bottom: 6px; gap: 6px; }
@@ -207,9 +253,7 @@
     .tier-table input[type=range] { width: 100%; height: 2px; accent-color: var(--black); cursor: pointer; }
     .tier-val { font-size: 7px; font-family: var(--mono); color: var(--gray2); display: block; text-align: center; }
 
-    /* ── Text/typography fields ── */
-    #text-mode-panel { display: none; }
-
+    /* ── Typography / text fields ── */
     .text-field { margin-bottom: 9px; }
     .text-field label {
       display: block;
@@ -269,8 +313,6 @@
     .align-btn.active { background: var(--black); border-color: var(--black); color: var(--white); }
     .align-btn:hover:not(.active) { border-color: var(--black); color: var(--black); }
 
-    .divider { border: none; border-top: 1px solid var(--gray3); margin: 10px 0; }
-
     input[type=file] { font-size: 9px; font-family: var(--mono); color: var(--gray1); width: 100%; }
 
     /* ── Status indicator ── */
@@ -288,10 +330,6 @@
       0%,100% { opacity: 1; }
       50%      { opacity: 0.2; }
     }
-
-    /* ── Mode panels ── */
-    #default-mode-panel  { display: none; }
-    #gradient-mode-panel { display: none; }
 
     /* ── Mesh gradient editor ── */
     .mesh-canvas-wrap {
@@ -362,126 +400,96 @@
 
 <div id="sidebar">
 
-  <!-- Mode Toggle -->
+  <!-- Mode Toggle: 2 tabs -->
   <div class="mode-toggle">
-    <button id="btn-default-mode"  class="mode-btn active">Default</button>
-    <button id="btn-gradient-mode" class="mode-btn">Gradient</button>
-    <button id="btn-text-mode"     class="mode-btn">Text</button>
+    <button id="btn-gradient-mode" class="mode-btn active">Gradient</button>
     <button id="btn-image-mode"    class="mode-btn">Image</button>
   </div>
 
-  <!-- Canvas — always visible -->
-  <div class="section">
-    <div class="section-title">Canvas</div>
-    <div class="row">
-      <label>Artboard W</label>
-      <input type="number" id="inp-artboard-w" value="1200" min="100" max="8000" step="50">
+  <!-- ═══════════════ SHARED TYPOGRAPHY (shown when On Text is active) ═══════════════ -->
+  <div id="typography-section" class="section" style="display:none">
+    <div class="section-title">Typography</div>
+
+    <div class="text-field">
+      <textarea id="txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
     </div>
-    <div class="row">
-      <label>Artboard H</label>
-      <input type="number" id="inp-artboard-h" value="800" min="100" max="8000" step="50">
+
+    <div class="text-field">
+      <label>Font Family</label>
+      <select id="txt-font-family">
+        <option value="'Times New Roman', serif" selected>Times New Roman</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+        <option value="'Space Mono', monospace">Space Mono</option>
+        <option value="'Anton', sans-serif">Anton</option>
+        <option value="'Inter', sans-serif">Inter</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'DM Serif Display', serif">DM Serif Display</option>
+        <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+      </select>
     </div>
+
+    <div class="text-field">
+      <label>Custom Google Font</label>
+      <div class="inline-input">
+        <input type="text" id="txt-custom-font" placeholder="e.g. Oswald">
+        <button id="btn-load-custom-font">Load</button>
+      </div>
+    </div>
+
     <div class="row">
-      <label>Master Scale</label>
-      <input type="range" id="sld-master-scale" min="0.25" max="3.0" value="1.0" step="0.05"
+      <label>Font Size</label>
+      <input type="range" id="txt-font-size" min="10" max="800" value="200" step="1"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">200</span>
+    </div>
+
+    <div class="text-field">
+      <label>Font Weight</label>
+      <select id="txt-font-weight">
+        <option value="100">Thin — 100</option>
+        <option value="300">Light — 300</option>
+        <option value="400" selected>Regular — 400</option>
+        <option value="600">SemiBold — 600</option>
+        <option value="700">Bold — 700</option>
+        <option value="900">Black — 900</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>Letter Spc.</label>
+      <input type="range" id="txt-letter-spacing" min="-20" max="200" value="0" step="1"
+             oninput="this.nextElementSibling.textContent=this.value">
+      <span class="val">0</span>
+    </div>
+
+    <div class="row">
+      <label>Line Height</label>
+      <input type="range" id="txt-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
              oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-      <span class="val">1.00</span>
+      <span class="val">1.20</span>
     </div>
-  </div>
 
-  <!-- ═══════════════ DEFAULT MODE PANEL ═══════════════ -->
-  <div id="default-mode-panel">
-
-    <div class="section">
-      <div class="section-title">Typography</div>
-
-      <div class="text-field">
-        <textarea id="def-txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
-      </div>
-
-      <div class="text-field">
-        <label>Font Family</label>
-        <select id="def-font-family">
-          <option value="'Times New Roman', serif" selected>Times New Roman</option>
-          <option value="'Playfair Display', serif">Playfair Display</option>
-          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
-          <option value="'Space Mono', monospace">Space Mono</option>
-          <option value="'Anton', sans-serif">Anton</option>
-          <option value="'Inter', sans-serif">Inter</option>
-          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
-          <option value="'DM Serif Display', serif">DM Serif Display</option>
-          <option value="'Libre Baskerville', serif">Libre Baskerville</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Font Size</label>
-        <input type="range" id="def-font-size" min="10" max="800" value="200" step="1"
-               oninput="this.nextElementSibling.textContent=this.value">
-        <span class="val">200</span>
-      </div>
-
-      <div class="text-field">
-        <label>Font Weight</label>
-        <select id="def-font-weight">
-          <option value="100">Thin — 100</option>
-          <option value="300">Light — 300</option>
-          <option value="400" selected>Regular — 400</option>
-          <option value="600">SemiBold — 600</option>
-          <option value="700">Bold — 700</option>
-          <option value="900">Black — 900</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Letter Spc.</label>
-        <input type="range" id="def-letter-spacing" min="-20" max="200" value="0" step="1"
-               oninput="this.nextElementSibling.textContent=this.value">
-        <span class="val">0</span>
-      </div>
-
-      <div class="row">
-        <label>Line Height</label>
-        <input type="range" id="def-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
-               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-        <span class="val">1.20</span>
-      </div>
-
-      <div class="text-field">
-        <label>Alignment</label>
-        <div class="align-btns" id="def-alignment-btns">
-          <button class="align-btn" data-align="left">Left</button>
-          <button class="align-btn active" data-align="center">Center</button>
-          <button class="align-btn" data-align="right">Right</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <label>Text X</label>
-        <input type="range" id="def-pos-x" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
-      </div>
-      <div class="row">
-        <label>Text Y</label>
-        <input type="range" id="def-pos-y" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
+    <div class="text-field">
+      <label>Alignment</label>
+      <div class="align-btns" id="txt-alignment-btns">
+        <button class="align-btn" data-align="left">Left</button>
+        <button class="align-btn active" data-align="center">Center</button>
+        <button class="align-btn" data-align="right">Right</button>
       </div>
     </div>
 
-    <div class="section">
-      <div class="section-title">Gradient</div>
-      <div class="mesh-canvas-wrap">
-        <canvas id="mesh-def" width="232" height="155"></canvas>
-      </div>
-      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:0">
-        Drag points · Right-click to delete<br>Edit colors &amp; triads in Gradient tab
-      </div>
+    <div class="row">
+      <label>Text X</label>
+      <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
+             oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span class="val">50%</span>
     </div>
-
-    <div class="section">
-      <button class="btn btn-primary" id="btn-def-render">Apply &amp; Render</button>
+    <div class="row">
+      <label>Text Y</label>
+      <input type="range" id="txt-pos-y" min="0" max="100" value="50" step="1"
+             oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span class="val">50%</span>
     </div>
   </div>
 
@@ -490,6 +498,11 @@
 
     <div class="section">
       <div class="section-title">Gradient</div>
+
+      <div class="sub-toggle">
+        <button class="sub-btn active" id="btn-grad-full">Full Texture</button>
+        <button class="sub-btn"        id="btn-grad-text">On Text</button>
+      </div>
 
       <div class="mesh-canvas-wrap">
         <canvas id="mesh-grad" width="232" height="155"></canvas>
@@ -528,6 +541,13 @@
         <button class="icon-btn" id="btn-mesh-del" title="Delete selected point">−</button>
       </div>
 
+      <div class="row">
+        <label>Size / Intens.</label>
+        <input type="range" id="inp-mesh-weight" min="0.1" max="5.0" value="1.0" step="0.1"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+        <span class="val">1.0</span>
+      </div>
+
       <button class="btn btn-secondary" id="btn-mesh-randomize">Randomize</button>
     </div>
 
@@ -536,326 +556,60 @@
     </div>
   </div>
 
-  <!-- ═══════════════ TEXT MODE PANEL ═══════════════ -->
-  <div id="text-mode-panel">
+  <!-- ═══════════════ IMAGE MODE PANEL ═══════════════ -->
+  <div id="image-mode-panel" style="display:none">
+
     <div class="section">
-      <div class="section-title">Typography</div>
+      <div class="section-title">Source</div>
 
-      <div class="text-field">
-        <label>Text</label>
-        <textarea id="txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+      <div class="sub-toggle">
+        <button class="sub-btn active" id="btn-img-text">On Text</button>
+        <button class="sub-btn"        id="btn-img-full">Full Texture</button>
       </div>
 
-      <div class="text-field">
-        <label>Font Family</label>
-        <select id="txt-font-family">
-          <option value="'Times New Roman', serif" selected>Times New Roman</option>
-          <option value="'Playfair Display', serif">Playfair Display</option>
-          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
-          <option value="'Space Mono', monospace">Space Mono</option>
-          <option value="'Anton', sans-serif">Anton</option>
-          <option value="'Inter', sans-serif">Inter</option>
-          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
-          <option value="'DM Serif Display', serif">DM Serif Display</option>
-          <option value="'Libre Baskerville', serif">Libre Baskerville</option>
-        </select>
-      </div>
-
-      <div class="text-field">
-        <label>Custom Google Font</label>
-        <div class="inline-input">
-          <input type="text" id="txt-custom-font" placeholder="e.g. Oswald">
-          <button id="btn-load-custom-font">Load</button>
+      <!-- Photo controls (On Text) -->
+      <div id="img-photo-section">
+        <div class="text-field">
+          <label>Background photo</label>
+          <input type="file" id="txt-photo-input" accept="image/*">
+        </div>
+        <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.7;margin-bottom:8px">
+          Drag to reposition · Scroll to scale
+        </div>
+        <div class="row">
+          <label>Photo X</label>
+          <input type="range" id="txt-photo-x" min="0" max="100" value="50" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span class="val">50%</span>
+        </div>
+        <div class="row">
+          <label>Photo Y</label>
+          <input type="range" id="txt-photo-y" min="0" max="100" value="50" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span class="val">50%</span>
+        </div>
+        <div class="row">
+          <label>Photo Scale</label>
+          <input type="range" id="txt-photo-scale" min="0.1" max="3.0" value="1.0" step="0.05"
+                 oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'×'">
+          <span class="val">1.00×</span>
         </div>
       </div>
 
-      <div class="row">
-        <label>Font Size</label>
-        <input type="range" id="txt-font-size" min="10" max="800" value="200" step="1"
-               oninput="this.nextElementSibling.textContent=this.value">
-        <span class="val">200</span>
-      </div>
-
-      <div class="text-field">
-        <label>Font Weight</label>
-        <select id="txt-font-weight">
-          <option value="100">Thin — 100</option>
-          <option value="300">Light — 300</option>
-          <option value="400" selected>Regular — 400</option>
-          <option value="600">SemiBold — 600</option>
-          <option value="700">Bold — 700</option>
-          <option value="900">Black — 900</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label>Letter Spc.</label>
-        <input type="range" id="txt-letter-spacing" min="-20" max="200" value="0" step="1"
-               oninput="this.nextElementSibling.textContent=this.value">
-        <span class="val">0</span>
-      </div>
-
-      <div class="row">
-        <label>Line Height</label>
-        <input type="range" id="txt-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
-               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-        <span class="val">1.20</span>
-      </div>
-
-      <div class="text-field">
-        <label>Alignment</label>
-        <div class="align-btns" id="txt-alignment-btns">
-          <button class="align-btn" data-align="left">Left</button>
-          <button class="align-btn active" data-align="center">Center</button>
-          <button class="align-btn" data-align="right">Right</button>
+      <!-- Full texture hint -->
+      <div id="img-full-hint" style="display:none">
+        <div style="font-size:9px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:10px">
+          Drop an image<br>onto the canvas
         </div>
       </div>
-
-      <div class="row">
-        <label>Text X</label>
-        <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
-      </div>
-      <div class="row">
-        <label>Text Y</label>
-        <input type="range" id="txt-pos-y" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
-      </div>
     </div>
 
     <div class="section">
-      <div class="section-title">Background Photo</div>
-      <div class="text-field">
-        <label>Image (clips inside letters)</label>
-        <input type="file" id="txt-photo-input" accept="image/*">
-      </div>
-      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.7;margin-bottom:8px">
-        Drag photo on canvas to reposition.<br>Scroll on canvas to scale.
-      </div>
-      <div class="row">
-        <label>Photo X</label>
-        <input type="range" id="txt-photo-x" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
-      </div>
-      <div class="row">
-        <label>Photo Y</label>
-        <input type="range" id="txt-photo-y" min="0" max="100" value="50" step="1"
-               oninput="this.nextElementSibling.textContent=this.value+'%'">
-        <span class="val">50%</span>
-      </div>
-      <div class="row">
-        <label>Photo Scale</label>
-        <input type="range" id="txt-photo-scale" min="0.1" max="3.0" value="1.0" step="0.05"
-               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'×'">
-        <span class="val">1.00×</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <button class="btn btn-primary" id="btn-render-text">Apply &amp; Render</button>
+      <button class="btn btn-primary" id="btn-render-image">Apply &amp; Render</button>
     </div>
   </div>
 
-  <!-- ═══════════════ IMAGE MODE SECTION ═══════════════ -->
-  <div id="image-mode-section" class="section">
-    <div class="section-title">Source</div>
-    <div style="font-size:9px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:10px">
-      Drop an image<br>onto the canvas
-    </div>
-    <button class="btn btn-primary" id="btn-render-image">Apply &amp; Render</button>
-  </div>
-
-  <!-- Growth — always visible -->
-  <div class="section">
-    <div class="section-title">Growth</div>
-    <div class="row">
-      <label>Density</label>
-      <input type="range" id="sld-density" min="1" max="100" value="41"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">41</span>
-    </div>
-    <div class="row">
-      <label>Spawn Freq.</label>
-      <input type="range" id="sld-spawn-freq" min="1" max="50" value="5"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">5</span>
-    </div>
-    <div class="row">
-      <label>Draw Vel.</label>
-      <input type="range" id="sld-draw-speed" min="0.1" max="10.0" value="2.0" step="0.1"
-             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
-      <span class="val">2.0</span>
-    </div>
-  </div>
-
-  <!-- Interaction — always visible -->
-  <div class="section">
-    <div class="section-title">Interaction</div>
-    <div class="row">
-      <label>Strength</label>
-      <input type="range" id="sld-mouse-strength" min="0" max="3.0" value="1.5" step="0.1"
-             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
-      <span class="val">1.5</span>
-    </div>
-    <div class="row">
-      <label>Radius</label>
-      <input type="range" id="sld-mouse-radius" min="0.05" max="0.8" value="0.3" step="0.05"
-             oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
-      <span class="val">30%</span>
-    </div>
-    <div class="text-field" style="margin-bottom:0">
-      <label>Mode</label>
-      <div class="align-btns" id="mouse-mode-btns">
-        <button class="align-btn" data-mode="repel">Repel</button>
-        <button class="align-btn" data-mode="attract">Attract</button>
-        <button class="align-btn active" data-mode="wind">Wind</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Appearance — always visible -->
-  <div class="section">
-    <div class="section-title">Appearance</div>
-    <div class="row">
-      <label>Length</label>
-      <input type="range" id="sld-len" min="50" max="1500" value="450"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">450</span>
-    </div>
-    <div class="row">
-      <label>Line Weight</label>
-      <input type="range" id="sld-weight" min="0.05" max="2.0" value="1.18" step="0.01"
-             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-      <span class="val">1.18</span>
-    </div>
-    <div class="row">
-      <label>Wind Force</label>
-      <input type="range" id="sld-sway" min="0" max="5.0" value="2.16" step="0.01"
-             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-      <span class="val">2.16</span>
-    </div>
-    <div class="row">
-      <label>Wind Speed</label>
-      <input type="range" id="sld-wind-speed" min="0" max="100" value="14"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">14</span>
-    </div>
-    <div class="row">
-      <label>White Filter</label>
-      <input type="range" id="sld-threshold" min="100" max="255" value="255"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">255</span>
-    </div>
-    <div class="row">
-      <label>Margin</label>
-      <input type="range" id="sld-margin" min="0" max="500" value="20"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">20</span>
-    </div>
-    <div class="row">
-      <label>Displacement</label>
-      <input type="range" id="sld-displace" min="0" max="100" value="1"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">1</span>
-    </div>
-    <div class="row">
-      <label>Cluster</label>
-      <input type="range" id="sld-cluster" min="0" max="100" value="0"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">0</span>
-    </div>
-  </div>
-
-  <!-- Tiers — always visible -->
-  <div class="section">
-    <div class="section-title">Tiers</div>
-    <table class="tier-table">
-      <thead>
-        <tr>
-          <th></th><th>Size</th><th>Chance</th><th>Rand.</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="tier-label">T1</td>
-          <td>
-            <input type="range" id="sld-s1" min="0" max="1.0" value="0.04" step="0.01"
-                   oninput="document.getElementById('v-s1').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-s1">0.04</span>
-          </td>
-          <td>
-            <input type="range" id="sld-c1" min="0" max="100" value="62"
-                   oninput="document.getElementById('v-c1').textContent=this.value">
-            <span class="tier-val" id="v-c1">62</span>
-          </td>
-          <td>
-            <input type="range" id="sld-r1" min="0" max="1.0" value="1.0" step="0.01"
-                   oninput="document.getElementById('v-r1').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-r1">1.00</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="tier-label">T2</td>
-          <td>
-            <input type="range" id="sld-s2" min="0" max="1.0" value="0.14" step="0.01"
-                   oninput="document.getElementById('v-s2').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-s2">0.14</span>
-          </td>
-          <td>
-            <input type="range" id="sld-c2" min="0" max="100" value="7"
-                   oninput="document.getElementById('v-c2').textContent=this.value">
-            <span class="tier-val" id="v-c2">7</span>
-          </td>
-          <td>
-            <input type="range" id="sld-r2" min="0" max="1.0" value="0.76" step="0.01"
-                   oninput="document.getElementById('v-r2').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-r2">0.76</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="tier-label">T3</td>
-          <td>
-            <input type="range" id="sld-s3" min="0" max="1.0" value="0.25" step="0.01"
-                   oninput="document.getElementById('v-s3').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-s3">0.25</span>
-          </td>
-          <td>
-            <input type="range" id="sld-c3" min="0" max="100" value="0"
-                   oninput="document.getElementById('v-c3').textContent=this.value">
-            <span class="tier-val" id="v-c3">0</span>
-          </td>
-          <td>
-            <input type="range" id="sld-r3" min="0" max="1.0" value="0.15" step="0.01"
-                   oninput="document.getElementById('v-r3').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-r3">0.15</span>
-          </td>
-        </tr>
-        <tr>
-          <td class="tier-label">T4</td>
-          <td>
-            <input type="range" id="sld-s4" min="0" max="1.0" value="0.24" step="0.01"
-                   oninput="document.getElementById('v-s4').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-s4">0.24</span>
-          </td>
-          <td>
-            <input type="range" id="sld-c4" min="0" max="100" value="1"
-                   oninput="document.getElementById('v-c4').textContent=this.value">
-            <span class="tier-val" id="v-c4">1</span>
-          </td>
-          <td>
-            <input type="range" id="sld-r4" min="0" max="1.0" value="0.09" step="0.01"
-                   oninput="document.getElementById('v-r4').textContent=parseFloat(this.value).toFixed(2)">
-            <span class="tier-val" id="v-r4">0.09</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Actions — always visible -->
+  <!-- ═══════════════ ACTIONS ═══════════════ -->
   <div class="section">
     <div class="section-title">Actions</div>
     <button class="btn btn-red"       id="btn-stop-grow" onclick="window.toggleGrowth()">Stop Growing</button>
@@ -863,6 +617,235 @@
     <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
     <button class="btn btn-secondary" onclick="window.exportSettings()">Export Settings</button>
+  </div>
+
+  <!-- ═══════════════ GROWTH (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Growth</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+      <div class="row">
+        <label>Density</label>
+        <input type="range" id="sld-density" min="1" max="100" value="41"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">41</span>
+      </div>
+      <div class="row">
+        <label>Spawn Freq.</label>
+        <input type="range" id="sld-spawn-freq" min="1" max="50" value="5"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">5</span>
+      </div>
+      <div class="row">
+        <label>Draw Vel.</label>
+        <input type="range" id="sld-draw-speed" min="0.1" max="10.0" value="2.0" step="0.1"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+        <span class="val">2.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ APPEARANCE (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Appearance</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+      <div class="row">
+        <label>Length</label>
+        <input type="range" id="sld-len" min="50" max="1500" value="450"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">450</span>
+      </div>
+      <div class="row">
+        <label>Line Weight</label>
+        <input type="range" id="sld-weight" min="0.05" max="2.0" value="1.18" step="0.01"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">1.18</span>
+      </div>
+      <div class="row">
+        <label>Wind Force</label>
+        <input type="range" id="sld-sway" min="0" max="5.0" value="2.16" step="0.01"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">2.16</span>
+      </div>
+      <div class="row">
+        <label>Wind Speed</label>
+        <input type="range" id="sld-wind-speed" min="0" max="100" value="14"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">14</span>
+      </div>
+      <div class="row">
+        <label>White Filter</label>
+        <input type="range" id="sld-threshold" min="100" max="255" value="242"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">242</span>
+      </div>
+      <div class="row">
+        <label>Margin</label>
+        <input type="range" id="sld-margin" min="0" max="500" value="20"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">20</span>
+      </div>
+      <div class="row">
+        <label>Displacement</label>
+        <input type="range" id="sld-displace" min="0" max="100" value="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">1</span>
+      </div>
+      <div class="row">
+        <label>Cluster</label>
+        <input type="range" id="sld-cluster" min="0" max="100" value="0"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TIERS (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Tiers</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+      <table class="tier-table">
+        <thead>
+          <tr><th></th><th>Size</th><th>Chance</th><th>Rand.</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="tier-label">T1</td>
+            <td>
+              <input type="range" id="sld-s1" min="0" max="1.0" value="0.04" step="0.01"
+                     oninput="document.getElementById('v-s1').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-s1">0.04</span>
+            </td>
+            <td>
+              <input type="range" id="sld-c1" min="0" max="100" value="62"
+                     oninput="document.getElementById('v-c1').textContent=this.value">
+              <span class="tier-val" id="v-c1">62</span>
+            </td>
+            <td>
+              <input type="range" id="sld-r1" min="0" max="1.0" value="1.0" step="0.01"
+                     oninput="document.getElementById('v-r1').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-r1">1.00</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="tier-label">T2</td>
+            <td>
+              <input type="range" id="sld-s2" min="0" max="1.0" value="0.14" step="0.01"
+                     oninput="document.getElementById('v-s2').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-s2">0.14</span>
+            </td>
+            <td>
+              <input type="range" id="sld-c2" min="0" max="100" value="7"
+                     oninput="document.getElementById('v-c2').textContent=this.value">
+              <span class="tier-val" id="v-c2">7</span>
+            </td>
+            <td>
+              <input type="range" id="sld-r2" min="0" max="1.0" value="0.76" step="0.01"
+                     oninput="document.getElementById('v-r2').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-r2">0.76</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="tier-label">T3</td>
+            <td>
+              <input type="range" id="sld-s3" min="0" max="1.0" value="0.25" step="0.01"
+                     oninput="document.getElementById('v-s3').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-s3">0.25</span>
+            </td>
+            <td>
+              <input type="range" id="sld-c3" min="0" max="100" value="0"
+                     oninput="document.getElementById('v-c3').textContent=this.value">
+              <span class="tier-val" id="v-c3">0</span>
+            </td>
+            <td>
+              <input type="range" id="sld-r3" min="0" max="1.0" value="0.15" step="0.01"
+                     oninput="document.getElementById('v-r3').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-r3">0.15</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="tier-label">T4</td>
+            <td>
+              <input type="range" id="sld-s4" min="0" max="1.0" value="0.24" step="0.01"
+                     oninput="document.getElementById('v-s4').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-s4">0.24</span>
+            </td>
+            <td>
+              <input type="range" id="sld-c4" min="0" max="100" value="1"
+                     oninput="document.getElementById('v-c4').textContent=this.value">
+              <span class="tier-val" id="v-c4">1</span>
+            </td>
+            <td>
+              <input type="range" id="sld-r4" min="0" max="1.0" value="0.09" step="0.01"
+                     oninput="document.getElementById('v-r4').textContent=parseFloat(this.value).toFixed(2)">
+              <span class="tier-val" id="v-r4">0.09</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ INTERACTION (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Interaction</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+      <div class="row">
+        <label>Strength</label>
+        <input type="range" id="sld-mouse-strength" min="0" max="3.0" value="1.5" step="0.1"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+        <span class="val">1.5</span>
+      </div>
+      <div class="row">
+        <label>Radius</label>
+        <input type="range" id="sld-mouse-radius" min="0.05" max="0.8" value="0.3" step="0.05"
+               oninput="this.nextElementSibling.textContent=Math.round(this.value*100)+'%'">
+        <span class="val">30%</span>
+      </div>
+      <div class="text-field" style="margin-bottom:0">
+        <label>Mode</label>
+        <div class="align-btns" id="mouse-mode-btns">
+          <button class="align-btn" data-mode="repel">Repel</button>
+          <button class="align-btn" data-mode="attract">Attract</button>
+          <button class="align-btn active" data-mode="wind">Wind</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CANVAS (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Canvas</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+      <div class="row">
+        <label>Artboard W</label>
+        <input type="number" id="inp-artboard-w" value="1200" min="100" max="8000" step="50">
+      </div>
+      <div class="row">
+        <label>Artboard H</label>
+        <input type="number" id="inp-artboard-h" value="800" min="100" max="8000" step="50">
+      </div>
+      <div class="row">
+        <label>Master Scale</label>
+        <input type="range" id="sld-master-scale" min="0.25" max="3.0" value="1.0" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">1.00</span>
+      </div>
+    </div>
   </div>
 
 </div>

@@ -39,32 +39,29 @@ let recordingCanvas = null;
 // Embed export
 let embedSourceBase64 = null;
 
-// Mode
-let currentMode = 'default';
+// Mode: 'gradient' | 'image'
+let currentMode = 'gradient';
+let gradientUseText = false; // Gradient tab: Full Texture by default
+let imageUseText    = true;  // Image tab: On Text by default
 
-// Text mode
+// Text / photo
 let textPhotoElement = null;
 let textAlignment = 'center';
 let textPreviewCanvas = null;
 let _previewTimer = null;
 
-// Text photo drag
+// Photo drag
 let isDraggingPhoto = false;
 let _photoDragMX = 0, _photoDragMY = 0;
 let _photoDragStartX = 50, _photoDragStartY = 50;
 
-// Text photo frame resize
+// Photo resize
 let isResizingPhoto = false;
 let _resizeInitScale = 1.0;
-let _resizeInitDist = 1.0;
-let _resizePhotoCX = 0, _resizePhotoCY = 0;
+let _resizeInitDist  = 1.0;
+let _resizePhotoCX   = 0, _resizePhotoCY = 0;
 
-// Default mode
-let defaultPreviewCanvas = null;
-let _defaultPreviewTimer = null;
-let defTextAlignment = 'center';
-
-// Gradient mode
+// Gradient preview
 let gradientPreviewCanvas = null;
 let _gradientPreviewTimer = null;
 
@@ -79,10 +76,10 @@ const MESH_ACCENTS = ['#8A6BD3', '#D297E8', '#C790DB', '#FF9FCC'];
 
 let meshPoints = [];
 let meshGreenTriad = 0;
-let meshAccentIdx = 0;
+let meshAccentIdx  = 0;
 let meshSelectedId = null;
-let _meshNextId = 0;
-let _meshDragId = null;
+let _meshNextId    = 0;
+let _meshDragId    = null;
 let _meshDragCanvas = null;
 
 // Sidebar
@@ -96,6 +93,7 @@ function domSlider(id) {
 }
 function getArtboardW() { return parseInt(document.getElementById('inp-artboard-w').value) || 1200; }
 function getArtboardH() { return parseInt(document.getElementById('inp-artboard-h').value) || 800; }
+function getCanvasScale() { return getArtboardW() / 1200; }
 
 // ── p5 lifecycle ───────────────────────────────────────────────────────────────
 
@@ -129,10 +127,9 @@ function setup() {
   initModeToggle();
   _meshRandomize();
 
-  // Defer first canvas render until layout is resolved
   requestAnimationFrame(() => {
     _meshEditorUpdate();
-    _scheduleDefaultPreview(50);
+    _scheduleGradientPreview(50);
   });
 }
 
@@ -143,7 +140,7 @@ function windowResized() {
 // ── File handling ──────────────────────────────────────────────────────────────
 
 function handleFile(file) {
-  if (file.type === 'image' && currentMode === 'image') {
+  if (file.type === 'image' && currentMode === 'image' && !imageUseText) {
     img = loadImage(file.data, () => restartGrowth());
   }
 }
@@ -205,34 +202,21 @@ function findSeeds() {
 // ── Draw loop ──────────────────────────────────────────────────────────────────
 
 function draw() {
-  // Default mode preview
-  if (currentMode === 'default' && defaultPreviewCanvas && !showGrowth) {
+  // Gradient mode preview
+  if (currentMode === 'gradient' && gradientPreviewCanvas && !showGrowth) {
     background(250);
-    const ar = defaultPreviewCanvas.width / defaultPreviewCanvas.height;
+    const ar = gradientPreviewCanvas.width / gradientPreviewCanvas.height;
     let dW = width, dH = width / ar;
     if (dH > height) { dH = height; dW = height * ar; }
     dispOX = (width - dW) / 2; dispOY = (height - dH) / 2;
     dispW = dW; dispH = dH;
-    drawingContext.drawImage(defaultPreviewCanvas, dispOX, dispOY, dW, dH);
+    drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dW, dH);
     cursor(ARROW);
     return;
   }
 
-  // Gradient mode preview
-  if (currentMode === 'gradient' && gradientPreviewCanvas && !showGrowth) {
-    background(250);
-    const arG = gradientPreviewCanvas.width / gradientPreviewCanvas.height;
-    let dWg = width, dHg = width / arG;
-    if (dHg > height) { dHg = height; dWg = height * arG; }
-    dispOX = (width - dWg) / 2; dispOY = (height - dHg) / 2;
-    dispW = dWg; dispH = dHg;
-    drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dWg, dHg);
-    cursor(ARROW);
-    return;
-  }
-
-  // Text preview mode
-  if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
+  // Image + On Text preview
+  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth) {
     background(250);
     const arT = textPreviewCanvas.width / textPreviewCanvas.height;
     let dWt = width, dHt = width / arT;
@@ -258,8 +242,9 @@ function draw() {
     }
   }
 
+  const cs = getCanvasScale();
   canvasBuffer.clear();
-  canvasBuffer.strokeWeight(sldWeight.value() * exportScale);
+  canvasBuffer.strokeWeight(sldWeight.value() * exportScale * cs);
   canvasBuffer.noFill();
   for (let i = 0; i < activeBlades.length; i++) {
     if (!growthPaused) activeBlades[i].update();
@@ -316,7 +301,6 @@ function _makeMeshCanvas(w, h) {
     return c;
   }
 
-  // Render at low resolution for speed, then upscale
   const SMALL = 128;
   const smallH = Math.max(1, Math.round(SMALL * h / w));
   const tmp = document.createElement('canvas');
@@ -327,7 +311,7 @@ function _makeMeshCanvas(w, h) {
 
   const pts = meshPoints.map(pt => {
     const rgb = _hexToRGB(pt.color);
-    return { x: pt.x, y: pt.y, r: rgb[0], g: rgb[1], b: rgb[2] };
+    return { x: pt.x, y: pt.y, r: rgb[0], g: rgb[1], b: rgb[2], weight: pt.weight || 1.0 };
   });
 
   for (let py = 0; py < smallH; py++) {
@@ -342,7 +326,7 @@ function _makeMeshCanvas(w, h) {
         if (d2 < 1e-8) {
           wR = pt.r; wG = pt.g; wB = pt.b; wSum = 1; exact = true; break;
         }
-        const w = 1 / d2;
+        const w = pt.weight / d2;
         wR += pt.r * w; wG += pt.g * w; wB += pt.b * w;
         wSum += w;
       }
@@ -391,12 +375,17 @@ function _meshRenderCanvas(canvasEl) {
 }
 
 function _meshEditorUpdate() {
-  _meshRenderCanvas(document.getElementById('mesh-def'));
   _meshRenderCanvas(document.getElementById('mesh-grad'));
 
   const sel = meshPoints.find(p => p.id === meshSelectedId);
-  const picker = document.getElementById('inp-mesh-color');
+  const picker    = document.getElementById('inp-mesh-color');
+  const weightSld = document.getElementById('inp-mesh-weight');
   if (picker && sel) picker.value = sel.color;
+  if (weightSld && sel) {
+    const w = sel.weight || 1.0;
+    weightSld.value = w;
+    weightSld.nextElementSibling.textContent = w.toFixed(1);
+  }
 
   document.querySelectorAll('#triad-btns .triad-btn').forEach((btn, i) => {
     btn.classList.toggle('active', i === meshGreenTriad);
@@ -405,7 +394,6 @@ function _meshEditorUpdate() {
     btn.classList.toggle('active', i === meshAccentIdx);
   });
 
-  if (currentMode === 'default')  _scheduleDefaultPreview(50);
   if (currentMode === 'gradient') _scheduleGradientPreview(50);
 }
 
@@ -416,25 +404,29 @@ function _meshRandomize() {
   const accent = MESH_ACCENTS[meshAccentIdx];
 
   const basePositions = [
-    { x: 0.15, y: 0.25 }, { x: 0.75, y: 0.15 }, { x: 0.50, y: 0.60 },
-    { x: 0.25, y: 0.80 }, { x: 0.85, y: 0.70 },
+    { x: 0.10, y: 0.15 }, { x: 0.50, y: 0.08 }, { x: 0.90, y: 0.20 },
+    { x: 0.20, y: 0.42 }, { x: 0.70, y: 0.38 }, { x: 0.45, y: 0.55 },
+    { x: 0.05, y: 0.72 }, { x: 0.40, y: 0.70 }, { x: 0.82, y: 0.65 },
+    { x: 0.25, y: 0.90 }, { x: 0.65, y: 0.88 },
   ];
   basePositions.forEach((pos, i) => {
     meshPoints.push({
       id: _meshNextId++,
-      x: Math.max(0.05, Math.min(0.95, pos.x + (Math.random() - 0.5) * 0.28)),
-      y: Math.max(0.05, Math.min(0.95, pos.y + (Math.random() - 0.5) * 0.28)),
+      x: Math.max(0.03, Math.min(0.97, pos.x + (Math.random() - 0.5) * 0.18)),
+      y: Math.max(0.03, Math.min(0.97, pos.y + (Math.random() - 0.5) * 0.18)),
       color: triad[i % triad.length],
+      weight: 0.8 + Math.random() * 0.4,
     });
   });
 
-  const numAccents = Math.random() < 0.5 ? 1 : 2;
+  const numAccents = 1 + Math.floor(Math.random() * 2);
   for (let i = 0; i < numAccents; i++) {
     meshPoints.push({
       id: _meshNextId++,
       x: Math.random() * 0.8 + 0.1,
       y: Math.random() * 0.8 + 0.1,
       color: accent,
+      weight: 0.6 + Math.random() * 0.8,
     });
   }
   meshSelectedId = meshPoints[0].id;
@@ -474,6 +466,7 @@ function _initMeshEditor(canvasId) {
         id: _meshNextId++,
         x: nx, y: ny,
         color: triad[Math.floor(Math.random() * triad.length)],
+        weight: 1.0,
       };
       meshPoints.push(newPt);
       meshSelectedId = newPt.id;
@@ -514,23 +507,23 @@ function _initMeshDocumentDrag() {
   document.addEventListener('mouseup', () => { _meshDragId = null; _meshDragCanvas = null; });
 }
 
-// ── Default mode ───────────────────────────────────────────────────────────────
+// ── Typography helper ──────────────────────────────────────────────────────────
 
-function _getDefTypography() {
+function _getTypography() {
   return {
-    lines:       (document.getElementById('def-txt-content').value || '').split('\n'),
-    fontFamily:  document.getElementById('def-font-family').value,
-    fontSize:    parseInt(document.getElementById('def-font-size').value) || 200,
-    fontWeight:  document.getElementById('def-font-weight').value,
-    letterSpc:   parseInt(document.getElementById('def-letter-spacing').value) || 0,
-    lineHMult:   parseFloat(document.getElementById('def-line-height').value) || 1.2,
-    textXPct:    parseInt(document.getElementById('def-pos-x').value) / 100,
-    textYPct:    parseInt(document.getElementById('def-pos-y').value) / 100,
+    lines:      (document.getElementById('txt-content').value || '').split('\n'),
+    fontFamily: document.getElementById('txt-font-family').value,
+    fontSize:   parseInt(document.getElementById('txt-font-size').value) || 200,
+    fontWeight: document.getElementById('txt-font-weight').value,
+    letterSpc:  parseInt(document.getElementById('txt-letter-spacing').value) || 0,
+    lineHMult:  parseFloat(document.getElementById('txt-line-height').value) || 1.2,
+    textXPct:   parseInt(document.getElementById('txt-pos-x').value) / 100,
+    textYPct:   parseInt(document.getElementById('txt-pos-y').value) / 100,
   };
 }
 
 function _buildTextMask(artW, artH, t) {
-  const lineH = t.fontSize * t.lineHMult;
+  const lineH   = t.fontSize * t.lineHMult;
   const fontStr = t.fontWeight + ' ' + t.fontSize + 'px ' + t.fontFamily;
   const mask = document.createElement('canvas');
   mask.width = artW; mask.height = artH;
@@ -544,35 +537,39 @@ function _buildTextMask(artW, artH, t) {
     const lw = _measureLine(mc, t.lines[i], t.letterSpc);
     const bx = t.textXPct * artW;
     const y  = blockTop + i * lineH;
-    const x  = defTextAlignment === 'center' ? bx - lw / 2
-             : defTextAlignment === 'right'  ? bx - lw : bx;
+    const x  = textAlignment === 'center' ? bx - lw / 2
+             : textAlignment === 'right'  ? bx - lw : bx;
     if ('letterSpacing' in mc) mc.fillText(t.lines[i], x, y);
     else _drawSpaced(mc, t.lines[i], x, y, t.letterSpc);
   }
   return mask;
 }
 
-function _renderDefaultPreviewSync() {
-  const artW = getArtboardW(), artH = getArtboardH();
-  const t = _getDefTypography();
+// ── Gradient previews ──────────────────────────────────────────────────────────
 
-  if (!defaultPreviewCanvas) defaultPreviewCanvas = document.createElement('canvas');
-  defaultPreviewCanvas.width  = artW;
-  defaultPreviewCanvas.height = artH;
-  const fc = defaultPreviewCanvas.getContext('2d');
+function _renderGradientFullTexturePreviewSync() {
+  const artW = getArtboardW(), artH = getArtboardH();
+  if (meshPoints.length < 2) return;
+  if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
+  gradientPreviewCanvas.width  = artW;
+  gradientPreviewCanvas.height = artH;
+  gradientPreviewCanvas.getContext('2d').drawImage(_makeMeshCanvas(artW, artH), 0, 0);
+}
+
+function _renderGradientOnTextPreviewSync() {
+  const artW = getArtboardW(), artH = getArtboardH();
+  const t = _getTypography();
+  if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
+  gradientPreviewCanvas.width  = artW;
+  gradientPreviewCanvas.height = artH;
+  const fc = gradientPreviewCanvas.getContext('2d');
   fc.fillStyle = '#ffffff';
   fc.fillRect(0, 0, artW, artH);
-
   if (meshPoints.length < 2) return;
-
   const meshCanvas = _makeMeshCanvas(artW, artH);
-
-  // Gradient at 75% opacity outside letters
   fc.globalAlpha = 0.75;
   fc.drawImage(meshCanvas, 0, 0);
   fc.globalAlpha = 1.0;
-
-  // Gradient clipped to letters at 100%
   const mask = _buildTextMask(artW, artH, t);
   const comp = document.createElement('canvas');
   comp.width = artW; comp.height = artH;
@@ -583,60 +580,13 @@ function _renderDefaultPreviewSync() {
   cc.globalCompositeOperation = 'source-over';
   fc.drawImage(comp, 0, 0);
 }
-
-function _scheduleDefaultPreview(delay) {
-  if (currentMode === 'default') showGrowth = false;
-  if (_defaultPreviewTimer) clearTimeout(_defaultPreviewTimer);
-  if (delay === 0) {
-    _renderDefaultPreviewSync();
-  } else {
-    _defaultPreviewTimer = setTimeout(() => {
-      _renderDefaultPreviewSync();
-      _defaultPreviewTimer = null;
-    }, delay);
-  }
-}
-
-function renderDefaultComposition() {
-  const artW = getArtboardW(), artH = getArtboardH();
-  const t = _getDefTypography();
-  if (meshPoints.length < 2) return;
-
-  const meshCanvas = _makeMeshCanvas(artW, artH);
-  const mask = _buildTextMask(artW, artH, t);
-
-  const comp = document.createElement('canvas');
-  comp.width = artW; comp.height = artH;
-  const cc = comp.getContext('2d');
-  cc.drawImage(meshCanvas, 0, 0);
-  cc.globalCompositeOperation = 'destination-in';
-  cc.drawImage(mask, 0, 0);
-  cc.globalCompositeOperation = 'source-over';
-
-  const final = document.createElement('canvas');
-  final.width = artW; final.height = artH;
-  const fc = final.getContext('2d');
-  fc.fillStyle = 'white';
-  fc.fillRect(0, 0, artW, artH);
-  fc.drawImage(comp, 0, 0);
-
-  const dataURL = final.toDataURL('image/jpeg', 0.92);
-  embedSourceBase64 = dataURL;
-  loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
-}
-
-// ── Gradient mode ──────────────────────────────────────────────────────────────
 
 function _scheduleGradientPreview(delay) {
   if (currentMode === 'gradient') showGrowth = false;
   if (_gradientPreviewTimer) clearTimeout(_gradientPreviewTimer);
   const doRender = () => {
-    const artW = getArtboardW(), artH = getArtboardH();
-    if (meshPoints.length < 2) return;
-    if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
-    gradientPreviewCanvas.width  = artW;
-    gradientPreviewCanvas.height = artH;
-    gradientPreviewCanvas.getContext('2d').drawImage(_makeMeshCanvas(artW, artH), 0, 0);
+    if (gradientUseText) _renderGradientOnTextPreviewSync();
+    else _renderGradientFullTexturePreviewSync();
     _gradientPreviewTimer = null;
   };
   if (delay === 0) doRender();
@@ -652,24 +602,48 @@ function renderGradientComposition() {
   loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
 }
 
-// ── Text preview ───────────────────────────────────────────────────────────────
+function renderGradientOnTextComposition() {
+  const artW = getArtboardW(), artH = getArtboardH();
+  const t = _getTypography();
+  if (meshPoints.length < 2) return;
+  const meshCanvas = _makeMeshCanvas(artW, artH);
+  const mask = _buildTextMask(artW, artH, t);
+  const comp = document.createElement('canvas');
+  comp.width = artW; comp.height = artH;
+  const cc = comp.getContext('2d');
+  cc.drawImage(meshCanvas, 0, 0);
+  cc.globalCompositeOperation = 'destination-in';
+  cc.drawImage(mask, 0, 0);
+  cc.globalCompositeOperation = 'source-over';
+  const final = document.createElement('canvas');
+  final.width = artW; final.height = artH;
+  const fc = final.getContext('2d');
+  fc.fillStyle = 'white';
+  fc.fillRect(0, 0, artW, artH);
+  fc.drawImage(comp, 0, 0);
+  const dataURL = final.toDataURL('image/jpeg', 0.92);
+  embedSourceBase64 = dataURL;
+  loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
+}
+
+// ── Text (image + on text) preview ────────────────────────────────────────────
 
 function renderTextPreviewSync() {
-  const lines        = document.getElementById('txt-content').value.split('\n');
-  const fontFamily   = document.getElementById('txt-font-family').value;
-  const fontSize     = parseInt(document.getElementById('txt-font-size').value);
-  const fontWeight   = document.getElementById('txt-font-weight').value;
-  const letterSpc    = parseInt(document.getElementById('txt-letter-spacing').value);
-  const lineHMult    = parseFloat(document.getElementById('txt-line-height').value);
-  const textXPct     = parseInt(document.getElementById('txt-pos-x').value) / 100;
-  const textYPct     = parseInt(document.getElementById('txt-pos-y').value) / 100;
-  const photoXPct    = parseInt(document.getElementById('txt-photo-x').value) / 100;
-  const photoYPct    = parseInt(document.getElementById('txt-photo-y').value) / 100;
-  const photoSc      = parseFloat(document.getElementById('txt-photo-scale').value);
+  const lines      = document.getElementById('txt-content').value.split('\n');
+  const fontFamily = document.getElementById('txt-font-family').value;
+  const fontSize   = parseInt(document.getElementById('txt-font-size').value);
+  const fontWeight = document.getElementById('txt-font-weight').value;
+  const letterSpc  = parseInt(document.getElementById('txt-letter-spacing').value);
+  const lineHMult  = parseFloat(document.getElementById('txt-line-height').value);
+  const textXPct   = parseInt(document.getElementById('txt-pos-x').value) / 100;
+  const textYPct   = parseInt(document.getElementById('txt-pos-y').value) / 100;
+  const photoXPct  = parseInt(document.getElementById('txt-photo-x').value) / 100;
+  const photoYPct  = parseInt(document.getElementById('txt-photo-y').value) / 100;
+  const photoSc    = parseFloat(document.getElementById('txt-photo-scale').value);
 
   const artW = getArtboardW(), artH = getArtboardH();
   const lineHeight = fontSize * lineHMult;
-  const fontStr = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
+  const fontStr    = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
 
   if (!textPreviewCanvas) textPreviewCanvas = document.createElement('canvas');
   textPreviewCanvas.width  = artW;
@@ -712,11 +686,11 @@ function renderTextPreviewSync() {
 
     const comp = document.createElement('canvas');
     comp.width = artW; comp.height = artH;
-    const cc = comp.getContext('2d');
-    cc.drawImage(textPhotoElement, drawX, drawY, dw, dh);
-    cc.globalCompositeOperation = 'destination-in';
-    cc.drawImage(mask, 0, 0);
-    cc.globalCompositeOperation = 'source-over';
+    const compCtx = comp.getContext('2d');
+    compCtx.drawImage(textPhotoElement, drawX, drawY, dw, dh);
+    compCtx.globalCompositeOperation = 'destination-in';
+    compCtx.drawImage(mask, 0, 0);
+    compCtx.globalCompositeOperation = 'source-over';
     fc.drawImage(comp, 0, 0);
   } else {
     fc.fillStyle = '#111111';
@@ -737,7 +711,7 @@ function renderTextPreviewSync() {
 }
 
 function _scheduleTextPreview(delay) {
-  if (currentMode === 'text') showGrowth = false;
+  if (currentMode === 'image' && imageUseText) showGrowth = false;
   if (typeof delay === 'undefined') delay = 250;
   if (_previewTimer) clearTimeout(_previewTimer);
   if (delay === 0) {
@@ -759,12 +733,12 @@ function _getPhotoFrameInfo() {
   const photoYPct = parseInt(document.getElementById('txt-photo-y').value) / 100;
   const photoSc   = parseFloat(document.getElementById('txt-photo-scale').value);
   const srcW = textPhotoElement.naturalWidth, srcH = textPhotoElement.naturalHeight;
-  const cov = Math.max(artW / srcW, artH / srcH);
-  const fsc = cov * Math.max(photoSc, 1.0);
-  const dw  = srcW * fsc, dh = srcH * fsc;
+  const cov  = Math.max(artW / srcW, artH / srcH);
+  const fsc  = cov * Math.max(photoSc, 1.0);
+  const dw   = srcW * fsc, dh = srcH * fsc;
   const panX = (photoXPct - 0.5) * (dw - artW);
   const panY = (photoYPct - 0.5) * (dh - artH);
-  const scX = dispW / artW, scY = dispH / artH;
+  const scX  = dispW / artW, scY = dispH / artH;
   return {
     fx: dispOX + (artW / 2 - dw / 2 + panX) * scX,
     fy: dispOY + (artH / 2 - dh / 2 + panY) * scY,
@@ -809,7 +783,7 @@ function _drawPhotoFrame() {
 // ── Mouse events ───────────────────────────────────────────────────────────────
 
 function mousePressed() {
-  if (currentMode === 'text' && textPreviewCanvas && !showGrowth && textPhotoElement) {
+  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth && textPhotoElement) {
     const info = _getPhotoFrameInfo();
     if (info) {
       const { fx, fy, fw, fh, cx, cy } = info;
@@ -838,7 +812,7 @@ function mousePressed() {
 function mouseDragged() {
   if (isResizingPhoto) {
     const curDist = Math.sqrt((mouseX - _resizePhotoCX) ** 2 + (mouseY - _resizePhotoCY) ** 2);
-    let newScale = Math.min(3.0, Math.max(0.1, _resizeInitScale * (curDist / _resizeInitDist)));
+    let newScale  = Math.min(3.0, Math.max(0.1, _resizeInitScale * (curDist / _resizeInitDist)));
     const sl = document.getElementById('txt-photo-scale');
     sl.value = newScale.toFixed(2);
     sl.nextElementSibling.textContent = newScale.toFixed(2) + '×';
@@ -860,7 +834,7 @@ function mouseDragged() {
 function mouseReleased() { isDraggingPhoto = false; isResizingPhoto = false; }
 
 function mouseWheel(event) {
-  if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
+  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth) {
     const sl = document.getElementById('txt-photo-scale');
     let v = Math.min(3.0, Math.max(0.1, parseFloat(sl.value) - event.delta * 0.0005));
     sl.value = v.toFixed(2);
@@ -884,11 +858,12 @@ class Blade {
     else if (roll < sldC1.value() + sldC2.value() + sldC3.value())      { basePct = sldS3.value(); tierJitter = sldR3.value(); }
     else                                                                  { basePct = sldS4.value(); tierJitter = sldR4.value(); }
 
-    let jitter = random(1 - tierJitter, 1 + tierJitter);
-    this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale;
+    const cs     = getCanvasScale();
+    let jitter   = random(1 - tierJitter, 1 + tierJitter);
+    this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale * cs;
     this.windSensitivity = noise(x * 0.01, y * 0.01);
     this.currentLen      = 0;
-    this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value();
+    this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value() * cs;
     this.baseAngle       = -HALF_PI + random(-0.2, 0.2);
     this.alpha           = random(80, 160);
   }
@@ -973,11 +948,11 @@ function exportSettings() {
     'sld-c1','sld-c2','sld-c3','sld-c4',
     'sld-r1','sld-r2','sld-r3','sld-r4',
     'sld-mouse-strength','sld-mouse-radius',
-    'def-font-size','def-letter-spacing','def-line-height','def-pos-x','def-pos-y',
     'txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y',
     'txt-photo-x','txt-photo-y','txt-photo-scale',
+    'inp-mesh-weight',
   ];
-  const selectIds = ['def-font-family','def-font-weight','txt-font-family','txt-font-weight'];
+  const selectIds = ['txt-font-family','txt-font-weight'];
 
   const sliders = {};
   sliderIds.forEach(id => { const el = document.getElementById(id); if (el) sliders[id] = el.value; });
@@ -985,18 +960,18 @@ function exportSettings() {
   selectIds.forEach(id => { const el = document.getElementById(id); if (el) selects[id] = el.value; });
 
   const settings = {
-    version: 1,
+    version: 2,
+    currentMode,
+    gradientUseText,
+    imageUseText,
     sliders,
     selects,
-    text: {
-      defContent: document.getElementById('def-txt-content')?.value || '',
-      txtContent: document.getElementById('txt-content')?.value || '',
-    },
-    alignment: { defTextAlignment, textAlignment, interactMode },
+    text: { txtContent: document.getElementById('txt-content')?.value || '' },
+    alignment: { textAlignment, interactMode },
     mesh: {
       greenTriad: meshGreenTriad,
-      accentIdx: meshAccentIdx,
-      points: meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color })),
+      accentIdx:  meshAccentIdx,
+      points: meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color, weight: p.weight || 1.0 })),
     },
   };
 
@@ -1004,8 +979,7 @@ function exportSettings() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'meadow-settings.json';
-  document.body.appendChild(a);
-  a.click();
+  document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
@@ -1022,17 +996,17 @@ window.exportEmbed = function () {
   const S = {
     artW: getArtboardW(), artH: getArtboardH(),
     masterScale: parseFloat(document.getElementById('sld-master-scale').value),
-    margin:    parseFloat(document.getElementById('sld-margin').value),
-    density:   parseFloat(document.getElementById('sld-density').value),
-    cluster:   parseFloat(document.getElementById('sld-cluster').value),
-    displace:  parseFloat(document.getElementById('sld-displace').value),
-    threshold: parseFloat(document.getElementById('sld-threshold').value),
-    len:       parseFloat(document.getElementById('sld-len').value),
-    weight:    parseFloat(document.getElementById('sld-weight').value),
-    sway:      parseFloat(document.getElementById('sld-sway').value),
-    spawnFreq: parseFloat(document.getElementById('sld-spawn-freq').value),
-    drawSpeed: parseFloat(document.getElementById('sld-draw-speed').value),
-    windSpeed: parseFloat(document.getElementById('sld-wind-speed').value),
+    margin:      parseFloat(document.getElementById('sld-margin').value),
+    density:     parseFloat(document.getElementById('sld-density').value),
+    cluster:     parseFloat(document.getElementById('sld-cluster').value),
+    displace:    parseFloat(document.getElementById('sld-displace').value),
+    threshold:   parseFloat(document.getElementById('sld-threshold').value),
+    len:         parseFloat(document.getElementById('sld-len').value),
+    weight:      parseFloat(document.getElementById('sld-weight').value),
+    sway:        parseFloat(document.getElementById('sld-sway').value),
+    spawnFreq:   parseFloat(document.getElementById('sld-spawn-freq').value),
+    drawSpeed:   parseFloat(document.getElementById('sld-draw-speed').value),
+    windSpeed:   parseFloat(document.getElementById('sld-wind-speed').value),
     s1: parseFloat(document.getElementById('sld-s1').value), s2: parseFloat(document.getElementById('sld-s2').value),
     s3: parseFloat(document.getElementById('sld-s3').value), s4: parseFloat(document.getElementById('sld-s4').value),
     c1: parseFloat(document.getElementById('sld-c1').value), c2: parseFloat(document.getElementById('sld-c2').value),
@@ -1041,6 +1015,7 @@ window.exportEmbed = function () {
     r3: parseFloat(document.getElementById('sld-r3').value), r4: parseFloat(document.getElementById('sld-r4').value),
     mouseStrength: parseFloat(document.getElementById('sld-mouse-strength').value),
     mouseRadius:   parseFloat(document.getElementById('sld-mouse-radius').value),
+    canvasScale: getCanvasScale(),
     interactMode, autoStop: 35
   };
   const html = buildEmbedHTML(embedSourceBase64, S);
@@ -1090,73 +1065,93 @@ function _updateRecordBtn() {
 // ── Mode toggle ────────────────────────────────────────────────────────────────
 
 function initModeToggle() {
-  const btnDefault  = document.getElementById('btn-default-mode');
-  const btnGradient = document.getElementById('btn-gradient-mode');
-  const btnText     = document.getElementById('btn-text-mode');
-  const btnImage    = document.getElementById('btn-image-mode');
-  const defaultPanel  = document.getElementById('default-mode-panel');
+  const btnGradient   = document.getElementById('btn-gradient-mode');
+  const btnImage      = document.getElementById('btn-image-mode');
   const gradientPanel = document.getElementById('gradient-mode-panel');
-  const textPanel     = document.getElementById('text-mode-panel');
-  const imagePanel    = document.getElementById('image-mode-section');
+  const imagePanel    = document.getElementById('image-mode-panel');
+  const typoSection   = document.getElementById('typography-section');
+
+  function updateTypoVisibility() {
+    const show = (currentMode === 'gradient' && gradientUseText) ||
+                 (currentMode === 'image'    && imageUseText);
+    typoSection.style.display = show ? 'block' : 'none';
+  }
 
   function setMode(mode) {
     currentMode = mode;
-    btnDefault.classList.toggle('active',  mode === 'default');
     btnGradient.classList.toggle('active', mode === 'gradient');
-    btnText.classList.toggle('active',     mode === 'text');
     btnImage.classList.toggle('active',    mode === 'image');
-    defaultPanel.style.display  = mode === 'default'  ? 'block' : 'none';
     gradientPanel.style.display = mode === 'gradient' ? 'block' : 'none';
-    textPanel.style.display     = mode === 'text'     ? 'block' : 'none';
     imagePanel.style.display    = mode === 'image'    ? 'block' : 'none';
+    updateTypoVisibility();
   }
 
-  setMode('default');
+  setMode('gradient');
 
-  btnDefault.addEventListener('click', () => {
-    setMode('default'); showGrowth = false; _scheduleDefaultPreview(0);
-  });
   btnGradient.addEventListener('click', () => {
-    setMode('gradient'); showGrowth = false; _scheduleGradientPreview(0);
+    setMode('gradient');
+    showGrowth = false;
+    _scheduleGradientPreview(0);
   });
-  btnText.addEventListener('click', () => {
-    setMode('text'); showGrowth = false; _scheduleTextPreview(50);
-  });
-  btnImage.addEventListener('click', () => setMode('image'));
-
-  // ── Default mode wiring ──────────────────────────────────────────────────────
-
-  document.getElementById('def-txt-content').addEventListener('input', () => _scheduleDefaultPreview(250));
-  ['def-font-size','def-letter-spacing','def-line-height','def-pos-x','def-pos-y'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => _scheduleDefaultPreview(150));
-  });
-  ['def-font-family','def-font-weight'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', () => _scheduleDefaultPreview(100));
-  });
-  document.querySelectorAll('#def-alignment-btns .align-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#def-alignment-btns .align-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      defTextAlignment = btn.dataset.align;
-      _scheduleDefaultPreview(0);
-    });
+  btnImage.addEventListener('click', () => {
+    setMode('image');
+    showGrowth = false;
+    if (imageUseText) _scheduleTextPreview(50);
   });
 
-  document.getElementById('btn-def-render').addEventListener('click', renderDefaultComposition);
+  // ── Gradient sub-toggle ────────────────────────────────────────────────────
 
-  // ── Mesh editor (both canvases) ──────────────────────────────────────────────
+  document.getElementById('btn-grad-full').addEventListener('click', () => {
+    gradientUseText = false;
+    document.getElementById('btn-grad-full').classList.add('active');
+    document.getElementById('btn-grad-text').classList.remove('active');
+    updateTypoVisibility();
+    showGrowth = false;
+    _scheduleGradientPreview(0);
+  });
+  document.getElementById('btn-grad-text').addEventListener('click', () => {
+    gradientUseText = true;
+    document.getElementById('btn-grad-text').classList.add('active');
+    document.getElementById('btn-grad-full').classList.remove('active');
+    updateTypoVisibility();
+    showGrowth = false;
+    _scheduleGradientPreview(0);
+  });
 
-  _initMeshEditor('mesh-def');
+  // ── Image sub-toggle ───────────────────────────────────────────────────────
+
+  document.getElementById('btn-img-text').addEventListener('click', () => {
+    imageUseText = true;
+    document.getElementById('btn-img-text').classList.add('active');
+    document.getElementById('btn-img-full').classList.remove('active');
+    document.getElementById('img-photo-section').style.display = 'block';
+    document.getElementById('img-full-hint').style.display     = 'none';
+    updateTypoVisibility();
+    showGrowth = false;
+    _scheduleTextPreview(50);
+  });
+  document.getElementById('btn-img-full').addEventListener('click', () => {
+    imageUseText = false;
+    document.getElementById('btn-img-full').classList.add('active');
+    document.getElementById('btn-img-text').classList.remove('active');
+    document.getElementById('img-photo-section').style.display = 'none';
+    document.getElementById('img-full-hint').style.display     = 'block';
+    updateTypoVisibility();
+  });
+
+  // ── Mesh editor ────────────────────────────────────────────────────────────
+
   _initMeshEditor('mesh-grad');
   _initMeshDocumentDrag();
-
-  // ── Gradient panel controls ──────────────────────────────────────────────────
 
   document.getElementById('inp-mesh-color').addEventListener('input', e => {
     const pt = meshPoints.find(p => p.id === meshSelectedId);
     if (pt) { pt.color = e.target.value; _meshEditorUpdate(); }
+  });
+
+  document.getElementById('inp-mesh-weight').addEventListener('input', e => {
+    const pt = meshPoints.find(p => p.id === meshSelectedId);
+    if (pt) { pt.weight = parseFloat(e.target.value); _meshEditorUpdate(); }
   });
 
   document.getElementById('btn-mesh-del').addEventListener('click', () => {
@@ -1178,27 +1173,21 @@ function initModeToggle() {
   document.querySelectorAll('#accent-btns .accent-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       meshAccentIdx = parseInt(btn.dataset.accent);
-      // Update accent points to new color
-      const accent = MESH_ACCENTS[meshAccentIdx];
+      const accent      = MESH_ACCENTS[meshAccentIdx];
       const triadColors = new Set(MESH_GREEN_TRIADS[meshGreenTriad]);
-      meshPoints.forEach(pt => {
-        if (!triadColors.has(pt.color)) pt.color = accent;
-      });
+      meshPoints.forEach(pt => { if (!triadColors.has(pt.color)) pt.color = accent; });
       _meshEditorUpdate();
     });
   });
 
-  document.getElementById('btn-grad-render').addEventListener('click', renderGradientComposition);
+  document.getElementById('btn-grad-render').addEventListener('click', () => {
+    gradientUseText ? renderGradientOnTextComposition() : renderGradientComposition();
+  });
 
-  // ── Image mode ────────────────────────────────────────────────────────────────
+  // ── Image mode ─────────────────────────────────────────────────────────────
 
-  document.getElementById('btn-render-image').addEventListener('click', restartGrowth);
-
-  // ── Text mode wiring ─────────────────────────────────────────────────────────
-
-  document.getElementById('btn-render-text').addEventListener('click', renderTextComposition);
-  document.getElementById('btn-load-custom-font').addEventListener('click', () => {
-    loadCustomFont(document.getElementById('txt-custom-font').value);
+  document.getElementById('btn-render-image').addEventListener('click', () => {
+    imageUseText ? renderTextComposition() : restartGrowth();
   });
 
   document.getElementById('txt-photo-input').addEventListener('change', e => {
@@ -1209,14 +1198,49 @@ function initModeToggle() {
     htmlImg.src = URL.createObjectURL(file);
   });
 
+  // ── Shared typography controls ─────────────────────────────────────────────
+
+  document.getElementById('txt-content').addEventListener('input', () => {
+    if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(250);
+    else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(300);
+  });
+
+  ['txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(150);
+      else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(150);
+    });
+  });
+
+  ['txt-font-family','txt-font-weight'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(100);
+      else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(100);
+    });
+  });
+
   document.querySelectorAll('#txt-alignment-btns .align-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#txt-alignment-btns .align-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       textAlignment = btn.dataset.align;
-      _scheduleTextPreview(0);
+      if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(0);
+      else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(0);
     });
   });
+
+  ['txt-photo-x','txt-photo-y','txt-photo-scale'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => _scheduleTextPreview(150));
+  });
+
+  document.getElementById('btn-load-custom-font').addEventListener('click', () => {
+    loadCustomFont(document.getElementById('txt-custom-font').value);
+  });
+
+  // ── Interaction mode ───────────────────────────────────────────────────────
 
   document.querySelectorAll('#mouse-mode-btns .align-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1226,34 +1250,31 @@ function initModeToggle() {
     });
   });
 
-  ['txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y',
-   'txt-photo-x','txt-photo-y','txt-photo-scale'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', () => _scheduleTextPreview(150));
-  });
-  document.getElementById('txt-content').addEventListener('input', () => _scheduleTextPreview(300));
-  ['txt-font-family','txt-font-weight'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', () => _scheduleTextPreview(100));
+  // ── Collapsible sections ───────────────────────────────────────────────────
+
+  document.querySelectorAll('.section.collapsible .section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.closest('.section').classList.toggle('open');
+    });
   });
 }
 
 // ── Text compositing ───────────────────────────────────────────────────────────
 
 function renderTextComposition() {
-  const lines          = document.getElementById('txt-content').value.split('\n');
-  const fontFamily     = document.getElementById('txt-font-family').value;
-  const fontSize       = parseInt(document.getElementById('txt-font-size').value);
-  const fontWeight     = document.getElementById('txt-font-weight').value;
-  const letterSpacing  = parseInt(document.getElementById('txt-letter-spacing').value);
-  const lineHeightMult = parseFloat(document.getElementById('txt-line-height').value);
-  const textXPct       = parseInt(document.getElementById('txt-pos-x').value) / 100;
-  const textYPct       = parseInt(document.getElementById('txt-pos-y').value) / 100;
-  const photoXPct      = parseInt(document.getElementById('txt-photo-x').value) / 100;
-  const photoYPct      = parseInt(document.getElementById('txt-photo-y').value) / 100;
-  const photoScale     = parseFloat(document.getElementById('txt-photo-scale').value);
+  const lines         = document.getElementById('txt-content').value.split('\n');
+  const fontFamily    = document.getElementById('txt-font-family').value;
+  const fontSize      = parseInt(document.getElementById('txt-font-size').value);
+  const fontWeight    = document.getElementById('txt-font-weight').value;
+  const letterSpacing = parseInt(document.getElementById('txt-letter-spacing').value);
+  const lineHMult     = parseFloat(document.getElementById('txt-line-height').value);
+  const textXPct      = parseInt(document.getElementById('txt-pos-x').value) / 100;
+  const textYPct      = parseInt(document.getElementById('txt-pos-y').value) / 100;
+  const photoXPct     = parseInt(document.getElementById('txt-photo-x').value) / 100;
+  const photoYPct     = parseInt(document.getElementById('txt-photo-y').value) / 100;
+  const photoScale    = parseFloat(document.getElementById('txt-photo-scale').value);
   const artW = getArtboardW(), artH = getArtboardH();
-  const lineHeight = fontSize * lineHeightMult;
+  const lineHeight = fontSize * lineHMult;
   const fontString = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
 
   const compCanvas = document.createElement('canvas');
@@ -1265,8 +1286,8 @@ function renderTextComposition() {
     const coverScale = Math.max(artW / srcW, artH / srcH);
     const finalScale = coverScale * Math.max(photoScale, 1.0);
     const drawW = srcW * finalScale, drawH = srcH * finalScale;
-    const panX = (photoXPct - 0.5) * (drawW - artW);
-    const panY = (photoYPct - 0.5) * (drawH - artH);
+    const panX  = (photoXPct - 0.5) * (drawW - artW);
+    const panY  = (photoYPct - 0.5) * (drawH - artH);
     cc.drawImage(textPhotoElement, artW / 2 - drawW / 2 + panX, artH / 2 - drawH / 2 + panY, drawW, drawH);
   } else {
     cc.fillStyle = '#111111'; cc.fillRect(0, 0, artW, artH);
@@ -1335,7 +1356,8 @@ function loadCustomFont(name) {
   opt.selected = true;
   sel.appendChild(opt);
   document.fonts.load('700 40px \'' + trimmed + '\'').then(() => {
-    if (currentMode === 'text') _scheduleTextPreview(0);
+    if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(0);
+    else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(0);
   });
 }
 
@@ -1353,8 +1375,8 @@ function buildEmbedHTML(base64, S) {
 'function windowResized(){resizeCanvas(windowWidth,windowHeight);}\n' +
 'function boot(){var m=C.margin;img.resize(C.artW-m*2,0);if(img.height>C.artH-m*2)img.resize(0,C.artH-m*2);var bW=(img.width+m*2)*ES,bH=(img.height+m*2)*ES;buf=createGraphics(bW,bH);buf.clear();blades=[];seeds=[];si=0;wt=0;seeds=findSeeds();going=true;}\n' +
 'function findSeeds(){var s=2,m=C.margin,dt=C.density,cs=C.cluster/100,wl=C.threshold,da=C.displace;img.loadPixels();var out=[];for(var x=s;x<img.width-s;x+=s){for(var y=s;y<img.height-s;y+=s){var c=img.get(x,y),br=(red(c)+green(c)+blue(c))/3;if(br>=wl)continue;var cn=noise(x*.04,y*.04),fc=map(cn,0,1,-cs,cs);if(random(100)<(dt+fc*100)){out.push({x:(x+m+random(-da,da))*ES,y:(y+m+random(-da,da))*ES,col:c});}}}return shuffle(out);}\n' +
-'function draw(){if(!going)return;if(growStart===0)growStart=millis();if(!growDone&&(millis()-growStart)/1000>C.autoStop)growDone=true;wt+=C.windSpeed*0.0005;if(!growDone){for(var i=0;i<C.spawnFreq;i++){if(si<seeds.length){var s=seeds[si++];blades.push(new Blade(s.x,s.y,s.col));}}}buf.clear();buf.strokeWeight(C.weight*ES);buf.noFill();dW=width;dH=(buf.height/buf.width)*width;if(dH>height){dH=height;dW=(buf.width/buf.height)*height;}dOX=(width-dW)/2;dOY=(height-dH)/2;bMX=map(mouseX,dOX,dOX+dW,0,buf.width);bMY=map(mouseY,dOY,dOY+dH,0,buf.height);var bSc=buf.width/dW;var rVX=(mouseX-pMX)*bSc,rVY=(mouseY-pMY)*bSc;pMX=mouseX;pMY=mouseY;var rMag=Math.sqrt(rVX*rVX+rVY*rVY);var mxR=buf.width*0.025,cl=rMag>mxR?mxR/rMag:1;mVX=mVX*0.9+rVX*cl*0.1;mVY=mVY*0.9+rVY*cl*0.1;var sm=Math.sqrt(mVX*mVX+mVY*mVY);wMag=Math.min(sm/mxR,1);wDir=sm>0.5?mVX/sm:0;for(var j=0;j<blades.length;j++){if(!growDone)blades[j].upd();blades[j].shw();}background(255);imageMode(CENTER);image(buf,width/2,height/2,dW,dH);}\n' +
-'function Blade(x,y,c){this.x=x;this.y=y;this.c=c;var roll=random(0,C.c1+C.c2+C.c3+C.c4),bp,tj;if(roll<C.c1){bp=C.s1;tj=C.r1;}else if(roll<C.c1+C.c2){bp=C.s2;tj=C.r2;}else if(roll<C.c1+C.c2+C.c3){bp=C.s3;tj=C.r3;}else{bp=C.s4;tj=C.r4;}var j=random(1-tj,1+tj);this.ml=(bp*j)*C.len*C.masterScale*ES;this.ws=noise(x*.01,y*.01);this.cl=0;this.gr=random(5,15)*ES*C.masterScale;this.ba=-HALF_PI+random(-.2,.2);this.al=random(80,160);}\n' +
+'function draw(){if(!going)return;if(growStart===0)growStart=millis();if(!growDone&&(millis()-growStart)/1000>C.autoStop)growDone=true;wt+=C.windSpeed*0.0005;var csc=C.canvasScale||1;if(!growDone){for(var i=0;i<C.spawnFreq;i++){if(si<seeds.length){var s=seeds[si++];blades.push(new Blade(s.x,s.y,s.col));}}}buf.clear();buf.strokeWeight(C.weight*ES*csc);buf.noFill();dW=width;dH=(buf.height/buf.width)*width;if(dH>height){dH=height;dW=(buf.width/buf.height)*height;}dOX=(width-dW)/2;dOY=(height-dH)/2;bMX=map(mouseX,dOX,dOX+dW,0,buf.width);bMY=map(mouseY,dOY,dOY+dH,0,buf.height);var bSc=buf.width/dW;var rVX=(mouseX-pMX)*bSc,rVY=(mouseY-pMY)*bSc;pMX=mouseX;pMY=mouseY;var rMag=Math.sqrt(rVX*rVX+rVY*rVY);var mxR=buf.width*0.025,cl=rMag>mxR?mxR/rMag:1;mVX=mVX*0.9+rVX*cl*0.1;mVY=mVY*0.9+rVY*cl*0.1;var sm=Math.sqrt(mVX*mVX+mVY*mVY);wMag=Math.min(sm/mxR,1);wDir=sm>0.5?mVX/sm:0;for(var j=0;j<blades.length;j++){if(!growDone)blades[j].upd();blades[j].shw();}background(255);imageMode(CENTER);image(buf,width/2,height/2,dW,dH);}\n' +
+'function Blade(x,y,c){this.x=x;this.y=y;this.c=c;var csc=C.canvasScale||1;var roll=random(0,C.c1+C.c2+C.c3+C.c4),bp,tj;if(roll<C.c1){bp=C.s1;tj=C.r1;}else if(roll<C.c1+C.c2){bp=C.s2;tj=C.r2;}else if(roll<C.c1+C.c2+C.c3){bp=C.s3;tj=C.r3;}else{bp=C.s4;tj=C.r4;}var j=random(1-tj,1+tj);this.ml=(bp*j)*C.len*C.masterScale*ES*csc;this.ws=noise(x*.01,y*.01);this.cl=0;this.gr=random(5,15)*ES*C.masterScale*csc;this.ba=-HALF_PI+random(-.2,.2);this.al=random(80,160);}\n' +
 'Blade.prototype.upd=function(){if(this.cl<this.ml)this.cl+=this.gr*C.drawSpeed*0.1;};\n' +
 'Blade.prototype.shw=function(){var c=this.c;buf.stroke(red(c),green(c),blue(c),this.al);var nv=noise(this.x/ES*.005,this.y/ES*.005,wt);var sw=C.sway*this.ws,wb=map(nv,0,1,-sw,sw);var dx=this.x-bMX,dy=this.y-bMY;var d=max(1,sqrt(dx*dx+dy*dy));var mr=buf.width*C.mouseRadius,mf=max(0,1-d/mr);var mb;if(C.interactMode==="attract"){mb=mf*C.mouseStrength*(-dx/d);}else if(C.interactMode==="wind"){mb=mf*C.mouseStrength*wDir*wMag;}else{mb=mf*C.mouseStrength*(dx/d);}var fa=this.ba+wb+mb;var cpx=this.x+cos(this.ba)*(this.cl*.5),cpy=this.y+sin(this.ba)*(this.cl*.5);var tx=this.x+cos(fa)*this.cl,ty=this.y+sin(fa)*this.cl;buf.beginShape();buf.vertex(this.x,this.y);buf.quadraticVertex(cpx,cpy,tx,ty);buf.endShape();};\n' +
 '<' + '/script>\n</body>\n</html>';
