@@ -67,12 +67,12 @@ let _gradientPreviewTimer = null;
 
 // ── Mesh gradient ─────────────────────────────────────────────────────────────
 
-const MESH_GREEN_TRIADS = [
+const meshGreenTriads = [
   ['#037342', '#2E944C', '#45B04B'],
   ['#525C29', '#ADBA6B', '#DDE3B6'],
   ['#417F34', '#749E5E', '#8FB47D'],
 ];
-const MESH_ACCENTS = ['#8A6BD3', '#D297E8', '#C790DB', '#FF9FCC'];
+const meshAccents = ['#8A6BD3', '#D297E8', '#C790DB', '#FF9FCC'];
 
 let meshPoints = [];
 let meshGreenTriad = 0;
@@ -126,10 +126,12 @@ function setup() {
 
   initModeToggle();
   _meshRandomize();
+  loadSettings();
 
   requestAnimationFrame(() => {
     _meshEditorUpdate();
-    _scheduleGradientPreview(50);
+    if (currentMode === 'image' && imageUseText) _scheduleTextPreview(50);
+    else _scheduleGradientPreview(50);
   });
 }
 
@@ -397,11 +399,35 @@ function _meshEditorUpdate() {
   if (currentMode === 'gradient') _scheduleGradientPreview(50);
 }
 
+function _updateTriadSwatches(t) {
+  const btn = document.querySelector(`#triad-btns .triad-btn[data-triad="${t}"]`);
+  if (!btn) return;
+  const swatches = btn.querySelectorAll('.triad-swatch');
+  meshGreenTriads[t].forEach((c, i) => { if (swatches[i]) swatches[i].style.background = c; });
+}
+
+function _updateAllTriadSwatches() { [0, 1, 2].forEach(_updateTriadSwatches); }
+
+function _updateTriadEditRow() {
+  const triad = meshGreenTriads[meshGreenTriad];
+  ['triad-c0', 'triad-c1', 'triad-c2'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && triad[i]) el.value = triad[i];
+  });
+}
+
+function _updateAccentBtns() {
+  document.querySelectorAll('#accent-btns .accent-btn').forEach((inp, i) => {
+    inp.value = meshAccents[i];
+    inp.classList.toggle('active', i === meshAccentIdx);
+  });
+}
+
 function _meshRandomize() {
   meshPoints = [];
   _meshNextId = 0;
-  const triad  = MESH_GREEN_TRIADS[meshGreenTriad];
-  const accent = MESH_ACCENTS[meshAccentIdx];
+  const triad  = meshGreenTriads[meshGreenTriad];
+  const accent = meshAccents[meshAccentIdx];
 
   const basePositions = [
     { x: 0.10, y: 0.15 }, { x: 0.50, y: 0.08 }, { x: 0.90, y: 0.20 },
@@ -461,7 +487,7 @@ function _initMeshEditor(canvasId) {
       meshSelectedId = hit.id;
       _meshDragId = hit.id;
     } else {
-      const triad = MESH_GREEN_TRIADS[meshGreenTriad];
+      const triad = meshGreenTriads[meshGreenTriad];
       const newPt = {
         id: _meshNextId++,
         x: nx, y: ny,
@@ -939,7 +965,7 @@ function keyPressed() {
   if (key === 's' || key === 'S') downloadHighRes();
 }
 
-function exportSettings() {
+function collectSettings() {
   const sliderIds = [
     'inp-artboard-w','inp-artboard-h','sld-master-scale',
     'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
@@ -953,29 +979,28 @@ function exportSettings() {
     'inp-mesh-weight',
   ];
   const selectIds = ['txt-font-family','txt-font-weight'];
-
   const sliders = {};
   sliderIds.forEach(id => { const el = document.getElementById(id); if (el) sliders[id] = el.value; });
   const selects = {};
   selectIds.forEach(id => { const el = document.getElementById(id); if (el) selects[id] = el.value; });
-
-  const settings = {
-    version: 2,
-    currentMode,
-    gradientUseText,
-    imageUseText,
-    sliders,
-    selects,
+  return {
+    version: 3,
+    currentMode, gradientUseText, imageUseText,
+    sliders, selects,
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
     alignment: { textAlignment, interactMode },
     mesh: {
       greenTriad: meshGreenTriad,
       accentIdx:  meshAccentIdx,
-      points: meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color, weight: p.weight || 1.0 })),
+      greenTriads: meshGreenTriads.map(t => [...t]),
+      accents:    [...meshAccents],
+      points:     meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color, weight: p.weight || 1.0 })),
     },
   };
+}
 
-  const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+function exportSettings() {
+  const blob = new Blob([JSON.stringify(collectSettings(), null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'meadow-settings.json';
@@ -984,9 +1009,126 @@ function exportSettings() {
   URL.revokeObjectURL(a.href);
 }
 
+function saveSettings() {
+  localStorage.setItem('meadow-settings', JSON.stringify(collectSettings()));
+  const btn = document.getElementById('btn-save-settings');
+  if (!btn) return;
+  const prev = btn.textContent;
+  btn.textContent = 'Saved ✓';
+  btn.style.color = '#4a9a6f'; btn.style.borderColor = '#4a9a6f';
+  setTimeout(() => { btn.textContent = prev; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
+}
+
+function loadSettings() {
+  const raw = localStorage.getItem('meadow-settings');
+  if (!raw) return;
+  try { applySettings(JSON.parse(raw)); } catch(e) { /* ignore corrupt data */ }
+}
+
+function applySettings(data) {
+  if (!data) return;
+
+  // 1. Restore palette color arrays (mutate in-place)
+  if (Array.isArray(data.mesh?.greenTriads)) {
+    data.mesh.greenTriads.forEach((t, i) => {
+      if (meshGreenTriads[i]) t.forEach((c, j) => { meshGreenTriads[i][j] = c; });
+    });
+  }
+  if (Array.isArray(data.mesh?.accents)) {
+    data.mesh.accents.forEach((c, i) => { if (i < meshAccents.length) meshAccents[i] = c; });
+  }
+
+  // 2. Restore mode variables first (so preview callbacks use correct mode)
+  if (data.currentMode)                currentMode    = data.currentMode;
+  if (data.gradientUseText !== undefined) gradientUseText = data.gradientUseText;
+  if (data.imageUseText    !== undefined) imageUseText    = data.imageUseText;
+
+  // 3. Update mode panel UI
+  ['btn-gradient-mode','btn-image-mode'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', el.id === 'btn-' + currentMode + '-mode');
+  });
+  const gradPanel = document.getElementById('gradient-mode-panel');
+  const imgPanel  = document.getElementById('image-mode-panel');
+  if (gradPanel) gradPanel.style.display = currentMode === 'gradient' ? 'block' : 'none';
+  if (imgPanel)  imgPanel.style.display  = currentMode === 'image'    ? 'block' : 'none';
+
+  const gFull = document.getElementById('btn-grad-full');
+  const gText = document.getElementById('btn-grad-text');
+  if (gFull) gFull.classList.toggle('active', !gradientUseText);
+  if (gText) gText.classList.toggle('active',  gradientUseText);
+
+  const iText = document.getElementById('btn-img-text');
+  const iFull = document.getElementById('btn-img-full');
+  if (iText) iText.classList.toggle('active', imageUseText);
+  if (iFull) iFull.classList.toggle('active', !imageUseText);
+  const photoSec = document.getElementById('img-photo-section');
+  const fullHint = document.getElementById('img-full-hint');
+  if (photoSec) photoSec.style.display = imageUseText ? 'block' : 'none';
+  if (fullHint) fullHint.style.display = imageUseText ? 'none'  : 'block';
+
+  const typoSec = document.getElementById('typography-section');
+  if (typoSec) {
+    const show = (currentMode === 'gradient' && gradientUseText) || (currentMode === 'image' && imageUseText);
+    typoSec.style.display = show ? 'block' : 'none';
+  }
+
+  // 4. Restore sliders (dispatching input to update display spans)
+  Object.entries(data.sliders || {}).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = val;
+    el.dispatchEvent(new Event('input'));
+  });
+
+  // 5. Restore selects
+  Object.entries(data.selects || {}).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+
+  // 6. Restore text
+  const txtEl = document.getElementById('txt-content');
+  if (txtEl && data.text?.txtContent !== undefined) txtEl.value = data.text.txtContent;
+
+  // 7. Restore alignment button active states
+  if (data.alignment?.textAlignment) {
+    textAlignment = data.alignment.textAlignment;
+    document.querySelectorAll('#txt-alignment-btns .align-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.align === textAlignment);
+    });
+  }
+  if (data.alignment?.interactMode) {
+    interactMode = data.alignment.interactMode;
+    document.querySelectorAll('#mouse-mode-btns .align-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === interactMode);
+    });
+  }
+
+  // 8. Restore mesh
+  if (data.mesh) {
+    meshGreenTriad = data.mesh.greenTriad ?? 0;
+    meshAccentIdx  = data.mesh.accentIdx  ?? 0;
+    if (Array.isArray(data.mesh.points) && data.mesh.points.length > 0) {
+      _meshNextId = 0;
+      meshPoints = data.mesh.points.map(p => ({
+        id: _meshNextId++, x: p.x, y: p.y,
+        color: p.color, weight: p.weight || 1.0,
+      }));
+      meshSelectedId = meshPoints[0].id;
+    }
+  }
+
+  // 9. Refresh palette UI
+  _updateAllTriadSwatches();
+  _updateTriadEditRow();
+  _updateAccentBtns();
+}
+
 // ── Global wiring ──────────────────────────────────────────────────────────────
 
 window.saveHighRes     = downloadHighRes;
+window.saveSettings    = saveSettings;
 window.exportSettings  = exportSettings;
 window.toggleGrowth    = function () { growthPaused = !growthPaused; _updateStopBtn(); };
 window.toggleRecording = function () { isRecording ? stopRecording() : startRecording(); };
@@ -1166,16 +1308,36 @@ function initModeToggle() {
   document.querySelectorAll('#triad-btns .triad-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       meshGreenTriad = parseInt(btn.dataset.triad);
+      _updateTriadEditRow();
       _meshRandomize();
     });
   });
 
-  document.querySelectorAll('#accent-btns .accent-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      meshAccentIdx = parseInt(btn.dataset.accent);
-      const accent      = MESH_ACCENTS[meshAccentIdx];
-      const triadColors = new Set(MESH_GREEN_TRIADS[meshGreenTriad]);
-      meshPoints.forEach(pt => { if (!triadColors.has(pt.color)) pt.color = accent; });
+  // Triad color editing
+  ['triad-c0','triad-c1','triad-c2'].forEach((id, pos) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', e => {
+      const oldColor = meshGreenTriads[meshGreenTriad][pos];
+      meshGreenTriads[meshGreenTriad][pos] = e.target.value;
+      meshPoints.forEach(pt => { if (pt.color === oldColor) pt.color = e.target.value; });
+      _updateTriadSwatches(meshGreenTriad);
+      _meshEditorUpdate();
+    });
+  });
+
+  // Accent color inputs: mousedown = select, change = update color
+  document.querySelectorAll('#accent-btns .accent-btn').forEach(inp => {
+    inp.addEventListener('mousedown', () => {
+      meshAccentIdx = parseInt(inp.dataset.accent);
+      document.querySelectorAll('#accent-btns .accent-btn').forEach(b => b.classList.remove('active'));
+      inp.classList.add('active');
+    });
+    inp.addEventListener('change', e => {
+      const idx      = parseInt(inp.dataset.accent);
+      const oldColor = meshAccents[idx];
+      meshAccents[idx] = e.target.value;
+      meshPoints.forEach(pt => { if (pt.color === oldColor) pt.color = e.target.value; });
       _meshEditorUpdate();
     });
   });
