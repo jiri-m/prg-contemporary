@@ -14,6 +14,7 @@
 
     :root {
       --red:    #EF3330;
+      --accent: #9B73F9;
       --black:  #111111;
       --gray1:  #888888;
       --gray2:  #CCCCCC;
@@ -234,6 +235,8 @@
     .btn-red:hover { background: #c82020; border-color: #c82020; }
     .btn-secondary { background: var(--white); border: 1px solid var(--gray3); color: var(--gray1); }
     .btn-secondary:hover { border-color: var(--black); color: var(--black); }
+    .btn-accent { background: var(--accent); border: 1px solid var(--accent); color: var(--white); }
+    .btn-accent:hover { background: #8560d9; border-color: #8560d9; }
 
     /* ── Tiers table ── */
     .tier-table { width: 100%; border-collapse: collapse; }
@@ -388,12 +391,6 @@
       cursor: pointer; padding: 0;
     }
     .icon-btn:hover { border-color: var(--black); color: var(--black); }
-
-    #inp-mesh-color {
-      flex: 1; height: 24px;
-      border: 1px solid var(--gray3);
-      border-radius: 0; padding: 0; cursor: pointer;
-    }
 
     .ctrl-label {
       font-size: 8px;
@@ -550,16 +547,10 @@
 
       <div class="ctrl-label">Accent</div>
       <div class="accent-row" id="accent-btns">
-        <input type="color" class="accent-btn active" data-accent="0" value="#8A6BD3">
-        <input type="color" class="accent-btn"        data-accent="1" value="#D297E8">
-        <input type="color" class="accent-btn"        data-accent="2" value="#C790DB">
-        <input type="color" class="accent-btn"        data-accent="3" value="#FF9FCC">
-      </div>
-
-      <div class="row" style="align-items:center;margin-bottom:6px">
-        <label>Point color</label>
-        <input type="color" id="inp-mesh-color" value="#037342">
-        <button class="icon-btn" id="btn-mesh-del" title="Delete selected point">−</button>
+        <input type="color" class="accent-btn"        data-accent="0" value="#ff95ae">
+        <input type="color" class="accent-btn"        data-accent="1" value="#ff97d4">
+        <input type="color" class="accent-btn active" data-accent="2" value="#de92fa">
+        <input type="color" class="accent-btn"        data-accent="3" value="#9b73f9">
       </div>
 
       <div class="row">
@@ -569,11 +560,14 @@
         <span class="val">1.0</span>
       </div>
 
-      <button class="btn btn-secondary" id="btn-mesh-randomize">Randomize</button>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-secondary" id="btn-mesh-randomize" style="flex:1">Randomize</button>
+        <button class="icon-btn" id="btn-mesh-del" title="Delete selected point">−</button>
+      </div>
     </div>
 
     <div class="section">
-      <button class="btn btn-primary" id="btn-grad-render">Apply &amp; Render</button>
+      <button class="btn btn-accent" id="btn-grad-render">Apply &amp; Render</button>
     </div>
   </div>
 
@@ -626,14 +620,14 @@
     </div>
 
     <div class="section">
-      <button class="btn btn-primary" id="btn-render-image">Apply &amp; Render</button>
+      <button class="btn btn-accent" id="btn-render-image">Apply &amp; Render</button>
     </div>
   </div>
 
   <!-- ═══════════════ ACTIONS ═══════════════ -->
   <div class="section">
     <div class="section-title">Actions</div>
-    <button class="btn btn-red"       id="btn-stop-grow" onclick="window.toggleGrowth()">Stop Growing</button>
+    <button class="btn btn-secondary"  id="btn-stop-grow" onclick="window.toggleGrowth()">Stop Growing</button>
     <button class="btn btn-primary"   onclick="window.saveHighRes()" style="background:#fff;color:#111;border-color:#111">Save High-Res</button>
     <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>

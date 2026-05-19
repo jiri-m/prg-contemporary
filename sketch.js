@@ -74,7 +74,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"color":"#525C29","weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"color":"#ADBA6B","weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"color":"#DDE3B6","weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"color":"#525C29","weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"color":"#ADBA6B","weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"color":"#DDE3B6","weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"color":"#525C29","weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"color":"#ADBA6B","weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"color":"#DDE3B6","weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"color":"#525C29","weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"color":"#ADBA6B","weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"color":"#de92fa","weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"color":"#de92fa","weight":1.207297232696769}]}};
+const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -295,6 +295,24 @@ function _hexToRGB(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+function _inferSlot(color, meshData) {
+  if (!color) return { type: 'green', shade: 0 };
+  const triads = meshData?.greenTriads || meshGreenTriads;
+  for (let t = 0; t < triads.length; t++) {
+    const shade = triads[t].findIndex(c => c.toLowerCase() === color.toLowerCase());
+    if (shade !== -1) return { type: 'green', shade };
+  }
+  const accents = meshData?.accents || meshAccents;
+  const ai = accents.findIndex(c => c.toLowerCase() === color.toLowerCase());
+  if (ai !== -1) return { type: 'accent', idx: ai };
+  return { type: 'green', shade: 0 };
+}
+
+function getPointColor(pt) {
+  if (pt.slot?.type === 'accent') return meshAccents[pt.slot.idx] || meshAccents[0];
+  return meshGreenTriads[meshGreenTriad][pt.slot?.shade ?? 0] || meshGreenTriads[0][0];
+}
+
 function _makeMeshCanvas(w, h) {
   if (meshPoints.length === 0) {
     const c = document.createElement('canvas');
@@ -313,7 +331,7 @@ function _makeMeshCanvas(w, h) {
   const data = imgData.data;
 
   const pts = meshPoints.map(pt => {
-    const rgb = _hexToRGB(pt.color);
+    const rgb = _hexToRGB(getPointColor(pt));
     return { x: pt.x, y: pt.y, r: rgb[0], g: rgb[1], b: rgb[2], weight: pt.weight || 1.0 };
   });
 
@@ -362,7 +380,7 @@ function _meshRenderCanvas(canvasEl) {
     const sel = pt.id === meshSelectedId;
     ctx.beginPath();
     ctx.arc(px, py, sel ? 7 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = pt.color;
+    ctx.fillStyle = getPointColor(pt);
     ctx.fill();
     ctx.strokeStyle = 'white';
     ctx.lineWidth = sel ? 2.5 : 1.5;
@@ -381,9 +399,7 @@ function _meshEditorUpdate() {
   _meshRenderCanvas(document.getElementById('mesh-grad'));
 
   const sel = meshPoints.find(p => p.id === meshSelectedId);
-  const picker    = document.getElementById('inp-mesh-color');
   const weightSld = document.getElementById('inp-mesh-weight');
-  if (picker && sel) picker.value = sel.color;
   if (weightSld && sel) {
     const w = sel.weight || 1.0;
     weightSld.value = w;
@@ -427,8 +443,6 @@ function _updateAccentBtns() {
 function _meshRandomize() {
   meshPoints = [];
   _meshNextId = 0;
-  const triad  = meshGreenTriads[meshGreenTriad];
-  const accent = meshAccents[meshAccentIdx];
 
   const basePositions = [
     { x: 0.10, y: 0.15 }, { x: 0.50, y: 0.08 }, { x: 0.90, y: 0.20 },
@@ -436,12 +450,20 @@ function _meshRandomize() {
     { x: 0.05, y: 0.72 }, { x: 0.40, y: 0.70 }, { x: 0.82, y: 0.65 },
     { x: 0.25, y: 0.90 }, { x: 0.65, y: 0.88 },
   ];
+
+  // randomly shuffle shade slots so all 3 shades are distributed across the canvas
+  const shadeSlots = basePositions.map((_, i) => i % 3);
+  for (let i = shadeSlots.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shadeSlots[i], shadeSlots[j]] = [shadeSlots[j], shadeSlots[i]];
+  }
+
   basePositions.forEach((pos, i) => {
     meshPoints.push({
       id: _meshNextId++,
       x: Math.max(0.03, Math.min(0.97, pos.x + (Math.random() - 0.5) * 0.18)),
       y: Math.max(0.03, Math.min(0.97, pos.y + (Math.random() - 0.5) * 0.18)),
-      color: triad[i % triad.length],
+      slot: { type: 'green', shade: shadeSlots[i] },
       weight: 0.8 + Math.random() * 0.4,
     });
   });
@@ -451,7 +473,7 @@ function _meshRandomize() {
       id: _meshNextId++,
       x: Math.random() * 0.8 + 0.1,
       y: Math.random() * 0.8 + 0.1,
-      color: accent,
+      slot: { type: 'accent', idx: meshAccentIdx },
       weight: 0.6 + Math.random() * 0.8,
     });
   }
@@ -487,11 +509,10 @@ function _initMeshEditor(canvasId) {
       meshSelectedId = hit.id;
       _meshDragId = hit.id;
     } else {
-      const triad = meshGreenTriads[meshGreenTriad];
       const newPt = {
         id: _meshNextId++,
         x: nx, y: ny,
-        color: triad[Math.floor(Math.random() * triad.length)],
+        slot: { type: 'green', shade: Math.floor(Math.random() * 3) },
         weight: 1.0,
       };
       meshPoints.push(newPt);
@@ -994,7 +1015,7 @@ function collectSettings() {
       accentIdx:  meshAccentIdx,
       greenTriads: meshGreenTriads.map(t => [...t]),
       accents:    [...meshAccents],
-      points:     meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color, weight: p.weight || 1.0 })),
+      points:     meshPoints.map(p => ({ x: p.x, y: p.y, slot: p.slot, weight: p.weight || 1.0 })),
     },
   };
 }
@@ -1115,7 +1136,8 @@ function applySettings(data) {
       _meshNextId = 0;
       meshPoints = data.mesh.points.map(p => ({
         id: _meshNextId++, x: p.x, y: p.y,
-        color: p.color, weight: p.weight || 1.0,
+        slot: p.slot || _inferSlot(p.color, data.mesh),
+        weight: p.weight || 1.0,
       }));
       meshSelectedId = meshPoints[0].id;
     }
@@ -1288,11 +1310,6 @@ function initModeToggle() {
   _initMeshEditor('mesh-grad');
   _initMeshDocumentDrag();
 
-  document.getElementById('inp-mesh-color').addEventListener('input', e => {
-    const pt = meshPoints.find(p => p.id === meshSelectedId);
-    if (pt) { pt.color = e.target.value; _meshEditorUpdate(); }
-  });
-
   document.getElementById('inp-mesh-weight').addEventListener('input', e => {
     const pt = meshPoints.find(p => p.id === meshSelectedId);
     if (pt) { pt.weight = parseFloat(e.target.value); _meshEditorUpdate(); }
@@ -1309,34 +1326,24 @@ function initModeToggle() {
 
   document.querySelectorAll('#triad-btns .triad-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const newIdx = parseInt(btn.dataset.triad);
-      if (newIdx === meshGreenTriad) return;
-      const oldTriad = meshGreenTriads[meshGreenTriad];
-      const newTriad = meshGreenTriads[newIdx];
-      meshPoints.forEach(pt => {
-        const slot = oldTriad.indexOf(pt.color);
-        if (slot !== -1) pt.color = newTriad[slot];
-      });
-      meshGreenTriad = newIdx;
+      meshGreenTriad = parseInt(btn.dataset.triad);
       _updateTriadEditRow();
       _meshEditorUpdate();
     });
   });
 
-  // Triad color editing: change redefines the shade globally, updating all matching points
+  // Triad color editing: update palette array, redraw — points reference shades by slot
   ['triad-c0','triad-c1','triad-c2'].forEach((id, pos) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('change', e => {
-      const oldColor = meshGreenTriads[meshGreenTriad][pos];
       meshGreenTriads[meshGreenTriad][pos] = e.target.value;
-      meshPoints.forEach(pt => { if (pt.color === oldColor) pt.color = e.target.value; });
       _updateTriadSwatches(meshGreenTriad);
       _meshEditorUpdate();
     });
   });
 
-  // Accent color inputs: mousedown = select active accent; change = redefine globally across all matching points
+  // Accent color inputs: mousedown = select active; change = update palette array, redraw
   document.querySelectorAll('#accent-btns .accent-btn').forEach(inp => {
     inp.addEventListener('mousedown', () => {
       meshAccentIdx = parseInt(inp.dataset.accent);
@@ -1344,10 +1351,7 @@ function initModeToggle() {
       inp.classList.add('active');
     });
     inp.addEventListener('change', e => {
-      const idx      = parseInt(inp.dataset.accent);
-      const oldColor = meshAccents[idx];
-      meshAccents[idx] = e.target.value;
-      meshPoints.forEach(pt => { if (pt.color === oldColor) pt.color = e.target.value; });
+      meshAccents[parseInt(inp.dataset.accent)] = e.target.value;
       _meshEditorUpdate();
     });
   });
