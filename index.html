@@ -360,8 +360,22 @@
       flex: 1; height: 22px;
       border: 1.5px solid var(--gray3);
       cursor: pointer; border-radius: 1px;
+      padding: 1px;
+      -webkit-appearance: none; appearance: none;
     }
     .accent-btn.active { border-color: var(--black); box-shadow: inset 0 0 0 1px var(--black); }
+    .accent-btn[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+    .accent-btn[type=color]::-webkit-color-swatch { border: none; border-radius: 0; }
+
+    /* ── Triad color edit inputs ── */
+    .triad-color-input {
+      flex: 1; height: 20px;
+      border: 1px solid var(--gray3);
+      padding: 1px; cursor: pointer; border-radius: 1px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .triad-color-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .triad-color-input::-webkit-color-swatch { border: none; border-radius: 0; }
 
     /* ── Shared small button ── */
     .icon-btn {
@@ -527,12 +541,19 @@
         </button>
       </div>
 
+      <div class="ctrl-label" style="margin-top:2px">Edit triad</div>
+      <div style="display:flex;gap:3px;margin-bottom:8px">
+        <input type="color" class="triad-color-input" id="triad-c0" value="#037342" title="Shade 1">
+        <input type="color" class="triad-color-input" id="triad-c1" value="#2E944C" title="Shade 2">
+        <input type="color" class="triad-color-input" id="triad-c2" value="#45B04B" title="Shade 3">
+      </div>
+
       <div class="ctrl-label">Accent</div>
       <div class="accent-row" id="accent-btns">
-        <button class="accent-btn active" data-accent="0" style="background:#8A6BD3"></button>
-        <button class="accent-btn"        data-accent="1" style="background:#D297E8"></button>
-        <button class="accent-btn"        data-accent="2" style="background:#C790DB"></button>
-        <button class="accent-btn"        data-accent="3" style="background:#FF9FCC"></button>
+        <input type="color" class="accent-btn active" data-accent="0" value="#8A6BD3">
+        <input type="color" class="accent-btn"        data-accent="1" value="#D297E8">
+        <input type="color" class="accent-btn"        data-accent="2" value="#C790DB">
+        <input type="color" class="accent-btn"        data-accent="3" value="#FF9FCC">
       </div>
 
       <div class="row" style="align-items:center;margin-bottom:6px">
@@ -617,6 +638,7 @@
     <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
     <button class="btn btn-secondary" onclick="window.exportSettings()">Export Settings</button>
+    <button class="btn btn-secondary" id="btn-save-settings" onclick="window.saveSettings()">Save Settings</button>
   </div>
 
   <!-- ═══════════════ GROWTH (collapsible) ═══════════════ -->
