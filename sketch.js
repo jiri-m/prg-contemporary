@@ -4,7 +4,7 @@ let imgLoaded = false;
 let exportScale = 4;
 
 // Sliders
-let sldMargin, sldLen, sldWeight, sldSway, sldSpawnFreq, sldDrawSpeed;
+let sldMargin, sldLen, sldWeight, sldSway, sldSpawnFreq, sldDrawSpeed, sldOpacity;
 let sldDensity, sldCluster, sldThreshold, sldWindSpeed, sldDisplace;
 let sldS1, sldS2, sldS3, sldS4;
 let sldC1, sldC2, sldC3, sldC4;
@@ -74,7 +74,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
+const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -108,6 +108,7 @@ function setup() {
   sldMargin      = domSlider('sld-margin');
   sldLen         = domSlider('sld-len');
   sldWeight      = domSlider('sld-weight');
+  sldOpacity     = domSlider('sld-opacity');
   sldSway        = domSlider('sld-sway');
   sldSpawnFreq   = domSlider('sld-spawn-freq');
   sldDrawSpeed   = domSlider('sld-draw-speed');
@@ -309,7 +310,7 @@ function _inferSlot(color, meshData) {
 }
 
 function getPointColor(pt) {
-  if (pt.slot?.type === 'accent') return meshAccents[pt.slot.idx] || meshAccents[0];
+  if (pt.slot?.type === 'accent') return meshAccents[meshAccentIdx] || meshAccents[0];
   return meshGreenTriads[meshGreenTriad][pt.slot?.shade ?? 0] || meshGreenTriads[0][0];
 }
 
@@ -912,7 +913,8 @@ class Blade {
     this.currentLen      = 0;
     this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value() * cs;
     this.baseAngle       = -HALF_PI + random(-0.2, 0.2);
-    this.alpha           = random(80, 160);
+    const maxA           = sldOpacity.value();
+    this.alpha           = random(maxA * 0.5, maxA);
   }
 
   update() {
@@ -990,7 +992,7 @@ function collectSettings() {
   const sliderIds = [
     'inp-artboard-w','inp-artboard-h','sld-master-scale',
     'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
-    'sld-len','sld-weight','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
+    'sld-len','sld-weight','sld-opacity','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
     'sld-s1','sld-s2','sld-s3','sld-s4',
     'sld-c1','sld-c2','sld-c3','sld-c4',
     'sld-r1','sld-r2','sld-r3','sld-r4',
@@ -1349,6 +1351,7 @@ function initModeToggle() {
       meshAccentIdx = parseInt(inp.dataset.accent);
       document.querySelectorAll('#accent-btns .accent-btn').forEach(b => b.classList.remove('active'));
       inp.classList.add('active');
+      _meshEditorUpdate();
     });
     inp.addEventListener('change', e => {
       meshAccents[parseInt(inp.dataset.accent)] = e.target.value;
