@@ -3,7 +3,7 @@ let canvasBuffer;
 let imgLoaded = false;
 let exportScale = 4;
 
-// Sliders (wired to DOM via domSlider())
+// Sliders
 let sldMargin, sldLen, sldWeight, sldSway, sldSpawnFreq, sldDrawSpeed;
 let sldDensity, sldCluster, sldThreshold, sldWindSpeed, sldDisplace;
 let sldS1, sldS2, sldS3, sldS4;
@@ -59,22 +59,37 @@ let _resizeInitScale = 1.0;
 let _resizeInitDist = 1.0;
 let _resizePhotoCX = 0, _resizePhotoCY = 0;
 
-// Default mode (gradient)
+// Default mode
 let defaultPreviewCanvas = null;
 let _defaultPreviewTimer = null;
-let gradStops = [
-  { id: 0, pos: 0, color: '#6c8d79' },
-  { id: 1, pos: 1, color: '#8a52ee' },
+let defTextAlignment = 'center';
+
+// Gradient mode
+let gradientPreviewCanvas = null;
+let _gradientPreviewTimer = null;
+
+// ── Mesh gradient ─────────────────────────────────────────────────────────────
+
+const MESH_GREEN_TRIADS = [
+  ['#037342', '#2E944C', '#45B04B'],
+  ['#525C29', '#ADBA6B', '#DDE3B6'],
+  ['#417F34', '#749E5E', '#8FB47D'],
 ];
-let gradAngle = 135;
-let gradSelectedId = 0;
-let _gradNextId = 2;
+const MESH_ACCENTS = ['#8A6BD3', '#D297E8', '#C790DB', '#FF9FCC'];
+
+let meshPoints = [];
+let meshGreenTriad = 0;
+let meshAccentIdx = 0;
+let meshSelectedId = null;
+let _meshNextId = 0;
+let _meshDragId = null;
+let _meshDragCanvas = null;
 
 // Sidebar
 let sidebarVisible = true;
 const SIDEBAR_W = 260;
 
-// ── DOM helpers ────────────────────────────────────────────────────────────────────────────
+// ── DOM helpers ────────────────────────────────────────────────────────────────
 
 function domSlider(id) {
   return { value: () => parseFloat(document.getElementById(id).value) };
@@ -82,7 +97,7 @@ function domSlider(id) {
 function getArtboardW() { return parseInt(document.getElementById('inp-artboard-w').value) || 1200; }
 function getArtboardH() { return parseInt(document.getElementById('inp-artboard-h').value) || 800; }
 
-// ── p5 lifecycle ───────────────────────────────────────────────────────────────────────────
+// ── p5 lifecycle ───────────────────────────────────────────────────────────────
 
 function setup() {
   let canvas = createCanvas(windowWidth - SIDEBAR_W, windowHeight);
@@ -112,15 +127,20 @@ function setup() {
   sldMouseRadius   = domSlider('sld-mouse-radius');
 
   initModeToggle();
-  _gradUpdate();
-  _scheduleDefaultPreview(100);
+  _meshRandomize();
+
+  // Defer first canvas render until layout is resolved
+  requestAnimationFrame(() => {
+    _meshEditorUpdate();
+    _scheduleDefaultPreview(50);
+  });
 }
 
 function windowResized() {
   resizeCanvas(windowWidth - (sidebarVisible ? SIDEBAR_W : 0), windowHeight);
 }
 
-// ── File handling ──────────────────────────────────────────────────────────────────────────
+// ── File handling ──────────────────────────────────────────────────────────────
 
 function handleFile(file) {
   if (file.type === 'image' && currentMode === 'image') {
@@ -128,7 +148,7 @@ function handleFile(file) {
   }
 }
 
-// ── Growth ────────────────────────────────────────────────────────────────────────────────
+// ── Growth ────────────────────────────────────────────────────────────────────
 
 function restartGrowth() {
   if (!img) return;
@@ -182,15 +202,15 @@ function findSeeds() {
   allSeeds = shuffle(allSeeds);
 }
 
-// ── Draw loop ──────────────────────────────────────────────────────────────────────────────
+// ── Draw loop ──────────────────────────────────────────────────────────────────
 
 function draw() {
-  // — Default mode preview ———————————————————————————————————————————————————————
+  // Default mode preview
   if (currentMode === 'default' && defaultPreviewCanvas && !showGrowth) {
     background(250);
-    const arD = defaultPreviewCanvas.width / defaultPreviewCanvas.height;
-    let dW = width, dH = width / arD;
-    if (dH > height) { dH = height; dW = height * arD; }
+    const ar = defaultPreviewCanvas.width / defaultPreviewCanvas.height;
+    let dW = width, dH = width / ar;
+    if (dH > height) { dH = height; dW = height * ar; }
     dispOX = (width - dW) / 2; dispOY = (height - dH) / 2;
     dispW = dW; dispH = dH;
     drawingContext.drawImage(defaultPreviewCanvas, dispOX, dispOY, dW, dH);
@@ -198,7 +218,20 @@ function draw() {
     return;
   }
 
-  // — Text preview mode ——————————————————————————————————————————————————————————
+  // Gradient mode preview
+  if (currentMode === 'gradient' && gradientPreviewCanvas && !showGrowth) {
+    background(250);
+    const arG = gradientPreviewCanvas.width / gradientPreviewCanvas.height;
+    let dWg = width, dHg = width / arG;
+    if (dHg > height) { dHg = height; dWg = height * arG; }
+    dispOX = (width - dWg) / 2; dispOY = (height - dHg) / 2;
+    dispW = dWg; dispH = dHg;
+    drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dWg, dHg);
+    cursor(ARROW);
+    return;
+  }
+
+  // Text preview mode
   if (currentMode === 'text' && textPreviewCanvas && !showGrowth) {
     background(250);
     const arT = textPreviewCanvas.width / textPreviewCanvas.height;
@@ -211,7 +244,7 @@ function draw() {
     return;
   }
 
-  // — Standard growth display ——————————————————————————————————————————————————————
+  // Standard growth display
   if (!imgLoaded) { background(255); cursor(ARROW); return; }
   cursor(ARROW);
   windTime += sldWindSpeed.value() * 0.0005;
@@ -245,12 +278,12 @@ function draw() {
   const rawVelX = (mouseX - _prevMX) * bScale;
   const rawVelY = (mouseY - _prevMY) * bScale;
   _prevMX = mouseX; _prevMY = mouseY;
-  const rawMag    = Math.sqrt(rawVelX * rawVelX + rawVelY * rawVelY);
-  const maxRaw    = canvasBuffer.width * 0.025;
-  const clamp     = rawMag > maxRaw ? maxRaw / rawMag : 1;
-  const velSmooth = 0.90;
-  mouseVelX = mouseVelX * velSmooth + rawVelX * clamp * (1 - velSmooth);
-  mouseVelY = mouseVelY * velSmooth + rawVelY * clamp * (1 - velSmooth);
+  const rawMag  = Math.sqrt(rawVelX * rawVelX + rawVelY * rawVelY);
+  const maxRaw  = canvasBuffer.width * 0.025;
+  const clamp   = rawMag > maxRaw ? maxRaw / rawMag : 1;
+  const smooth  = 0.90;
+  mouseVelX = mouseVelX * smooth + rawVelX * clamp * (1 - smooth);
+  mouseVelY = mouseVelY * smooth + rawVelY * clamp * (1 - smooth);
   const smoothMag = Math.sqrt(mouseVelX * mouseVelX + mouseVelY * mouseVelY);
   windMagnitude   = Math.min(smoothMag / maxRaw, 1);
   windDirX        = smoothMag > 0.5 ? mouseVelX / smoothMag : 0;
@@ -267,102 +300,261 @@ function draw() {
   image(canvasBuffer, width / 2, height / 2, dispW, dispH);
 }
 
-// ── Default mode — gradient ────────────────────────────────────────────────────────────────
+// ── Mesh gradient ─────────────────────────────────────────────────────────────
 
-function _makeGradientCanvas(w, h) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d');
-  const angle = gradAngle * Math.PI / 180;
-  const cx = w / 2, cy = h / 2;
-  const len = Math.sqrt(w * w + h * h) / 2;
-  const x1 = cx - Math.cos(angle) * len;
-  const y1 = cy - Math.sin(angle) * len;
-  const x2 = cx + Math.cos(angle) * len;
-  const y2 = cy + Math.sin(angle) * len;
-  const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-  const sorted = [...gradStops].sort((a, b) => a.pos - b.pos);
-  for (const s of sorted) grad.addColorStop(s.pos, s.color);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-  return c;
+function _hexToRGB(hex) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-function _gradColorAt(pos) {
-  const sorted = [...gradStops].sort((a, b) => a.pos - b.pos);
-  if (pos <= sorted[0].pos) return sorted[0].color;
-  if (pos >= sorted[sorted.length - 1].pos) return sorted[sorted.length - 1].color;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (pos >= sorted[i].pos && pos <= sorted[i + 1].pos) {
-      const t = (pos - sorted[i].pos) / (sorted[i + 1].pos - sorted[i].pos);
-      return _lerpColor(sorted[i].color, sorted[i + 1].color, t);
-    }
+function _makeMeshCanvas(w, h) {
+  if (meshPoints.length === 0) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').fillStyle = '#6c8d79';
+    c.getContext('2d').fillRect(0, 0, w, h);
+    return c;
   }
-  return '#888888';
-}
 
-function _lerpColor(c1, c2, t) {
-  const r1 = parseInt(c1.slice(1, 3), 16), g1 = parseInt(c1.slice(3, 5), 16), b1 = parseInt(c1.slice(5, 7), 16);
-  const r2 = parseInt(c2.slice(1, 3), 16), g2 = parseInt(c2.slice(3, 5), 16), b2 = parseInt(c2.slice(5, 7), 16);
-  const r = Math.round(r1 + (r2 - r1) * t);
-  const g = Math.round(g1 + (g2 - g1) * t);
-  const b = Math.round(b1 + (b2 - b1) * t);
-  return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
-}
+  // Render at low resolution for speed, then upscale
+  const SMALL = 128;
+  const smallH = Math.max(1, Math.round(SMALL * h / w));
+  const tmp = document.createElement('canvas');
+  tmp.width = SMALL; tmp.height = smallH;
+  const ctx = tmp.getContext('2d');
+  const imgData = ctx.createImageData(SMALL, smallH);
+  const data = imgData.data;
 
-function _gradUpdate() {
-  const bar = document.getElementById('grad-bar');
-  if (!bar) return;
-
-  // Update gradient bar preview
-  const sorted = [...gradStops].sort((a, b) => a.pos - b.pos);
-  const stopsStr = sorted.map(s => `${s.color} ${Math.round(s.pos * 100)}%`).join(', ');
-  bar.style.background = `linear-gradient(to right, ${stopsStr})`;
-
-  // Render stop markers
-  const track = document.getElementById('grad-stops-row');
-  if (!track) return;
-  track.innerHTML = '';
-  gradStops.forEach(s => {
-    const el = document.createElement('div');
-    el.className = 'grad-stop' + (s.id === gradSelectedId ? ' selected' : '');
-    el.style.left = (s.pos * 100) + '%';
-    el.style.background = s.color;
-    el.addEventListener('mousedown', ev => {
-      gradSelectedId = s.id;
-      _gradUpdate();
-      const rect = track.getBoundingClientRect();
-      function onMove(e) {
-        let p = (e.clientX - rect.left) / rect.width;
-        p = Math.max(0.001, Math.min(0.999, p));
-        const stop = gradStops.find(x => x.id === s.id);
-        if (stop) { stop.pos = p; _gradUpdate(); _scheduleDefaultPreview(0); }
-      }
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      }
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-      ev.preventDefault();
-    });
-    track.appendChild(el);
+  const pts = meshPoints.map(pt => {
+    const rgb = _hexToRGB(pt.color);
+    return { x: pt.x, y: pt.y, r: rgb[0], g: rgb[1], b: rgb[2] };
   });
 
-  // Sync color picker to selected stop
-  const sel = gradStops.find(s => s.id === gradSelectedId);
-  const picker = document.getElementById('inp-grad-color');
-  if (sel && picker) picker.value = sel.color;
+  for (let py = 0; py < smallH; py++) {
+    const ny = py / (smallH - 1 || 1);
+    for (let px = 0; px < SMALL; px++) {
+      const nx = px / (SMALL - 1 || 1);
+      let wR = 0, wG = 0, wB = 0, wSum = 0;
+      let exact = false;
+      for (const pt of pts) {
+        const dx = nx - pt.x, dy = ny - pt.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 1e-8) {
+          wR = pt.r; wG = pt.g; wB = pt.b; wSum = 1; exact = true; break;
+        }
+        const w = 1 / d2;
+        wR += pt.r * w; wG += pt.g * w; wB += pt.b * w;
+        wSum += w;
+      }
+      if (!exact && wSum === 0) { wR = 108; wG = 141; wB = 121; wSum = 1; }
+      const i = (py * SMALL + px) * 4;
+      data[i]   = Math.round(wR / wSum);
+      data[i+1] = Math.round(wG / wSum);
+      data[i+2] = Math.round(wB / wSum);
+      data[i+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
 
-  _scheduleDefaultPreview(0);
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(tmp, 0, 0, w, h);
+  return out;
+}
+
+function _meshRenderCanvas(canvasEl) {
+  if (!canvasEl || canvasEl.width === 0 || canvasEl.height === 0) return;
+  const W = canvasEl.width, H = canvasEl.height;
+  const ctx = canvasEl.getContext('2d');
+  ctx.drawImage(_makeMeshCanvas(W, H), 0, 0);
+  for (const pt of meshPoints) {
+    const px = pt.x * W, py = pt.y * H;
+    const sel = pt.id === meshSelectedId;
+    ctx.beginPath();
+    ctx.arc(px, py, sel ? 7 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = pt.color;
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = sel ? 2.5 : 1.5;
+    ctx.stroke();
+    if (sel) {
+      ctx.beginPath();
+      ctx.arc(px, py, 11, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+function _meshEditorUpdate() {
+  _meshRenderCanvas(document.getElementById('mesh-def'));
+  _meshRenderCanvas(document.getElementById('mesh-grad'));
+
+  const sel = meshPoints.find(p => p.id === meshSelectedId);
+  const picker = document.getElementById('inp-mesh-color');
+  if (picker && sel) picker.value = sel.color;
+
+  document.querySelectorAll('#triad-btns .triad-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === meshGreenTriad);
+  });
+  document.querySelectorAll('#accent-btns .accent-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === meshAccentIdx);
+  });
+
+  if (currentMode === 'default')  _scheduleDefaultPreview(50);
+  if (currentMode === 'gradient') _scheduleGradientPreview(50);
+}
+
+function _meshRandomize() {
+  meshPoints = [];
+  _meshNextId = 0;
+  const triad  = MESH_GREEN_TRIADS[meshGreenTriad];
+  const accent = MESH_ACCENTS[meshAccentIdx];
+
+  const basePositions = [
+    { x: 0.15, y: 0.25 }, { x: 0.75, y: 0.15 }, { x: 0.50, y: 0.60 },
+    { x: 0.25, y: 0.80 }, { x: 0.85, y: 0.70 },
+  ];
+  basePositions.forEach((pos, i) => {
+    meshPoints.push({
+      id: _meshNextId++,
+      x: Math.max(0.05, Math.min(0.95, pos.x + (Math.random() - 0.5) * 0.28)),
+      y: Math.max(0.05, Math.min(0.95, pos.y + (Math.random() - 0.5) * 0.28)),
+      color: triad[i % triad.length],
+    });
+  });
+
+  const numAccents = Math.random() < 0.5 ? 1 : 2;
+  for (let i = 0; i < numAccents; i++) {
+    meshPoints.push({
+      id: _meshNextId++,
+      x: Math.random() * 0.8 + 0.1,
+      y: Math.random() * 0.8 + 0.1,
+      color: accent,
+    });
+  }
+  meshSelectedId = meshPoints[0].id;
+  _meshEditorUpdate();
+}
+
+function _initMeshEditor(canvasId) {
+  const canvasEl = document.getElementById(canvasId);
+  if (!canvasEl) return;
+
+  function _getCoords(ev) {
+    const rect = canvasEl.getBoundingClientRect();
+    return {
+      nx: Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width)),
+      ny: Math.max(0, Math.min(1, (ev.clientY - rect.top)  / rect.height)),
+      hitR: 14 / rect.width,
+    };
+  }
+
+  canvasEl.addEventListener('mousedown', ev => {
+    ev.preventDefault();
+    const { nx, ny, hitR } = _getCoords(ev);
+
+    let hit = null, minD = Infinity;
+    for (const pt of meshPoints) {
+      const dx = nx - pt.x, dy = ny - pt.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < hitR && d < minD) { minD = d; hit = pt; }
+    }
+
+    if (hit) {
+      meshSelectedId = hit.id;
+      _meshDragId = hit.id;
+    } else {
+      const triad = MESH_GREEN_TRIADS[meshGreenTriad];
+      const newPt = {
+        id: _meshNextId++,
+        x: nx, y: ny,
+        color: triad[Math.floor(Math.random() * triad.length)],
+      };
+      meshPoints.push(newPt);
+      meshSelectedId = newPt.id;
+      _meshDragId = newPt.id;
+    }
+    _meshDragCanvas = canvasId;
+    _meshEditorUpdate();
+  });
+
+  canvasEl.addEventListener('contextmenu', ev => {
+    ev.preventDefault();
+    const { nx, ny, hitR } = _getCoords(ev);
+    let hit = null, minD = Infinity;
+    for (const pt of meshPoints) {
+      const dx = nx - pt.x, dy = ny - pt.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < hitR && d < minD) { minD = d; hit = pt; }
+    }
+    if (hit && meshPoints.length > 2) {
+      meshPoints = meshPoints.filter(p => p.id !== hit.id);
+      if (meshSelectedId === hit.id) meshSelectedId = meshPoints[0]?.id ?? null;
+      _meshEditorUpdate();
+    }
+  });
+}
+
+function _initMeshDocumentDrag() {
+  document.addEventListener('mousemove', ev => {
+    if (_meshDragId === null || !_meshDragCanvas) return;
+    const canvasEl = document.getElementById(_meshDragCanvas);
+    if (!canvasEl) return;
+    const rect = canvasEl.getBoundingClientRect();
+    const nx = Math.max(0.01, Math.min(0.99, (ev.clientX - rect.left) / rect.width));
+    const ny = Math.max(0.01, Math.min(0.99, (ev.clientY - rect.top)  / rect.height));
+    const pt = meshPoints.find(p => p.id === _meshDragId);
+    if (pt) { pt.x = nx; pt.y = ny; _meshEditorUpdate(); }
+  });
+  document.addEventListener('mouseup', () => { _meshDragId = null; _meshDragCanvas = null; });
+}
+
+// ── Default mode ───────────────────────────────────────────────────────────────
+
+function _getDefTypography() {
+  return {
+    lines:       (document.getElementById('def-txt-content').value || '').split('\n'),
+    fontFamily:  document.getElementById('def-font-family').value,
+    fontSize:    parseInt(document.getElementById('def-font-size').value) || 200,
+    fontWeight:  document.getElementById('def-font-weight').value,
+    letterSpc:   parseInt(document.getElementById('def-letter-spacing').value) || 0,
+    lineHMult:   parseFloat(document.getElementById('def-line-height').value) || 1.2,
+    textXPct:    parseInt(document.getElementById('def-pos-x').value) / 100,
+    textYPct:    parseInt(document.getElementById('def-pos-y').value) / 100,
+  };
+}
+
+function _buildTextMask(artW, artH, t) {
+  const lineH = t.fontSize * t.lineHMult;
+  const fontStr = t.fontWeight + ' ' + t.fontSize + 'px ' + t.fontFamily;
+  const mask = document.createElement('canvas');
+  mask.width = artW; mask.height = artH;
+  const mc = mask.getContext('2d');
+  mc.fillStyle = 'black';
+  mc.font = fontStr; mc.textBaseline = 'top';
+  if ('letterSpacing' in mc) mc.letterSpacing = t.letterSpc + 'px';
+  const totalH   = t.lines.length * lineH;
+  const blockTop = t.textYPct * artH - totalH / 2;
+  for (let i = 0; i < t.lines.length; i++) {
+    const lw = _measureLine(mc, t.lines[i], t.letterSpc);
+    const bx = t.textXPct * artW;
+    const y  = blockTop + i * lineH;
+    const x  = defTextAlignment === 'center' ? bx - lw / 2
+             : defTextAlignment === 'right'  ? bx - lw : bx;
+    if ('letterSpacing' in mc) mc.fillText(t.lines[i], x, y);
+    else _drawSpaced(mc, t.lines[i], x, y, t.letterSpc);
+  }
+  return mask;
 }
 
 function _renderDefaultPreviewSync() {
-  const lines = (document.getElementById('def-txt-content').value || '').split('\n');
   const artW = getArtboardW(), artH = getArtboardH();
-  const fontSize = Math.round(artW * 0.17);
-  const fontStr = '400 ' + fontSize + 'px "Times New Roman", serif';
-  const lineH = fontSize * 1.2;
+  const t = _getDefTypography();
 
   if (!defaultPreviewCanvas) defaultPreviewCanvas = document.createElement('canvas');
   defaultPreviewCanvas.width  = artW;
@@ -371,31 +563,21 @@ function _renderDefaultPreviewSync() {
   fc.fillStyle = '#ffffff';
   fc.fillRect(0, 0, artW, artH);
 
-  const gradCanvas = _makeGradientCanvas(artW, artH);
+  if (meshPoints.length < 2) return;
 
-  // Gradient at 75% opacity — visible outside letters
+  const meshCanvas = _makeMeshCanvas(artW, artH);
+
+  // Gradient at 75% opacity outside letters
   fc.globalAlpha = 0.75;
-  fc.drawImage(gradCanvas, 0, 0);
+  fc.drawImage(meshCanvas, 0, 0);
   fc.globalAlpha = 1.0;
 
-  // Build text mask
-  const mask = document.createElement('canvas');
-  mask.width = artW; mask.height = artH;
-  const mc = mask.getContext('2d');
-  mc.fillStyle = 'black';
-  mc.font = fontStr; mc.textBaseline = 'top';
-  const totalH  = lines.length * lineH;
-  const blockTop = artH / 2 - totalH / 2;
-  for (let i = 0; i < lines.length; i++) {
-    const lw = mc.measureText(lines[i]).width;
-    mc.fillText(lines[i], artW / 2 - lw / 2, blockTop + i * lineH);
-  }
-
   // Gradient clipped to letters at 100%
+  const mask = _buildTextMask(artW, artH, t);
   const comp = document.createElement('canvas');
   comp.width = artW; comp.height = artH;
   const cc = comp.getContext('2d');
-  cc.drawImage(gradCanvas, 0, 0);
+  cc.drawImage(meshCanvas, 0, 0);
   cc.globalCompositeOperation = 'destination-in';
   cc.drawImage(mask, 0, 0);
   cc.globalCompositeOperation = 'source-over';
@@ -416,47 +598,61 @@ function _scheduleDefaultPreview(delay) {
 }
 
 function renderDefaultComposition() {
-  const lines = (document.getElementById('def-txt-content').value || '').split('\n');
   const artW = getArtboardW(), artH = getArtboardH();
-  const fontSize = Math.round(artW * 0.17);
-  const fontStr = '400 ' + fontSize + 'px "Times New Roman", serif';
-  const lineH = fontSize * 1.2;
+  const t = _getDefTypography();
+  if (meshPoints.length < 2) return;
 
-  const gradCanvas = _makeGradientCanvas(artW, artH);
-
-  const mask = document.createElement('canvas');
-  mask.width = artW; mask.height = artH;
-  const mc = mask.getContext('2d');
-  mc.fillStyle = 'black';
-  mc.font = fontStr; mc.textBaseline = 'top';
-  const totalH   = lines.length * lineH;
-  const blockTop = artH / 2 - totalH / 2;
-  for (let i = 0; i < lines.length; i++) {
-    const lw = mc.measureText(lines[i]).width;
-    mc.fillText(lines[i], artW / 2 - lw / 2, blockTop + i * lineH);
-  }
-
-  const finalCanvas = document.createElement('canvas');
-  finalCanvas.width = artW; finalCanvas.height = artH;
-  const fc = finalCanvas.getContext('2d');
-  fc.fillStyle = 'white';
-  fc.fillRect(0, 0, artW, artH);
+  const meshCanvas = _makeMeshCanvas(artW, artH);
+  const mask = _buildTextMask(artW, artH, t);
 
   const comp = document.createElement('canvas');
   comp.width = artW; comp.height = artH;
   const cc = comp.getContext('2d');
-  cc.drawImage(gradCanvas, 0, 0);
+  cc.drawImage(meshCanvas, 0, 0);
   cc.globalCompositeOperation = 'destination-in';
   cc.drawImage(mask, 0, 0);
   cc.globalCompositeOperation = 'source-over';
+
+  const final = document.createElement('canvas');
+  final.width = artW; final.height = artH;
+  const fc = final.getContext('2d');
+  fc.fillStyle = 'white';
+  fc.fillRect(0, 0, artW, artH);
   fc.drawImage(comp, 0, 0);
 
-  const dataURL = finalCanvas.toDataURL('image/jpeg', 0.92);
+  const dataURL = final.toDataURL('image/jpeg', 0.92);
   embedSourceBase64 = dataURL;
   loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
 }
 
-// ── Text preview ───────────────────────────────────────────────────────────────────────────
+// ── Gradient mode ──────────────────────────────────────────────────────────────
+
+function _scheduleGradientPreview(delay) {
+  if (currentMode === 'gradient') showGrowth = false;
+  if (_gradientPreviewTimer) clearTimeout(_gradientPreviewTimer);
+  const doRender = () => {
+    const artW = getArtboardW(), artH = getArtboardH();
+    if (meshPoints.length < 2) return;
+    if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
+    gradientPreviewCanvas.width  = artW;
+    gradientPreviewCanvas.height = artH;
+    gradientPreviewCanvas.getContext('2d').drawImage(_makeMeshCanvas(artW, artH), 0, 0);
+    _gradientPreviewTimer = null;
+  };
+  if (delay === 0) doRender();
+  else _gradientPreviewTimer = setTimeout(doRender, delay);
+}
+
+function renderGradientComposition() {
+  const artW = getArtboardW(), artH = getArtboardH();
+  if (meshPoints.length < 2) return;
+  const meshCanvas = _makeMeshCanvas(artW, artH);
+  const dataURL = meshCanvas.toDataURL('image/jpeg', 0.92);
+  embedSourceBase64 = dataURL;
+  loadImage(dataURL, loaded => { img = loaded; restartGrowth(); });
+}
+
+// ── Text preview ───────────────────────────────────────────────────────────────
 
 function renderTextPreviewSync() {
   const lines        = document.getElementById('txt-content').value.split('\n');
@@ -554,7 +750,7 @@ function _scheduleTextPreview(delay) {
   }
 }
 
-// ── Photo frame helpers ────────────────────────────────────────────────────────────────────
+// ── Photo frame helpers ────────────────────────────────────────────────────────
 
 function _getPhotoFrameInfo() {
   if (!textPhotoElement || dispW <= 0) return null;
@@ -610,7 +806,7 @@ function _drawPhotoFrame() {
   else                             cursor('grab');
 }
 
-// ── Mouse events ───────────────────────────────────────────────────────────────────────────
+// ── Mouse events ───────────────────────────────────────────────────────────────
 
 function mousePressed() {
   if (currentMode === 'text' && textPreviewCanvas && !showGrowth && textPhotoElement) {
@@ -674,7 +870,7 @@ function mouseWheel(event) {
   }
 }
 
-// ── Blade ──────────────────────────────────────────────────────────────────────────────────
+// ── Blade ──────────────────────────────────────────────────────────────────────
 
 class Blade {
   constructor(x, y, c) {
@@ -730,13 +926,13 @@ class Blade {
   }
 }
 
-// ── Video recording ────────────────────────────────────────────────────────────────────────
+// ── Video recording ────────────────────────────────────────────────────────────
 
 function startRecording() {
   if (!imgLoaded || !canvasBuffer) { alert('Start growing something first.'); return; }
   const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
   const mimeType  = mimeTypes.find(t => MediaRecorder.isTypeSupported(t));
-  if (!mimeType) { alert('Video recording is not supported in this browser.\nUse Chrome or Firefox.'); return; }
+  if (!mimeType) { alert('Video recording not supported in this browser.\nUse Chrome or Firefox.'); return; }
   const recW = Math.min(canvasBuffer.width, 1920);
   const recH = Math.round(recW / (canvasBuffer.width / canvasBuffer.height));
   recordingCanvas = document.createElement('canvas');
@@ -760,39 +956,65 @@ function stopRecording() {
   isRecording = false; _updateRecordBtn();
 }
 
-// ── Export & keys ──────────────────────────────────────────────────────────────────────────
+// ── Export & save ──────────────────────────────────────────────────────────────
 
 function downloadHighRes() { if (canvasBuffer) save(canvasBuffer, 'meadow.png'); }
 
 function keyPressed() {
   if (key === 's' || key === 'S') downloadHighRes();
-  if (key === 'r' || key === 'R') {
-    if      (currentMode === 'default') renderDefaultComposition();
-    else if (currentMode === 'text')    renderTextComposition();
-    else                                restartGrowth();
-  }
 }
 
-function logSettings() {
-  const ids = [
+function exportSettings() {
+  const sliderIds = [
     'inp-artboard-w','inp-artboard-h','sld-master-scale',
     'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
     'sld-len','sld-weight','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
-    'sld-s1','sld-s2','sld-s3','sld-s4','sld-c1','sld-c2','sld-c3','sld-c4',
-    'sld-r1','sld-r2','sld-r3','sld-r4'
+    'sld-s1','sld-s2','sld-s3','sld-s4',
+    'sld-c1','sld-c2','sld-c3','sld-c4',
+    'sld-r1','sld-r2','sld-r3','sld-r4',
+    'sld-mouse-strength','sld-mouse-radius',
+    'def-font-size','def-letter-spacing','def-line-height','def-pos-x','def-pos-y',
+    'txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y',
+    'txt-photo-x','txt-photo-y','txt-photo-scale',
   ];
-  const out = {};
-  ids.forEach(id => { const el = document.getElementById(id); if (el) out[id] = el.value; });
-  console.log(JSON.stringify(out, null, 2));
+  const selectIds = ['def-font-family','def-font-weight','txt-font-family','txt-font-weight'];
+
+  const sliders = {};
+  sliderIds.forEach(id => { const el = document.getElementById(id); if (el) sliders[id] = el.value; });
+  const selects = {};
+  selectIds.forEach(id => { const el = document.getElementById(id); if (el) selects[id] = el.value; });
+
+  const settings = {
+    version: 1,
+    sliders,
+    selects,
+    text: {
+      defContent: document.getElementById('def-txt-content')?.value || '',
+      txtContent: document.getElementById('txt-content')?.value || '',
+    },
+    alignment: { defTextAlignment, textAlignment, interactMode },
+    mesh: {
+      greenTriad: meshGreenTriad,
+      accentIdx: meshAccentIdx,
+      points: meshPoints.map(p => ({ x: p.x, y: p.y, color: p.color })),
+    },
+  };
+
+  const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'meadow-settings.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
-// ── Global wiring ──────────────────────────────────────────────────────────────────────────
+// ── Global wiring ──────────────────────────────────────────────────────────────
 
-window.applyAndRestart = restartGrowth;
 window.saveHighRes     = downloadHighRes;
-window.logSettings     = logSettings;
-
-window.toggleGrowth = function () { growthPaused = !growthPaused; _updateStopBtn(); };
+window.exportSettings  = exportSettings;
+window.toggleGrowth    = function () { growthPaused = !growthPaused; _updateStopBtn(); };
 window.toggleRecording = function () { isRecording ? stopRecording() : startRecording(); };
 
 window.exportEmbed = function () {
@@ -839,7 +1061,7 @@ window.toggleUI = function () {
   resizeCanvas(windowWidth - (sidebarVisible ? SIDEBAR_W : 0), windowHeight);
 };
 
-// ── Internal button state helpers ──────────────────────────────────────────────────────────
+// ── Internal button state helpers ──────────────────────────────────────────────
 
 function _updateStopBtn() {
   const btn = document.getElementById('btn-stop-grow');
@@ -865,88 +1087,116 @@ function _updateRecordBtn() {
   }
 }
 
-// ── Mode toggle ────────────────────────────────────────────────────────────────────────────
+// ── Mode toggle ────────────────────────────────────────────────────────────────
 
 function initModeToggle() {
-  const btnDefault = document.getElementById('btn-default-mode');
-  const btnText    = document.getElementById('btn-text-mode');
-  const btnImage   = document.getElementById('btn-image-mode');
-  const defaultPanel = document.getElementById('default-mode-panel');
-  const textPanel    = document.getElementById('text-mode-panel');
-  const imagePanel   = document.getElementById('image-mode-section');
+  const btnDefault  = document.getElementById('btn-default-mode');
+  const btnGradient = document.getElementById('btn-gradient-mode');
+  const btnText     = document.getElementById('btn-text-mode');
+  const btnImage    = document.getElementById('btn-image-mode');
+  const defaultPanel  = document.getElementById('default-mode-panel');
+  const gradientPanel = document.getElementById('gradient-mode-panel');
+  const textPanel     = document.getElementById('text-mode-panel');
+  const imagePanel    = document.getElementById('image-mode-section');
 
   function setMode(mode) {
     currentMode = mode;
-    btnDefault.classList.toggle('active', mode === 'default');
-    btnText.classList.toggle('active',    mode === 'text');
-    btnImage.classList.toggle('active',   mode === 'image');
-    defaultPanel.style.display = mode === 'default' ? 'block' : 'none';
-    textPanel.style.display    = mode === 'text'    ? 'block' : 'none';
-    imagePanel.style.display   = mode === 'image'   ? 'block' : 'none';
+    btnDefault.classList.toggle('active',  mode === 'default');
+    btnGradient.classList.toggle('active', mode === 'gradient');
+    btnText.classList.toggle('active',     mode === 'text');
+    btnImage.classList.toggle('active',    mode === 'image');
+    defaultPanel.style.display  = mode === 'default'  ? 'block' : 'none';
+    gradientPanel.style.display = mode === 'gradient' ? 'block' : 'none';
+    textPanel.style.display     = mode === 'text'     ? 'block' : 'none';
+    imagePanel.style.display    = mode === 'image'    ? 'block' : 'none';
   }
 
   setMode('default');
 
   btnDefault.addEventListener('click', () => {
-    setMode('default');
-    showGrowth = false;
-    _scheduleDefaultPreview(0);
+    setMode('default'); showGrowth = false; _scheduleDefaultPreview(0);
+  });
+  btnGradient.addEventListener('click', () => {
+    setMode('gradient'); showGrowth = false; _scheduleGradientPreview(0);
   });
   btnText.addEventListener('click', () => {
-    setMode('text');
-    showGrowth = false;
-    _scheduleTextPreview(50);
+    setMode('text'); showGrowth = false; _scheduleTextPreview(50);
   });
   btnImage.addEventListener('click', () => setMode('image'));
 
-  // Default mode wiring
+  // ── Default mode wiring ──────────────────────────────────────────────────────
+
   document.getElementById('def-txt-content').addEventListener('input', () => _scheduleDefaultPreview(250));
-
-  document.getElementById('inp-grad-color').addEventListener('input', e => {
-    const stop = gradStops.find(s => s.id === gradSelectedId);
-    if (stop) { stop.color = e.target.value; _gradUpdate(); }
+  ['def-font-size','def-letter-spacing','def-line-height','def-pos-x','def-pos-y'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => _scheduleDefaultPreview(150));
   });
-
-  document.getElementById('inp-grad-angle').addEventListener('input', e => {
-    gradAngle = parseInt(e.target.value);
-    _scheduleDefaultPreview(0);
+  ['def-font-family','def-font-weight'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => _scheduleDefaultPreview(100));
   });
-
-  document.getElementById('btn-grad-add').addEventListener('click', () => {
-    const sorted = [...gradStops].sort((a, b) => a.pos - b.pos);
-    const selIdx = sorted.findIndex(s => s.id === gradSelectedId);
-    let newPos;
-    if (selIdx < sorted.length - 1) newPos = (sorted[selIdx].pos + sorted[selIdx + 1].pos) / 2;
-    else if (selIdx > 0)            newPos = (sorted[selIdx - 1].pos + sorted[selIdx].pos) / 2;
-    else                            newPos = 0.5;
-    const newStop = { id: _gradNextId++, pos: newPos, color: _gradColorAt(newPos) };
-    gradStops.push(newStop);
-    gradSelectedId = newStop.id;
-    _gradUpdate();
-  });
-
-  document.getElementById('btn-grad-del').addEventListener('click', () => {
-    if (gradStops.length <= 2) return;
-    gradStops = gradStops.filter(s => s.id !== gradSelectedId);
-    gradSelectedId = gradStops[0].id;
-    _gradUpdate();
-  });
-
-  // Click gradient bar to add a stop at that position
-  document.getElementById('grad-bar').addEventListener('click', ev => {
-    const rect = ev.currentTarget.getBoundingClientRect();
-    const pos  = Math.max(0.01, Math.min(0.99, (ev.clientX - rect.left) / rect.width));
-    const newStop = { id: _gradNextId++, pos, color: _gradColorAt(pos) };
-    gradStops.push(newStop);
-    gradSelectedId = newStop.id;
-    _gradUpdate();
+  document.querySelectorAll('#def-alignment-btns .align-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#def-alignment-btns .align-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      defTextAlignment = btn.dataset.align;
+      _scheduleDefaultPreview(0);
+    });
   });
 
   document.getElementById('btn-def-render').addEventListener('click', renderDefaultComposition);
 
-  // Text mode wiring
+  // ── Mesh editor (both canvases) ──────────────────────────────────────────────
+
+  _initMeshEditor('mesh-def');
+  _initMeshEditor('mesh-grad');
+  _initMeshDocumentDrag();
+
+  // ── Gradient panel controls ──────────────────────────────────────────────────
+
+  document.getElementById('inp-mesh-color').addEventListener('input', e => {
+    const pt = meshPoints.find(p => p.id === meshSelectedId);
+    if (pt) { pt.color = e.target.value; _meshEditorUpdate(); }
+  });
+
+  document.getElementById('btn-mesh-del').addEventListener('click', () => {
+    if (meshPoints.length <= 2) return;
+    meshPoints = meshPoints.filter(p => p.id !== meshSelectedId);
+    meshSelectedId = meshPoints[0]?.id ?? null;
+    _meshEditorUpdate();
+  });
+
+  document.getElementById('btn-mesh-randomize').addEventListener('click', _meshRandomize);
+
+  document.querySelectorAll('#triad-btns .triad-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      meshGreenTriad = parseInt(btn.dataset.triad);
+      _meshRandomize();
+    });
+  });
+
+  document.querySelectorAll('#accent-btns .accent-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      meshAccentIdx = parseInt(btn.dataset.accent);
+      // Update accent points to new color
+      const accent = MESH_ACCENTS[meshAccentIdx];
+      const triadColors = new Set(MESH_GREEN_TRIADS[meshGreenTriad]);
+      meshPoints.forEach(pt => {
+        if (!triadColors.has(pt.color)) pt.color = accent;
+      });
+      _meshEditorUpdate();
+    });
+  });
+
+  document.getElementById('btn-grad-render').addEventListener('click', renderGradientComposition);
+
+  // ── Image mode ────────────────────────────────────────────────────────────────
+
+  document.getElementById('btn-render-image').addEventListener('click', restartGrowth);
+
+  // ── Text mode wiring ─────────────────────────────────────────────────────────
+
   document.getElementById('btn-render-text').addEventListener('click', renderTextComposition);
-  document.getElementById('btn-preview-text').addEventListener('click', () => { showGrowth = false; _scheduleTextPreview(0); });
   document.getElementById('btn-load-custom-font').addEventListener('click', () => {
     loadCustomFont(document.getElementById('txt-custom-font').value);
   });
@@ -976,7 +1226,8 @@ function initModeToggle() {
     });
   });
 
-  ['txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y','txt-photo-x','txt-photo-y','txt-photo-scale'].forEach(id => {
+  ['txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y',
+   'txt-photo-x','txt-photo-y','txt-photo-scale'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => _scheduleTextPreview(150));
   });
@@ -987,7 +1238,7 @@ function initModeToggle() {
   });
 }
 
-// ── Text compositing ───────────────────────────────────────────────────────────────────────
+// ── Text compositing ───────────────────────────────────────────────────────────
 
 function renderTextComposition() {
   const lines          = document.getElementById('txt-content').value.split('\n');
@@ -1088,7 +1339,7 @@ function loadCustomFont(name) {
   });
 }
 
-// ── Embed HTML generator ───────────────────────────────────────────────────────────────────
+// ── Embed HTML generator ───────────────────────────────────────────────────────
 
 function buildEmbedHTML(base64, S) {
   const cfg = JSON.stringify(S);

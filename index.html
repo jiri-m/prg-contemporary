@@ -48,7 +48,7 @@
     #sidebar::-webkit-scrollbar-track { background: var(--white); }
     #sidebar::-webkit-scrollbar-thumb { background: var(--gray3); }
 
-    /* ── Fixed toggle tab — always visible ── */
+    /* ── Fixed toggle tab ── */
     #ui-toggle-tab {
       position: fixed;
       top: 0;
@@ -89,29 +89,19 @@
       transition: background 0.15s, color 0.15s;
       border-radius: 0 2px 2px 0;
     }
-    #ui-toggle-tab-btn:hover {
-      background: var(--gray3);
-      color: var(--black);
-    }
+    #ui-toggle-tab-btn:hover { background: var(--gray3); color: var(--black); }
 
-    #canvas-container {
-      flex: 1;
-      position: relative;
-      background: var(--white);
-    }
+    #canvas-container { flex: 1; position: relative; background: var(--white); }
     #canvas-container canvas { display: block; }
 
     /* ── Mode toggle ── */
-    .mode-toggle {
-      display: flex;
-      border-bottom: 1px solid var(--gray3);
-    }
+    .mode-toggle { display: flex; border-bottom: 1px solid var(--gray3); }
     .mode-btn {
       flex: 1;
       padding: 10px 0;
-      font-size: 9px;
+      font-size: 8px;
       font-family: var(--mono);
-      letter-spacing: 0.12em;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
       cursor: pointer;
       border: none;
@@ -121,17 +111,11 @@
       margin-bottom: -1px;
       transition: color 0.15s, border-color 0.15s;
     }
-    .mode-btn.active {
-      color: var(--black);
-      border-bottom-color: var(--red);
-    }
+    .mode-btn.active { color: var(--black); border-bottom-color: var(--red); }
     .mode-btn:hover:not(.active) { color: var(--gray1); }
 
     /* ── Sections ── */
-    .section {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--gray3);
-    }
+    .section { padding: 10px 14px; border-bottom: 1px solid var(--gray3); }
     .section-title {
       font-size: 8px;
       font-family: var(--mono);
@@ -142,12 +126,7 @@
     }
 
     /* ── Slider rows ── */
-    .row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 6px;
-      gap: 6px;
-    }
+    .row { display: flex; align-items: center; margin-bottom: 6px; gap: 6px; }
     .row label {
       font-size: 9px;
       font-family: var(--mono);
@@ -202,30 +181,16 @@
       margin-bottom: 5px;
       transition: background 0.12s, color 0.12s;
     }
-    .btn-primary {
-      background: var(--black);
-      border: 1px solid var(--black);
-      color: var(--white);
-    }
+    .btn:last-child { margin-bottom: 0; }
+    .btn-primary { background: var(--black); border: 1px solid var(--black); color: var(--white); }
     .btn-primary:hover { background: #333; }
-    .btn-red {
-      background: var(--red);
-      border: 1px solid var(--red);
-      color: var(--white);
-    }
+    .btn-red { background: var(--red); border: 1px solid var(--red); color: var(--white); }
     .btn-red:hover { background: #c82020; border-color: #c82020; }
-    .btn-secondary {
-      background: var(--white);
-      border: 1px solid var(--gray3);
-      color: var(--gray1);
-    }
+    .btn-secondary { background: var(--white); border: 1px solid var(--gray3); color: var(--gray1); }
     .btn-secondary:hover { border-color: var(--black); color: var(--black); }
 
     /* ── Tiers table ── */
-    .tier-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .tier-table { width: 100%; border-collapse: collapse; }
     .tier-table th {
       font-size: 7px;
       font-family: var(--mono);
@@ -238,34 +203,14 @@
     }
     .tier-table th:first-child { text-align: left; }
     .tier-table td { padding: 2px; vertical-align: middle; }
-    .tier-label {
-      font-size: 9px;
-      font-family: var(--mono);
-      color: var(--gray1);
-      padding-right: 4px !important;
-      white-space: nowrap;
-    }
-    .tier-table input[type=range] {
-      width: 100%;
-      height: 2px;
-      accent-color: var(--black);
-      cursor: pointer;
-    }
-    .tier-val {
-      font-size: 7px;
-      font-family: var(--mono);
-      color: var(--gray2);
-      display: block;
-      text-align: center;
-    }
+    .tier-label { font-size: 9px; font-family: var(--mono); color: var(--gray1); padding-right: 4px !important; white-space: nowrap; }
+    .tier-table input[type=range] { width: 100%; height: 2px; accent-color: var(--black); cursor: pointer; }
+    .tier-val { font-size: 7px; font-family: var(--mono); color: var(--gray2); display: block; text-align: center; }
 
-    /* ── Text mode ── */
+    /* ── Text/typography fields ── */
     #text-mode-panel { display: none; }
-    #draw-mode-panel { display: none; }
 
-    .text-field {
-      margin-bottom: 9px;
-    }
+    .text-field { margin-bottom: 9px; }
     .text-field label {
       display: block;
       font-size: 8px;
@@ -293,10 +238,7 @@
     .text-field input[type=text]:focus { outline: none; border-color: var(--black); }
     .text-field select option { background: var(--white); }
 
-    .inline-input {
-      display: flex;
-      gap: 4px;
-    }
+    .inline-input { display: flex; gap: 4px; }
     .inline-input input[type=text] { flex: 1; }
     .inline-input button {
       padding: 4px 8px;
@@ -324,34 +266,12 @@
       color: var(--gray1);
       transition: background 0.12s, color 0.12s, border-color 0.12s;
     }
-    .align-btn.active {
-      background: var(--black);
-      border-color: var(--black);
-      color: var(--white);
-    }
+    .align-btn.active { background: var(--black); border-color: var(--black); color: var(--white); }
     .align-btn:hover:not(.active) { border-color: var(--black); color: var(--black); }
 
-    .divider {
-      border: none;
-      border-top: 1px solid var(--gray3);
-      margin: 10px 0;
-    }
+    .divider { border: none; border-top: 1px solid var(--gray3); margin: 10px 0; }
 
-    .file-input-label {
-      display: block;
-      font-size: 8px;
-      font-family: var(--mono);
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--gray1);
-      margin-bottom: 3px;
-    }
-    input[type=file] {
-      font-size: 9px;
-      font-family: var(--mono);
-      color: var(--gray1);
-      width: 100%;
-    }
+    input[type=file] { font-size: 9px; font-family: var(--mono); color: var(--gray1); width: 100%; }
 
     /* ── Status indicator ── */
     #rec-dot {
@@ -363,67 +283,73 @@
       vertical-align: middle;
       transition: background 0.2s;
     }
-    #rec-dot.active {
-      background: var(--red);
-      animation: recpulse 0.9s ease-in-out infinite;
-    }
+    #rec-dot.active { background: var(--red); animation: recpulse 0.9s ease-in-out infinite; }
     @keyframes recpulse {
       0%,100% { opacity: 1; }
       50%      { opacity: 0.2; }
     }
 
-    /* ── Default mode panel ── */
-    #default-mode-panel { display: none; }
+    /* ── Mode panels ── */
+    #default-mode-panel  { display: none; }
+    #gradient-mode-panel { display: none; }
 
-    /* ── Gradient editor ── */
-    #grad-editor-wrap { position: relative; margin-bottom: 6px; }
-    #grad-bar {
-      height: 28px;
-      border-radius: 2px;
+    /* ── Mesh gradient editor ── */
+    .mesh-canvas-wrap {
       border: 1px solid var(--gray3);
-      cursor: crosshair;
-    }
-    #grad-stops-row {
-      position: relative;
-      height: 18px;
-      margin-top: 5px;
-    }
-    .grad-stop {
-      position: absolute;
-      width: 13px;
-      height: 18px;
-      top: 0;
-      transform: translateX(-50%);
       border-radius: 2px;
-      cursor: ew-resize;
-      border: 2px solid rgba(255,255,255,0.95);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.22), 0 2px 4px rgba(0,0,0,0.18);
-      transition: box-shadow 0.1s;
+      margin-bottom: 6px;
+      overflow: hidden;
+      cursor: crosshair;
+      user-select: none;
     }
-    .grad-stop.selected {
-      border-color: var(--black);
-      box-shadow: 0 0 0 1.5px var(--black);
+    .mesh-canvas-wrap canvas { display: block; width: 100%; height: auto; }
+
+    /* ── Triad selector ── */
+    .triad-row { display: flex; gap: 4px; margin-bottom: 6px; }
+    .triad-btn {
+      flex: 1; height: 22px;
+      border: 1.5px solid var(--gray3);
+      background: var(--white);
+      cursor: pointer;
+      display: flex; overflow: hidden; padding: 2px; gap: 1px; border-radius: 1px;
     }
-    .grad-action-btn {
-      flex: 0 0 24px;
-      height: 24px;
-      font-size: 14px;
-      line-height: 1;
+    .triad-btn.active { border-color: var(--black); }
+    .triad-swatch { flex: 1; border-radius: 1px; }
+
+    /* ── Accent selector ── */
+    .accent-row { display: flex; gap: 4px; margin-bottom: 6px; }
+    .accent-btn {
+      flex: 1; height: 22px;
+      border: 1.5px solid var(--gray3);
+      cursor: pointer; border-radius: 1px;
+    }
+    .accent-btn.active { border-color: var(--black); box-shadow: inset 0 0 0 1px var(--black); }
+
+    /* ── Shared small button ── */
+    .icon-btn {
+      flex: 0 0 24px; height: 24px;
+      font-size: 14px; line-height: 1;
       font-family: var(--mono);
       background: var(--white);
       border: 1px solid var(--gray3);
       color: var(--gray1);
-      cursor: pointer;
-      padding: 0;
+      cursor: pointer; padding: 0;
     }
-    .grad-action-btn:hover { border-color: var(--black); color: var(--black); }
-    #inp-grad-color {
-      flex: 1;
-      height: 24px;
+    .icon-btn:hover { border-color: var(--black); color: var(--black); }
+
+    #inp-mesh-color {
+      flex: 1; height: 24px;
       border: 1px solid var(--gray3);
-      border-radius: 0;
-      padding: 0;
-      cursor: pointer;
+      border-radius: 0; padding: 0; cursor: pointer;
+    }
+
+    .ctrl-label {
+      font-size: 8px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gray1);
+      margin-bottom: 4px;
     }
   </style>
 </head>
@@ -438,12 +364,13 @@
 
   <!-- Mode Toggle -->
   <div class="mode-toggle">
-    <button id="btn-default-mode" class="mode-btn active">Default</button>
-    <button id="btn-text-mode"    class="mode-btn">Text</button>
-    <button id="btn-image-mode"   class="mode-btn">Image</button>
+    <button id="btn-default-mode"  class="mode-btn active">Default</button>
+    <button id="btn-gradient-mode" class="mode-btn">Gradient</button>
+    <button id="btn-text-mode"     class="mode-btn">Text</button>
+    <button id="btn-image-mode"    class="mode-btn">Image</button>
   </div>
 
-  <!-- Canvas -->
+  <!-- Canvas — always visible -->
   <div class="section">
     <div class="section-title">Canvas</div>
     <div class="row">
@@ -462,49 +389,154 @@
     </div>
   </div>
 
-  <!-- Default Mode Panel -->
+  <!-- ═══════════════ DEFAULT MODE PANEL ═══════════════ -->
   <div id="default-mode-panel">
+
     <div class="section">
-      <div class="section-title">Text</div>
+      <div class="section-title">Typography</div>
+
       <div class="text-field">
         <textarea id="def-txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+      </div>
+
+      <div class="text-field">
+        <label>Font Family</label>
+        <select id="def-font-family">
+          <option value="'Times New Roman', serif" selected>Times New Roman</option>
+          <option value="'Playfair Display', serif">Playfair Display</option>
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          <option value="'Space Mono', monospace">Space Mono</option>
+          <option value="'Anton', sans-serif">Anton</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+          <option value="'DM Serif Display', serif">DM Serif Display</option>
+          <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Font Size</label>
+        <input type="range" id="def-font-size" min="10" max="800" value="200" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">200</span>
+      </div>
+
+      <div class="text-field">
+        <label>Font Weight</label>
+        <select id="def-font-weight">
+          <option value="100">Thin — 100</option>
+          <option value="300">Light — 300</option>
+          <option value="400" selected>Regular — 400</option>
+          <option value="600">SemiBold — 600</option>
+          <option value="700">Bold — 700</option>
+          <option value="900">Black — 900</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Letter Spc.</label>
+        <input type="range" id="def-letter-spacing" min="-20" max="200" value="0" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+
+      <div class="row">
+        <label>Line Height</label>
+        <input type="range" id="def-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">1.20</span>
+      </div>
+
+      <div class="text-field">
+        <label>Alignment</label>
+        <div class="align-btns" id="def-alignment-btns">
+          <button class="align-btn" data-align="left">Left</button>
+          <button class="align-btn active" data-align="center">Center</button>
+          <button class="align-btn" data-align="right">Right</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Text X</label>
+        <input type="range" id="def-pos-x" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>Text Y</label>
+        <input type="range" id="def-pos-y" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">Gradient</div>
-      <div id="grad-editor-wrap">
-        <div id="grad-bar"></div>
-        <div id="grad-stops-row"></div>
+      <div class="mesh-canvas-wrap">
+        <canvas id="mesh-def" width="232" height="155"></canvas>
       </div>
-      <div class="row" style="align-items:center; margin-bottom:6px">
-        <label>Color</label>
-        <input type="color" id="inp-grad-color" value="#6c8d79">
-        <button class="grad-action-btn" id="btn-grad-add" title="Add stop">+</button>
-        <button class="grad-action-btn" id="btn-grad-del" title="Remove stop">−</button>
-      </div>
-      <div class="row">
-        <label>Angle</label>
-        <input type="range" id="inp-grad-angle" min="0" max="360" value="135"
-               oninput="this.nextElementSibling.textContent=this.value+'°'">
-        <span class="val">135°</span>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:0">
+        Drag points · Right-click to delete<br>Edit colors &amp; triads in Gradient tab
       </div>
     </div>
 
     <div class="section">
-      <button class="btn btn-primary" id="btn-def-render">Apply &amp; Render (R)</button>
+      <button class="btn btn-primary" id="btn-def-render">Apply &amp; Render</button>
     </div>
   </div>
 
-  <!-- Image Mode hint -->
-  <div id="image-mode-section" class="section">
-    <div class="section-title">Source</div>
-    <div style="font-size:9px; font-family:var(--mono); color:var(--gray2); line-height:1.6;">
-      Drop an image<br>onto the canvas
+  <!-- ═══════════════ GRADIENT MODE PANEL ═══════════════ -->
+  <div id="gradient-mode-panel">
+
+    <div class="section">
+      <div class="section-title">Gradient</div>
+
+      <div class="mesh-canvas-wrap">
+        <canvas id="mesh-grad" width="232" height="155"></canvas>
+      </div>
+
+      <div class="ctrl-label">Green set</div>
+      <div class="triad-row" id="triad-btns">
+        <button class="triad-btn active" data-triad="0">
+          <div class="triad-swatch" style="background:#037342"></div>
+          <div class="triad-swatch" style="background:#2E944C"></div>
+          <div class="triad-swatch" style="background:#45B04B"></div>
+        </button>
+        <button class="triad-btn" data-triad="1">
+          <div class="triad-swatch" style="background:#525C29"></div>
+          <div class="triad-swatch" style="background:#ADBA6B"></div>
+          <div class="triad-swatch" style="background:#DDE3B6"></div>
+        </button>
+        <button class="triad-btn" data-triad="2">
+          <div class="triad-swatch" style="background:#417F34"></div>
+          <div class="triad-swatch" style="background:#749E5E"></div>
+          <div class="triad-swatch" style="background:#8FB47D"></div>
+        </button>
+      </div>
+
+      <div class="ctrl-label">Accent</div>
+      <div class="accent-row" id="accent-btns">
+        <button class="accent-btn active" data-accent="0" style="background:#8A6BD3"></button>
+        <button class="accent-btn"        data-accent="1" style="background:#D297E8"></button>
+        <button class="accent-btn"        data-accent="2" style="background:#C790DB"></button>
+        <button class="accent-btn"        data-accent="3" style="background:#FF9FCC"></button>
+      </div>
+
+      <div class="row" style="align-items:center;margin-bottom:6px">
+        <label>Point color</label>
+        <input type="color" id="inp-mesh-color" value="#037342">
+        <button class="icon-btn" id="btn-mesh-del" title="Delete selected point">−</button>
+      </div>
+
+      <button class="btn btn-secondary" id="btn-mesh-randomize">Randomize</button>
+    </div>
+
+    <div class="section">
+      <button class="btn btn-primary" id="btn-grad-render">Apply &amp; Render</button>
     </div>
   </div>
 
-  <!-- Text Mode Panel -->
+  <!-- ═══════════════ TEXT MODE PANEL ═══════════════ -->
   <div id="text-mode-panel">
     <div class="section">
       <div class="section-title">Typography</div>
@@ -599,7 +631,7 @@
         <label>Image (clips inside letters)</label>
         <input type="file" id="txt-photo-input" accept="image/*">
       </div>
-      <div style="font-size:8px; font-family:var(--mono); color:var(--gray2); line-height:1.7; margin-bottom:8px;">
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.7;margin-bottom:8px">
         Drag photo on canvas to reposition.<br>Scroll on canvas to scale.
       </div>
       <div class="row">
@@ -623,12 +655,20 @@
     </div>
 
     <div class="section">
-      <button class="btn btn-secondary" id="btn-preview-text">Preview</button>
-      <button class="btn btn-primary" id="btn-render-text">Render &amp; Apply (R)</button>
+      <button class="btn btn-primary" id="btn-render-text">Apply &amp; Render</button>
     </div>
   </div>
 
-  <!-- Growth -->
+  <!-- ═══════════════ IMAGE MODE SECTION ═══════════════ -->
+  <div id="image-mode-section" class="section">
+    <div class="section-title">Source</div>
+    <div style="font-size:9px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:10px">
+      Drop an image<br>onto the canvas
+    </div>
+    <button class="btn btn-primary" id="btn-render-image">Apply &amp; Render</button>
+  </div>
+
+  <!-- Growth — always visible -->
   <div class="section">
     <div class="section-title">Growth</div>
     <div class="row">
@@ -651,7 +691,7 @@
     </div>
   </div>
 
-  <!-- Interaction -->
+  <!-- Interaction — always visible -->
   <div class="section">
     <div class="section-title">Interaction</div>
     <div class="row">
@@ -676,7 +716,7 @@
     </div>
   </div>
 
-  <!-- Appearance -->
+  <!-- Appearance — always visible -->
   <div class="section">
     <div class="section-title">Appearance</div>
     <div class="row">
@@ -729,16 +769,13 @@
     </div>
   </div>
 
-  <!-- Tiers -->
+  <!-- Tiers — always visible -->
   <div class="section">
     <div class="section-title">Tiers</div>
     <table class="tier-table">
       <thead>
         <tr>
-          <th></th>
-          <th>Size</th>
-          <th>Chance</th>
-          <th>Rand.</th>
+          <th></th><th>Size</th><th>Chance</th><th>Rand.</th>
         </tr>
       </thead>
       <tbody>
@@ -818,15 +855,14 @@
     </table>
   </div>
 
-  <!-- Actions -->
+  <!-- Actions — always visible -->
   <div class="section">
     <div class="section-title">Actions</div>
-    <button class="btn btn-primary"   onclick="window.applyAndRestart()">Apply &amp; Restart (R)</button>
     <button class="btn btn-red"       id="btn-stop-grow" onclick="window.toggleGrowth()">Stop Growing</button>
-    <button class="btn btn-primary"   onclick="window.saveHighRes()" style="background:#fff;color:#111;border-color:#111;">Save High-Res (S)</button>
+    <button class="btn btn-primary"   onclick="window.saveHighRes()" style="background:#fff;color:#111;border-color:#111">Save High-Res</button>
     <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
-    <button class="btn btn-secondary" onclick="window.logSettings()">Log Settings</button>
+    <button class="btn btn-secondary" onclick="window.exportSettings()">Export Settings</button>
   </div>
 
 </div>
