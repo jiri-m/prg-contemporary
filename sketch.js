@@ -1122,25 +1122,62 @@ function saveSettings() {
   setTimeout(() => { btn.textContent = prev; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
 }
 
-function applyClassicSettings() {
-  const vals = {
-    // Appearance
-    'sld-margin':'20','sld-density':'41','sld-cluster':'0','sld-displace':'1',
-    'sld-threshold':'255','sld-len':'450','sld-weight':'1.18','sld-opacity':'160',
-    'sld-sway':'2.16','sld-spawn-freq':'5','sld-draw-speed':'2','sld-wind-speed':'14',
-    // Tiers — sizes, chances, randomness
-    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
-    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
-    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
-    // Color variation off
-    'sld-hue-shift':'0','sld-sat-shift':'0','sld-bri-shift':'0',
-  };
-  Object.entries(vals).forEach(([id, val]) => {
+let _revertState = null;
+
+function _saveRevertState() {
+  const ids = [
+    'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
+    'sld-len','sld-weight','sld-opacity','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
+    'sld-s1','sld-s2','sld-s3','sld-s4','sld-c1','sld-c2','sld-c3','sld-c4',
+    'sld-r1','sld-r2','sld-r3','sld-r4','sld-hue-shift','sld-sat-shift','sld-bri-shift',
+  ];
+  _revertState = {};
+  ids.forEach(id => { const el = document.getElementById(id); if (el) _revertState[id] = el.value; });
+  const btn = document.getElementById('btn-revert-settings');
+  if (btn) btn.style.display = '';
+}
+
+function revertSettings() {
+  if (!_revertState) return;
+  Object.entries(_revertState).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
   });
+  _revertState = null;
+  const btn = document.getElementById('btn-revert-settings');
+  if (btn) btn.style.display = 'none';
+}
+window.revertSettings = revertSettings;
+
+function applyClassicSettings() {
+  _saveRevertState();
+  const vals = {
+    'sld-margin':'20','sld-density':'41','sld-cluster':'0','sld-displace':'1',
+    'sld-threshold':'255','sld-len':'450','sld-weight':'1.18','sld-opacity':'160',
+    'sld-sway':'2.16','sld-spawn-freq':'5','sld-draw-speed':'2','sld-wind-speed':'14',
+    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
+    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
+    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
+    'sld-hue-shift':'0','sld-sat-shift':'0','sld-bri-shift':'0',
+  };
+  Object.entries(vals).forEach(([id, val]) => {
+    const el = document.getElementById(id); if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+  });
 }
 window.applyClassicSettings = applyClassicSettings;
+
+function applyClassicTiers() {
+  _saveRevertState();
+  const vals = {
+    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
+    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
+    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
+  };
+  Object.entries(vals).forEach(([id, val]) => {
+    const el = document.getElementById(id); if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+  });
+}
+window.applyClassicTiers = applyClassicTiers;
 
 function loadSettings() {
   const raw = localStorage.getItem('meadow-settings');
