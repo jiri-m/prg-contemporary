@@ -75,7 +75,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2","inp-noise-strength":"0","inp-noise-scale":"5"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
+const DEFAULT_SETTINGS = {"version":5,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"78","sld-cluster":"0","sld-displace":"1","sld-threshold":"237","sld-len":"536","sld-weight":"0.87","sld-opacity":"241","sld-sway":"3.11","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"7","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"72","sld-c2":"8","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"5","inp-noise-strength":"0","inp-noise-scale":"5","sld-hue-shift":"0","sld-sat-shift":"0","sld-bri-shift":"0"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0},"mesh":{"greenTriad":2,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#25481e","#749E5E","#93d572"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.15835310119880952,"y":0.17397450580197749,"slot":{"type":"green","shade":1},"weight":0.9201841142381623},{"x":0.5283842794759825,"y":0.40198131032017564,"slot":{"type":"green","shade":0},"weight":4},{"x":0.9106947113828835,"y":0.23172911770333973,"slot":{"type":"green","shade":0},"weight":1.0241537303569506},{"x":0.2636856419455811,"y":0.49249531756980136,"slot":{"type":"green","shade":2},"weight":1.0054905636147837},{"x":0.3624454148471616,"y":0.545779502629832,"slot":{"type":"green","shade":0},"weight":0.8015446715082722},{"x":0.3712772585487503,"y":0.593704346958439,"slot":{"type":"green","shade":2},"weight":0.9752747420790763},{"x":0.03,"y":0.683051676236268,"slot":{"type":"green","shade":1},"weight":1.1692105971374644},{"x":0.2925764192139738,"y":0.40851759178879643,"slot":{"type":"green","shade":0},"weight":1.0019133135741414},{"x":0.5938864628820961,"y":0.4804166879436246,"slot":{"type":"green","shade":2},"weight":1.1495261510155566},{"x":0.2093987572771912,"y":0.9351375019543389,"slot":{"type":"green","shade":1},"weight":0.9748580030989811},{"x":0.537117903930131,"y":0.6307511617219016,"slot":{"type":"green","shade":1},"weight":0.9265597393703223},{"x":0.8427758246991462,"y":0.44272311293015143,"slot":{"type":"accent","idx":2},"weight":5},{"x":0.5065502183406113,"y":0.5196343767553491,"slot":{"type":"accent","idx":2},"weight":1.074671918953383},{"x":0.36681222707423583,"y":0.46080784353776233,"slot":{"type":"green","shade":2},"weight":1}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -288,6 +288,39 @@ function draw() {
   background(255);
   imageMode(CENTER);
   image(canvasBuffer, width / 2, height / 2, dispW, dispH);
+}
+
+// ── HSL color helpers ──────────────────────────────────────────────────────────
+
+function _rgbToHSL(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return [h * 360, s, l];
+}
+
+function _hslToRGB(h, s, l) {
+  h /= 360;
+  if (s === 0) { const v = Math.round(l * 255); return [v, v, v]; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const hue2 = (t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  return [Math.round(hue2(h + 1/3) * 255), Math.round(hue2(h) * 255), Math.round(hue2(h - 1/3) * 255)];
 }
 
 // ── Mesh gradient ─────────────────────────────────────────────────────────────
@@ -931,6 +964,20 @@ class Blade {
     this.root  = createVector(x, y);
     this.color = c;
 
+    // Per-blade HSL color variation
+    let dr = red(c), dg = green(c), db = blue(c);
+    const hShift = parseFloat(document.getElementById('sld-hue-shift')?.value || 0);
+    const sShift = parseFloat(document.getElementById('sld-sat-shift')?.value || 0);
+    const bShift = parseFloat(document.getElementById('sld-bri-shift')?.value || 0);
+    if (hShift > 0 || sShift > 0 || bShift > 0) {
+      let [h, s, l] = _rgbToHSL(dr, dg, db);
+      h = ((h + (Math.random() - 0.5) * 2 * hShift) % 360 + 360) % 360;
+      s = Math.max(0, Math.min(1, s + (Math.random() - 0.5) * 2 * sShift / 100));
+      l = Math.max(0, Math.min(1, l + (Math.random() - 0.5) * 2 * bShift / 100));
+      [dr, dg, db] = _hslToRGB(h, s, l);
+    }
+    this.drawR = dr; this.drawG = dg; this.drawB = db;
+
     let roll = random(0, sldC1.value() + sldC2.value() + sldC3.value() + sldC4.value());
     let basePct, tierJitter;
     if      (roll < sldC1.value())                                       { basePct = sldS1.value(); tierJitter = sldR1.value(); }
@@ -954,8 +1001,7 @@ class Blade {
   }
 
   show() {
-    let c = this.color;
-    canvasBuffer.stroke(red(c), green(c), blue(c), this.alpha);
+    canvasBuffer.stroke(this.drawR, this.drawG, this.drawB, this.alpha);
 
     let noiseVal = noise(this.root.x / exportScale * 0.005, this.root.y / exportScale * 0.005, windTime);
     let windBend = map(noiseVal, 0, 1, -sldSway.value() * this.windSensitivity, sldSway.value() * this.windSensitivity);
@@ -1033,6 +1079,7 @@ function collectSettings() {
     'txt-photo-x','txt-photo-y','txt-photo-scale',
     'inp-mesh-weight',
     'inp-noise-strength','inp-noise-scale',
+    'sld-hue-shift','sld-sat-shift','sld-bri-shift',
   ];
   const selectIds = ['txt-font-family','txt-font-weight'];
   const sliders = {};
@@ -1077,10 +1124,16 @@ function saveSettings() {
 
 function applyClassicSettings() {
   const vals = {
+    // Appearance
+    'sld-margin':'20','sld-density':'41','sld-cluster':'0','sld-displace':'1',
+    'sld-threshold':'255','sld-len':'450','sld-weight':'1.18','sld-opacity':'160',
+    'sld-sway':'2.16','sld-spawn-freq':'5','sld-draw-speed':'2','sld-wind-speed':'14',
+    // Tiers — sizes, chances, randomness
     'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
     'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
     'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
-    'sld-threshold':'255','sld-weight':'1.18','sld-wind-speed':'14','sld-sway':'2.16',
+    // Color variation off
+    'sld-hue-shift':'0','sld-sat-shift':'0','sld-bri-shift':'0',
   };
   Object.entries(vals).forEach(([id, val]) => {
     const el = document.getElementById(id);
