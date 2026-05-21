@@ -47,6 +47,7 @@ let imageUseText    = true;  // Image tab: On Text by default
 // Text / photo
 let textPhotoElement = null;
 let textAlignment = 'center';
+let textRotation = 0;
 let textPreviewCanvas = null;
 let _previewTimer = null;
 
@@ -74,7 +75,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
+const DEFAULT_SETTINGS = {"version":4,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.19","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1.2","inp-noise-strength":"0","inp-noise-scale":"5"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind"},"mesh":{"greenTriad":1,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.4017467248908297,"y":0.5229292207128996,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -314,6 +315,14 @@ function getPointColor(pt) {
   return meshGreenTriads[meshGreenTriad][pt.slot?.shade ?? 0] || meshGreenTriads[0][0];
 }
 
+function _meshNoise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  const ux = fx*fx*(3-2*fx), uy = fy*fy*(3-2*fy);
+  const h = (a, b) => { const n = Math.sin(a*127.1+b*311.7)*43758.5453; return n-Math.floor(n); };
+  return h(ix,iy)*(1-ux)*(1-uy) + h(ix+1,iy)*ux*(1-uy) + h(ix,iy+1)*(1-ux)*uy + h(ix+1,iy+1)*ux*uy;
+}
+
 function _makeMeshCanvas(w, h) {
   if (meshPoints.length === 0) {
     const c = document.createElement('canvas');
@@ -336,10 +345,18 @@ function _makeMeshCanvas(w, h) {
     return { x: pt.x, y: pt.y, r: rgb[0], g: rgb[1], b: rgb[2], weight: pt.weight || 1.0 };
   });
 
+  const noiseStr   = parseFloat(document.getElementById('inp-noise-strength')?.value || 0) / 100;
+  const noiseScale = parseFloat(document.getElementById('inp-noise-scale')?.value || 5);
+
   for (let py = 0; py < smallH; py++) {
-    const ny = py / (smallH - 1 || 1);
     for (let px = 0; px < SMALL; px++) {
-      const nx = px / (SMALL - 1 || 1);
+      let nx = px / (SMALL - 1 || 1);
+      let ny = py / (smallH - 1 || 1);
+      if (noiseStr > 0) {
+        const sc = noiseScale;
+        nx += (_meshNoise(px * sc / SMALL, py * sc / SMALL) - 0.5) * noiseStr;
+        ny += (_meshNoise(py * sc / SMALL + 5.2, px * sc / SMALL + 1.3) - 0.5) * noiseStr;
+      }
       let wR = 0, wG = 0, wB = 0, wSum = 0;
       let exact = false;
       for (const pt of pts) {
@@ -576,6 +593,10 @@ function _buildTextMask(artW, artH, t) {
   const mask = document.createElement('canvas');
   mask.width = artW; mask.height = artH;
   const mc = mask.getContext('2d');
+  mc.save();
+  mc.translate(artW / 2, artH / 2);
+  mc.rotate(textRotation * Math.PI / 180);
+  mc.translate(-artW / 2, -artH / 2);
   mc.fillStyle = 'black';
   mc.font = fontStr; mc.textBaseline = 'top';
   if ('letterSpacing' in mc) mc.letterSpacing = t.letterSpc + 'px';
@@ -590,6 +611,7 @@ function _buildTextMask(artW, artH, t) {
     if ('letterSpacing' in mc) mc.fillText(t.lines[i], x, y);
     else _drawSpaced(mc, t.lines[i], x, y, t.letterSpc);
   }
+  mc.restore();
   return mask;
 }
 
@@ -717,6 +739,10 @@ function renderTextPreviewSync() {
     const mask = document.createElement('canvas');
     mask.width = artW; mask.height = artH;
     const mc = mask.getContext('2d');
+    mc.save();
+    mc.translate(artW / 2, artH / 2);
+    mc.rotate(textRotation * Math.PI / 180);
+    mc.translate(-artW / 2, -artH / 2);
     mc.fillStyle = 'black';
     mc.font = fontStr; mc.textBaseline = 'top';
     if ('letterSpacing' in mc) mc.letterSpacing = letterSpc + 'px';
@@ -731,6 +757,7 @@ function renderTextPreviewSync() {
       if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
       else _drawSpaced(mc, lines[i], x, y, letterSpc);
     }
+    mc.restore();
 
     const comp = document.createElement('canvas');
     comp.width = artW; comp.height = artH;
@@ -741,6 +768,10 @@ function renderTextPreviewSync() {
     compCtx.globalCompositeOperation = 'source-over';
     fc.drawImage(comp, 0, 0);
   } else {
+    fc.save();
+    fc.translate(artW / 2, artH / 2);
+    fc.rotate(textRotation * Math.PI / 180);
+    fc.translate(-artW / 2, -artH / 2);
     fc.fillStyle = '#111111';
     fc.font = fontStr; fc.textBaseline = 'top';
     if ('letterSpacing' in fc) fc.letterSpacing = letterSpc + 'px';
@@ -755,6 +786,7 @@ function renderTextPreviewSync() {
       if ('letterSpacing' in fc) fc.fillText(lines[i], x, y);
       else _drawSpaced(fc, lines[i], x, y, letterSpc);
     }
+    fc.restore();
   }
 }
 
@@ -1000,6 +1032,7 @@ function collectSettings() {
     'txt-font-size','txt-letter-spacing','txt-line-height','txt-pos-x','txt-pos-y',
     'txt-photo-x','txt-photo-y','txt-photo-scale',
     'inp-mesh-weight',
+    'inp-noise-strength','inp-noise-scale',
   ];
   const selectIds = ['txt-font-family','txt-font-weight'];
   const sliders = {};
@@ -1011,7 +1044,7 @@ function collectSettings() {
     currentMode, gradientUseText, imageUseText,
     sliders, selects,
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
-    alignment: { textAlignment, interactMode },
+    alignment: { textAlignment, interactMode, textRotation },
     mesh: {
       greenTriad: meshGreenTriad,
       accentIdx:  meshAccentIdx,
@@ -1041,6 +1074,20 @@ function saveSettings() {
   btn.style.color = '#4a9a6f'; btn.style.borderColor = '#4a9a6f';
   setTimeout(() => { btn.textContent = prev; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
 }
+
+function applyClassicSettings() {
+  const vals = {
+    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
+    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
+    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
+    'sld-threshold':'255','sld-weight':'1.18','sld-wind-speed':'14','sld-sway':'2.16',
+  };
+  Object.entries(vals).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
+  });
+}
+window.applyClassicSettings = applyClassicSettings;
 
 function loadSettings() {
   const raw = localStorage.getItem('meadow-settings');
@@ -1127,6 +1174,12 @@ function applySettings(data) {
     interactMode = data.alignment.interactMode;
     document.querySelectorAll('#mouse-mode-btns .align-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === interactMode);
+    });
+  }
+  if (data.alignment?.textRotation !== undefined) {
+    textRotation = data.alignment.textRotation;
+    document.querySelectorAll('#txt-rotation-btns .align-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.rot) === textRotation);
     });
   }
 
@@ -1407,6 +1460,16 @@ function initModeToggle() {
       textAlignment = btn.dataset.align;
       if      (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(0);
       else if (currentMode === 'image'    && imageUseText)    _scheduleTextPreview(0);
+    });
+  });
+
+  document.querySelectorAll('#txt-rotation-btns .align-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      textRotation = parseInt(btn.dataset.rot);
+      document.querySelectorAll('#txt-rotation-btns .align-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (currentMode === 'image' && imageUseText) _scheduleTextPreview();
+      else _scheduleGradientPreview(50);
     });
   });
 
