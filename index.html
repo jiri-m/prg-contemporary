@@ -490,6 +490,15 @@
       </div>
     </div>
 
+    <div class="text-field">
+      <label>Rotation</label>
+      <div class="align-btns" id="txt-rotation-btns">
+        <button class="align-btn" data-rot="-90">−90°</button>
+        <button class="align-btn active" data-rot="0">0°</button>
+        <button class="align-btn" data-rot="90">+90°</button>
+      </div>
+    </div>
+
     <div class="row">
       <label>Text X</label>
       <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
@@ -566,6 +575,27 @@
       </div>
     </div>
 
+    <div class="section collapsible" id="section-noise">
+      <div class="section-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="section-title">Noise</span>
+        <span class="collapse-arrow">▸</span>
+      </div>
+      <div class="section-body">
+        <div class="row">
+          <label>Strength</label>
+          <input type="range" id="inp-noise-strength" min="0" max="100" value="0" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value">
+          <span class="val">0</span>
+        </div>
+        <div class="row">
+          <label>Scale</label>
+          <input type="range" id="inp-noise-scale" min="1" max="20" value="5" step="0.5"
+                 oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
+          <span class="val">5.0</span>
+        </div>
+      </div>
+    </div>
+
     <div class="section">
       <button class="btn btn-accent" id="btn-grad-render">Apply &amp; Render</button>
     </div>
@@ -633,6 +663,7 @@
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
     <button class="btn btn-secondary" onclick="window.exportSettings()">Export Settings</button>
     <button class="btn btn-secondary" id="btn-save-settings" onclick="window.saveSettings()">Save Settings</button>
+    <button class="btn btn-secondary" onclick="window.applyClassicSettings()">Classic Tiers</button>
   </div>
 
   <!-- ═══════════════ GROWTH (collapsible) ═══════════════ -->
