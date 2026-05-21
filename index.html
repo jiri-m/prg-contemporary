@@ -575,12 +575,13 @@
       </div>
     </div>
 
-    <div class="section collapsible" id="section-noise">
+    <div class="section collapsible" id="section-color-variation">
       <div class="section-header" onclick="this.parentElement.classList.toggle('open')">
-        <span class="section-title">Noise</span>
         <span class="collapse-arrow">▸</span>
+        <span class="section-title">Color Variation</span>
       </div>
       <div class="section-body">
+        <div class="ctrl-label">Gradient noise</div>
         <div class="row">
           <label>Strength</label>
           <input type="range" id="inp-noise-strength" min="0" max="100" value="0" step="1"
@@ -592,6 +593,25 @@
           <input type="range" id="inp-noise-scale" min="1" max="20" value="5" step="0.5"
                  oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)">
           <span class="val">5.0</span>
+        </div>
+        <div class="ctrl-label" style="margin-top:6px">Per-blade shift</div>
+        <div class="row">
+          <label>Hue Shift</label>
+          <input type="range" id="sld-hue-shift" min="0" max="180" value="0" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value+'°'">
+          <span class="val">0°</span>
+        </div>
+        <div class="row">
+          <label>Sat. Shift</label>
+          <input type="range" id="sld-sat-shift" min="0" max="100" value="0" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span class="val">0%</span>
+        </div>
+        <div class="row">
+          <label>Bri. Shift</label>
+          <input type="range" id="sld-bri-shift" min="0" max="100" value="0" step="1"
+                 oninput="this.nextElementSibling.textContent=this.value+'%'">
+          <span class="val">0%</span>
         </div>
       </div>
     </div>
