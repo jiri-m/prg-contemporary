@@ -75,7 +75,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":5,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"78","sld-cluster":"0","sld-displace":"1","sld-threshold":"237","sld-len":"536","sld-weight":"0.87","sld-opacity":"241","sld-sway":"3.11","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"7","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"72","sld-c2":"8","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"5","inp-noise-strength":"0","inp-noise-scale":"5","sld-hue-shift":"0","sld-sat-shift":"0","sld-bri-shift":"0"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0},"mesh":{"greenTriad":2,"accentIdx":2,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#25481e","#749E5E","#93d572"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.15835310119880952,"y":0.17397450580197749,"slot":{"type":"green","shade":1},"weight":0.9201841142381623},{"x":0.5283842794759825,"y":0.40198131032017564,"slot":{"type":"green","shade":0},"weight":4},{"x":0.9106947113828835,"y":0.23172911770333973,"slot":{"type":"green","shade":0},"weight":1.0241537303569506},{"x":0.2636856419455811,"y":0.49249531756980136,"slot":{"type":"green","shade":2},"weight":1.0054905636147837},{"x":0.3624454148471616,"y":0.545779502629832,"slot":{"type":"green","shade":0},"weight":0.8015446715082722},{"x":0.3712772585487503,"y":0.593704346958439,"slot":{"type":"green","shade":2},"weight":0.9752747420790763},{"x":0.03,"y":0.683051676236268,"slot":{"type":"green","shade":1},"weight":1.1692105971374644},{"x":0.2925764192139738,"y":0.40851759178879643,"slot":{"type":"green","shade":0},"weight":1.0019133135741414},{"x":0.5938864628820961,"y":0.4804166879436246,"slot":{"type":"green","shade":2},"weight":1.1495261510155566},{"x":0.2093987572771912,"y":0.9351375019543389,"slot":{"type":"green","shade":1},"weight":0.9748580030989811},{"x":0.537117903930131,"y":0.6307511617219016,"slot":{"type":"green","shade":1},"weight":0.9265597393703223},{"x":0.8427758246991462,"y":0.44272311293015143,"slot":{"type":"accent","idx":2},"weight":5},{"x":0.5065502183406113,"y":0.5196343767553491,"slot":{"type":"accent","idx":2},"weight":1.074671918953383},{"x":0.36681222707423583,"y":0.46080784353776233,"slot":{"type":"green","shade":2},"weight":1}]}};
+const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"65","inp-noise-scale":"4","sld-hue-shift":"35","sld-sat-shift":"7","sld-bri-shift":"18"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0},"mesh":{"greenTriad":2,"accentIdx":3,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -211,8 +211,9 @@ function draw() {
   if (currentMode === 'gradient' && gradientPreviewCanvas && !showGrowth) {
     background(250);
     const ar = gradientPreviewCanvas.width / gradientPreviewCanvas.height;
-    let dW = width, dH = width / ar;
-    if (dH > height) { dH = height; dW = height * ar; }
+    let fitW = width, fitH = width / ar;
+    if (fitH > height) { fitH = height; fitW = height * ar; }
+    let dW = fitW * viewZoom, dH = fitH * viewZoom;
     dispOX = (width - dW) / 2; dispOY = (height - dH) / 2;
     dispW = dW; dispH = dH;
     drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dW, dH);
@@ -224,8 +225,9 @@ function draw() {
   if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth) {
     background(250);
     const arT = textPreviewCanvas.width / textPreviewCanvas.height;
-    let dWt = width, dHt = width / arT;
-    if (dHt > height) { dHt = height; dWt = height * arT; }
+    let fitWt = width, fitHt = width / arT;
+    if (fitHt > height) { fitHt = height; fitWt = height * arT; }
+    let dWt = fitWt * viewZoom, dHt = fitHt * viewZoom;
     dispOX = (width - dWt) / 2; dispOY = (height - dHt) / 2;
     dispW = dWt; dispH = dHt;
     drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dWt, dHt);
@@ -256,9 +258,10 @@ function draw() {
     activeBlades[i].show();
   }
 
-  dispW = width;
-  dispH = (canvasBuffer.height / canvasBuffer.width) * width;
-  if (dispH > height) { dispH = height; dispW = (canvasBuffer.width / canvasBuffer.height) * height; }
+  let fitW = width, fitH = (canvasBuffer.height / canvasBuffer.width) * width;
+  if (fitH > height) { fitH = height; fitW = (canvasBuffer.width / canvasBuffer.height) * height; }
+  dispW = fitW * viewZoom;
+  dispH = fitH * viewZoom;
   dispOX = (width  - dispW) / 2;
   dispOY = (height - dispH) / 2;
   bMouseX = map(mouseX, dispOX, dispOX + dispW, 0, canvasBuffer.width);
@@ -1122,62 +1125,25 @@ function saveSettings() {
   setTimeout(() => { btn.textContent = prev; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
 }
 
-let _revertState = null;
+let viewZoom = 1.0;
 
-function _saveRevertState() {
-  const ids = [
-    'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
-    'sld-len','sld-weight','sld-opacity','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
-    'sld-s1','sld-s2','sld-s3','sld-s4','sld-c1','sld-c2','sld-c3','sld-c4',
-    'sld-r1','sld-r2','sld-r3','sld-r4','sld-hue-shift','sld-sat-shift','sld-bri-shift',
-  ];
-  _revertState = {};
-  ids.forEach(id => { const el = document.getElementById(id); if (el) _revertState[id] = el.value; });
-  const btn = document.getElementById('btn-revert-settings');
-  if (btn) btn.style.display = '';
+function zoomIn() {
+  viewZoom = Math.min(4.0, parseFloat((viewZoom + 0.25).toFixed(2)));
+  _updateZoomDisplay();
 }
 
-function revertSettings() {
-  if (!_revertState) return;
-  Object.entries(_revertState).forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
-  });
-  _revertState = null;
-  const btn = document.getElementById('btn-revert-settings');
-  if (btn) btn.style.display = 'none';
+function zoomOut() {
+  viewZoom = Math.max(0.25, parseFloat((viewZoom - 0.25).toFixed(2)));
+  _updateZoomDisplay();
 }
-window.revertSettings = revertSettings;
 
-function applyClassicSettings() {
-  _saveRevertState();
-  const vals = {
-    'sld-margin':'20','sld-density':'41','sld-cluster':'0','sld-displace':'1',
-    'sld-threshold':'255','sld-len':'450','sld-weight':'1.18','sld-opacity':'160',
-    'sld-sway':'2.16','sld-spawn-freq':'5','sld-draw-speed':'2','sld-wind-speed':'14',
-    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
-    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
-    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
-    'sld-hue-shift':'0','sld-sat-shift':'0','sld-bri-shift':'0',
-  };
-  Object.entries(vals).forEach(([id, val]) => {
-    const el = document.getElementById(id); if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
-  });
+function _updateZoomDisplay() {
+  const el = document.getElementById('view-zoom-display');
+  if (el) el.textContent = Math.round(viewZoom * 100) + '%';
 }
-window.applyClassicSettings = applyClassicSettings;
 
-function applyClassicTiers() {
-  _saveRevertState();
-  const vals = {
-    'sld-s1':'0.05','sld-s2':'0.18','sld-s3':'0.25','sld-s4':'0.54',
-    'sld-c1':'62','sld-c2':'34','sld-c3':'0','sld-c4':'1',
-    'sld-r1':'1.0','sld-r2':'0.43','sld-r3':'0.15','sld-r4':'0.24',
-  };
-  Object.entries(vals).forEach(([id, val]) => {
-    const el = document.getElementById(id); if (el) { el.value = val; el.dispatchEvent(new Event('input')); }
-  });
-}
-window.applyClassicTiers = applyClassicTiers;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
 
 function loadSettings() {
   const raw = localStorage.getItem('meadow-settings');
