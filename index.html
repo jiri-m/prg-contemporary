@@ -419,97 +419,134 @@
 
   <!-- ═══════════════ SHARED TYPOGRAPHY (shown when On Text is active) ═══════════════ -->
   <div id="typography-section" class="section" style="display:none">
-    <div class="section-title">Typography</div>
+    <div class="section-title">Typography / Mask</div>
 
-    <div class="text-field">
-      <textarea id="txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+    <div class="sub-toggle" style="margin-bottom:10px">
+      <button class="sub-btn active" id="btn-mask-text">Text</button>
+      <button class="sub-btn" id="btn-mask-svg">SVG</button>
     </div>
 
-    <div class="text-field">
-      <label>Font Family</label>
-      <select id="txt-font-family">
-        <option value="'Times New Roman', serif" selected>Times New Roman</option>
-        <option value="'Playfair Display', serif">Playfair Display</option>
-        <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
-        <option value="'Space Mono', monospace">Space Mono</option>
-        <option value="'Anton', sans-serif">Anton</option>
-        <option value="'Inter', sans-serif">Inter</option>
-        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
-        <option value="'DM Serif Display', serif">DM Serif Display</option>
-        <option value="'Libre Baskerville', serif">Libre Baskerville</option>
-      </select>
-    </div>
+    <!-- ── Text mask controls ── -->
+    <div id="mask-text-controls">
+      <div class="text-field">
+        <textarea id="txt-content" rows="3" placeholder="Enter text…">MEADOW</textarea>
+      </div>
 
-    <div class="text-field">
-      <label>Custom Google Font</label>
-      <div class="inline-input">
-        <input type="text" id="txt-custom-font" placeholder="e.g. Oswald">
-        <button id="btn-load-custom-font">Load</button>
+      <div class="text-field">
+        <label>Font Family</label>
+        <select id="txt-font-family">
+          <option value="'Times New Roman', serif" selected>Times New Roman</option>
+          <option value="'Playfair Display', serif">Playfair Display</option>
+          <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+          <option value="'Space Mono', monospace">Space Mono</option>
+          <option value="'Anton', sans-serif">Anton</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+          <option value="'DM Serif Display', serif">DM Serif Display</option>
+          <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+        </select>
+      </div>
+
+      <div class="text-field">
+        <label>Custom Google Font</label>
+        <div class="inline-input">
+          <input type="text" id="txt-custom-font" placeholder="e.g. Oswald">
+          <button id="btn-load-custom-font">Load</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Font Size</label>
+        <input type="range" id="txt-font-size" min="10" max="800" value="200" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">200</span>
+      </div>
+
+      <div class="text-field">
+        <label>Font Weight</label>
+        <select id="txt-font-weight">
+          <option value="100">Thin — 100</option>
+          <option value="300">Light — 300</option>
+          <option value="400" selected>Regular — 400</option>
+          <option value="600">SemiBold — 600</option>
+          <option value="700">Bold — 700</option>
+          <option value="900">Black — 900</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>Letter Spc.</label>
+        <input type="range" id="txt-letter-spacing" min="-20" max="200" value="0" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+
+      <div class="row">
+        <label>Line Height</label>
+        <input type="range" id="txt-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
+        <span class="val">1.20</span>
+      </div>
+
+      <div class="text-field">
+        <label>Alignment</label>
+        <div class="align-btns" id="txt-alignment-btns">
+          <button class="align-btn" data-align="left">Left</button>
+          <button class="align-btn active" data-align="center">Center</button>
+          <button class="align-btn" data-align="right">Right</button>
+        </div>
+      </div>
+
+      <div class="text-field">
+        <label>Rotation</label>
+        <div class="align-btns" id="txt-rotation-btns">
+          <button class="align-btn" data-rot="-90">−90°</button>
+          <button class="align-btn active" data-rot="0">0°</button>
+          <button class="align-btn" data-rot="90">+90°</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Text X</label>
+        <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>Text Y</label>
+        <input type="range" id="txt-pos-y" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
       </div>
     </div>
 
-    <div class="row">
-      <label>Font Size</label>
-      <input type="range" id="txt-font-size" min="10" max="800" value="200" step="1"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">200</span>
-    </div>
-
-    <div class="text-field">
-      <label>Font Weight</label>
-      <select id="txt-font-weight">
-        <option value="100">Thin — 100</option>
-        <option value="300">Light — 300</option>
-        <option value="400" selected>Regular — 400</option>
-        <option value="600">SemiBold — 600</option>
-        <option value="700">Bold — 700</option>
-        <option value="900">Black — 900</option>
-      </select>
-    </div>
-
-    <div class="row">
-      <label>Letter Spc.</label>
-      <input type="range" id="txt-letter-spacing" min="-20" max="200" value="0" step="1"
-             oninput="this.nextElementSibling.textContent=this.value">
-      <span class="val">0</span>
-    </div>
-
-    <div class="row">
-      <label>Line Height</label>
-      <input type="range" id="txt-line-height" min="0.5" max="3.0" value="1.2" step="0.05"
-             oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)">
-      <span class="val">1.20</span>
-    </div>
-
-    <div class="text-field">
-      <label>Alignment</label>
-      <div class="align-btns" id="txt-alignment-btns">
-        <button class="align-btn" data-align="left">Left</button>
-        <button class="align-btn active" data-align="center">Center</button>
-        <button class="align-btn" data-align="right">Right</button>
+    <!-- ── SVG mask controls ── -->
+    <div id="mask-svg-controls" style="display:none">
+      <div class="text-field">
+        <label>SVG File</label>
+        <input type="file" id="svg-mask-input" accept=".svg,image/svg+xml">
       </div>
-    </div>
-
-    <div class="text-field">
-      <label>Rotation</label>
-      <div class="align-btns" id="txt-rotation-btns">
-        <button class="align-btn" data-rot="-90">−90°</button>
-        <button class="align-btn active" data-rot="0">0°</button>
-        <button class="align-btn" data-rot="90">+90°</button>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.7;margin-bottom:8px">
+        Drag to reposition · Scroll to scale
       </div>
-    </div>
-
-    <div class="row">
-      <label>Text X</label>
-      <input type="range" id="txt-pos-x" min="0" max="100" value="50" step="1"
-             oninput="this.nextElementSibling.textContent=this.value+'%'">
-      <span class="val">50%</span>
-    </div>
-    <div class="row">
-      <label>Text Y</label>
-      <input type="range" id="txt-pos-y" min="0" max="100" value="50" step="1"
-             oninput="this.nextElementSibling.textContent=this.value+'%'">
-      <span class="val">50%</span>
+      <div class="row">
+        <label>SVG X</label>
+        <input type="range" id="svg-pos-x" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>SVG Y</label>
+        <input type="range" id="svg-pos-y" min="0" max="100" value="50" step="1"
+               oninput="this.nextElementSibling.textContent=this.value+'%'">
+        <span class="val">50%</span>
+      </div>
+      <div class="row">
+        <label>SVG Scale</label>
+        <input type="range" id="svg-scale" min="0.05" max="3.0" value="1.0" step="0.05"
+               oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)+'×'">
+        <span class="val">1.00×</span>
+      </div>
     </div>
   </div>
 
@@ -745,7 +782,7 @@
       <div class="ctrl-label">Gradient noise</div>
       <div class="row">
         <label>Strength</label>
-        <input type="range" id="inp-noise-strength" min="0" max="100" value="0" step="1"
+        <input type="range" id="inp-noise-strength" min="0" max="100" value="25" step="1"
                oninput="this.nextElementSibling.textContent=this.value">
         <span class="val">0</span>
       </div>
@@ -909,7 +946,7 @@
       </div>
       <div class="row">
         <label>Artboard H</label>
-        <input type="number" id="inp-artboard-h" value="800" min="100" max="8000" step="50">
+        <input type="number" id="inp-artboard-h" value="1200" min="100" max="8000" step="50">
       </div>
       <div class="row">
         <label>View Zoom</label>

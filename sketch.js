@@ -62,6 +62,14 @@ let _resizeInitScale = 1.0;
 let _resizeInitDist  = 1.0;
 let _resizePhotoCX   = 0, _resizePhotoCY = 0;
 
+// SVG mask
+let maskType = 'text'; // 'text' | 'svg'
+let svgMaskElement = null;
+let svgMaskObjectUrl = null;
+let svgPosX = 50, svgPosY = 50, svgScale = 1.0;
+let isSvgDragging = false;
+let _svgDragMX = 0, _svgDragMY = 0, _svgDragStartX = 50, _svgDragStartY = 50;
+
 // Gradient preview
 let gradientPreviewCanvas = null;
 let _gradientPreviewTimer = null;
@@ -75,7 +83,7 @@ const meshGreenTriads = [
 ];
 const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
 
-const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"800","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"65","inp-noise-scale":"4","sld-hue-shift":"35","sld-sat-shift":"7","sld-bri-shift":"18"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0},"mesh":{"greenTriad":2,"accentIdx":3,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
+const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"25","inp-noise-scale":"4","sld-hue-shift":"10","sld-sat-shift":"7","sld-bri-shift":"18","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":2,"accentIdx":3,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769}]}};
 
 let meshPoints = [];
 let meshGreenTriad = 1;
@@ -217,6 +225,7 @@ function draw() {
     dispOX = (width - dW) / 2; dispOY = (height - dH) / 2;
     dispW = dW; dispH = dH;
     drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dW, dH);
+    if (maskType === 'svg' && svgMaskElement && gradientUseText) _drawSvgFrame();
     cursor(ARROW);
     return;
   }
@@ -231,7 +240,9 @@ function draw() {
     dispOX = (width - dWt) / 2; dispOY = (height - dHt) / 2;
     dispW = dWt; dispH = dHt;
     drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dWt, dHt);
-    if (textPhotoElement) { _drawPhotoFrame(); } else { cursor(ARROW); }
+    if (maskType === 'svg' && svgMaskElement) { _drawSvgFrame(); cursor(ARROW); }
+    else if (textPhotoElement) { _drawPhotoFrame(); }
+    else { cursor(ARROW); }
     return;
   }
 
@@ -651,6 +662,73 @@ function _buildTextMask(artW, artH, t) {
   return mask;
 }
 
+function _buildSvgMask(artW, artH) {
+  const mask = document.createElement('canvas');
+  mask.width = artW; mask.height = artH;
+  if (!svgMaskElement) return mask;
+  const mc = mask.getContext('2d');
+  const svgW = svgMaskElement.naturalWidth || svgMaskElement.width;
+  const svgH = svgMaskElement.naturalHeight || svgMaskElement.height;
+  if (!svgW || !svgH) return mask;
+  const svgAspect = svgW / svgH;
+  const artAspect = artW / artH;
+  let baseW, baseH;
+  if (svgAspect > artAspect) { baseW = artW; baseH = artW / svgAspect; }
+  else                        { baseH = artH; baseW = artH * svgAspect; }
+  const dw = baseW * svgScale, dh = baseH * svgScale;
+  const cx = (svgPosX / 100) * artW, cy = (svgPosY / 100) * artH;
+  mc.drawImage(svgMaskElement, cx - dw / 2, cy - dh / 2, dw, dh);
+  // Convert: dark areas → opaque (grass grows), light/transparent → transparent
+  const imgd = mc.getImageData(0, 0, artW, artH);
+  const px = imgd.data;
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i+3] === 0) continue;
+    const lum = px[i] * 0.299 + px[i+1] * 0.587 + px[i+2] * 0.114;
+    px[i+3] = Math.round((1 - lum / 255) * px[i+3]);
+  }
+  mc.putImageData(imgd, 0, 0);
+  return mask;
+}
+
+function _getSvgFrameInfo() {
+  if (!svgMaskElement || dispW <= 0) return null;
+  const artW = getArtboardW(), artH = getArtboardH();
+  const svgW = svgMaskElement.naturalWidth || svgMaskElement.width;
+  const svgH = svgMaskElement.naturalHeight || svgMaskElement.height;
+  if (!svgW || !svgH) return null;
+  const svgAspect = svgW / svgH;
+  const artAspect = artW / artH;
+  let baseW, baseH;
+  if (svgAspect > artAspect) { baseW = artW; baseH = artW / svgAspect; }
+  else                        { baseH = artH; baseW = artH * svgAspect; }
+  const dw = baseW * svgScale, dh = baseH * svgScale;
+  const cx = (svgPosX / 100) * artW, cy = (svgPosY / 100) * artH;
+  const scX = dispW / artW, scY = dispH / artH;
+  return {
+    fx: dispOX + (cx - dw / 2) * scX,
+    fy: dispOY + (cy - dh / 2) * scY,
+    fw: dw * scX, fh: dh * scY,
+  };
+}
+
+function _drawSvgFrame() {
+  const info = _getSvgFrameInfo();
+  if (!info) return;
+  push();
+  noFill();
+  stroke(180, 100, 220, 180);
+  strokeWeight(1.5);
+  drawingContext.setLineDash([6, 4]);
+  rect(info.fx, info.fy, info.fw, info.fh);
+  drawingContext.setLineDash([]);
+  pop();
+}
+
+function _scheduleActivePreview(delay) {
+  if (currentMode === 'gradient' && gradientUseText) _scheduleGradientPreview(delay);
+  else if (currentMode === 'image' && imageUseText)  _scheduleTextPreview(delay);
+}
+
 // ── Gradient previews ──────────────────────────────────────────────────────────
 
 function _renderGradientFullTexturePreviewSync() {
@@ -676,7 +754,7 @@ function _renderGradientOnTextPreviewSync() {
   fc.globalAlpha = 0.75;
   fc.drawImage(meshCanvas, 0, 0);
   fc.globalAlpha = 1.0;
-  const mask = _buildTextMask(artW, artH, t);
+  const mask = maskType === 'svg' ? _buildSvgMask(artW, artH) : _buildTextMask(artW, artH, t);
   const comp = document.createElement('canvas');
   comp.width = artW; comp.height = artH;
   const cc = comp.getContext('2d');
@@ -713,7 +791,7 @@ function renderGradientOnTextComposition() {
   const t = _getTypography();
   if (meshPoints.length < 2) return;
   const meshCanvas = _makeMeshCanvas(artW, artH);
-  const mask = _buildTextMask(artW, artH, t);
+  const mask = maskType === 'svg' ? _buildSvgMask(artW, artH) : _buildTextMask(artW, artH, t);
   const comp = document.createElement('canvas');
   comp.width = artW; comp.height = artH;
   const cc = comp.getContext('2d');
@@ -772,28 +850,8 @@ function renderTextPreviewSync() {
     fc.drawImage(textPhotoElement, drawX, drawY, dw, dh);
     fc.globalAlpha = 1.0;
 
-    const mask = document.createElement('canvas');
-    mask.width = artW; mask.height = artH;
-    const mc = mask.getContext('2d');
-    mc.save();
-    mc.translate(artW / 2, artH / 2);
-    mc.rotate(textRotation * Math.PI / 180);
-    mc.translate(-artW / 2, -artH / 2);
-    mc.fillStyle = 'black';
-    mc.font = fontStr; mc.textBaseline = 'top';
-    if ('letterSpacing' in mc) mc.letterSpacing = letterSpc + 'px';
-    const totalH   = lines.length * lineHeight;
-    const blockTop = textYPct * artH - totalH / 2;
-    for (let i = 0; i < lines.length; i++) {
-      const lw = _measureLine(mc, lines[i], letterSpc);
-      const bx = textXPct * artW;
-      const y  = blockTop + i * lineHeight;
-      const x  = textAlignment === 'center' ? bx - lw / 2
-               : textAlignment === 'right'  ? bx - lw : bx;
-      if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
-      else _drawSpaced(mc, lines[i], x, y, letterSpc);
-    }
-    mc.restore();
+    const _t = { lines, fontFamily, fontSize, fontWeight, letterSpc, lineHMult, textXPct, textYPct };
+    const mask = maskType === 'svg' ? _buildSvgMask(artW, artH) : _buildTextMask(artW, artH, _t);
 
     const comp = document.createElement('canvas');
     comp.width = artW; comp.height = artH;
@@ -803,6 +861,22 @@ function renderTextPreviewSync() {
     compCtx.drawImage(mask, 0, 0);
     compCtx.globalCompositeOperation = 'source-over';
     fc.drawImage(comp, 0, 0);
+  } else if (maskType === 'svg') {
+    if (svgMaskElement) {
+      const svgW2 = svgMaskElement.naturalWidth || svgMaskElement.width;
+      const svgH2 = svgMaskElement.naturalHeight || svgMaskElement.height;
+      if (svgW2 && svgH2) {
+        const asp2 = svgW2 / svgH2, artAsp = artW / artH;
+        let bW2, bH2;
+        if (asp2 > artAsp) { bW2 = artW; bH2 = artW / asp2; }
+        else                { bH2 = artH; bW2 = artH * asp2; }
+        const dw2 = bW2 * svgScale, dh2 = bH2 * svgScale;
+        const cx2 = (svgPosX / 100) * artW, cy2 = (svgPosY / 100) * artH;
+        fc.globalAlpha = 0.85;
+        fc.drawImage(svgMaskElement, cx2 - dw2 / 2, cy2 - dh2 / 2, dw2, dh2);
+        fc.globalAlpha = 1.0;
+      }
+    }
   } else {
     fc.save();
     fc.translate(artW / 2, artH / 2);
@@ -899,7 +973,15 @@ function _drawPhotoFrame() {
 // ── Mouse events ───────────────────────────────────────────────────────────────
 
 function mousePressed() {
-  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth && textPhotoElement) {
+  const _inPreview = !showGrowth && ((currentMode === 'gradient' && gradientUseText && gradientPreviewCanvas) ||
+                                     (currentMode === 'image'    && imageUseText    && textPreviewCanvas));
+  if (_inPreview && maskType === 'svg' && svgMaskElement) {
+    isSvgDragging = true;
+    _svgDragMX = mouseX; _svgDragMY = mouseY;
+    _svgDragStartX = svgPosX; _svgDragStartY = svgPosY;
+    return false;
+  }
+  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth && textPhotoElement && maskType !== 'svg') {
     const info = _getPhotoFrameInfo();
     if (info) {
       const { fx, fy, fw, fh, cx, cy } = info;
@@ -926,6 +1008,17 @@ function mousePressed() {
 }
 
 function mouseDragged() {
+  if (isSvgDragging) {
+    const nx = Math.min(100, Math.max(0, _svgDragStartX + (mouseX - _svgDragMX) / dispW * 100));
+    const ny = Math.min(100, Math.max(0, _svgDragStartY + (mouseY - _svgDragMY) / dispH * 100));
+    svgPosX = nx; svgPosY = ny;
+    const sx = document.getElementById('svg-pos-x');
+    const sy = document.getElementById('svg-pos-y');
+    if (sx) { sx.value = Math.round(nx); sx.nextElementSibling.textContent = Math.round(nx) + '%'; }
+    if (sy) { sy.value = Math.round(ny); sy.nextElementSibling.textContent = Math.round(ny) + '%'; }
+    _scheduleActivePreview(0);
+    return false;
+  }
   if (isResizingPhoto) {
     const curDist = Math.sqrt((mouseX - _resizePhotoCX) ** 2 + (mouseY - _resizePhotoCY) ** 2);
     let newScale  = Math.min(3.0, Math.max(0.1, _resizeInitScale * (curDist / _resizeInitDist)));
@@ -947,10 +1040,20 @@ function mouseDragged() {
   }
 }
 
-function mouseReleased() { isDraggingPhoto = false; isResizingPhoto = false; }
+function mouseReleased() { isDraggingPhoto = false; isResizingPhoto = false; isSvgDragging = false; }
 
 function mouseWheel(event) {
-  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth) {
+  const _inPrev = !showGrowth && ((currentMode === 'gradient' && gradientUseText && gradientPreviewCanvas) ||
+                                   (currentMode === 'image'    && imageUseText    && textPreviewCanvas));
+  if (_inPrev && maskType === 'svg' && svgMaskElement) {
+    const sl = document.getElementById('svg-scale');
+    let v = Math.min(3.0, Math.max(0.05, svgScale - event.delta * 0.0005));
+    svgScale = v;
+    if (sl) { sl.value = v.toFixed(2); sl.nextElementSibling.textContent = v.toFixed(2) + '×'; }
+    _scheduleActivePreview(0);
+    return false;
+  }
+  if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth && maskType !== 'svg') {
     const sl = document.getElementById('txt-photo-scale');
     let v = Math.min(3.0, Math.max(0.1, parseFloat(sl.value) - event.delta * 0.0005));
     sl.value = v.toFixed(2);
@@ -1083,6 +1186,7 @@ function collectSettings() {
     'inp-mesh-weight',
     'inp-noise-strength','inp-noise-scale',
     'sld-hue-shift','sld-sat-shift','sld-bri-shift',
+    'svg-pos-x','svg-pos-y','svg-scale',
   ];
   const selectIds = ['txt-font-family','txt-font-weight'];
   const sliders = {};
@@ -1094,7 +1198,7 @@ function collectSettings() {
     currentMode, gradientUseText, imageUseText,
     sliders, selects,
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
-    alignment: { textAlignment, interactMode, textRotation },
+    alignment: { textAlignment, interactMode, textRotation, maskType },
     mesh: {
       greenTriad: meshGreenTriad,
       accentIdx:  meshAccentIdx,
@@ -1237,6 +1341,19 @@ function applySettings(data) {
     document.querySelectorAll('#txt-rotation-btns .align-btn').forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.dataset.rot) === textRotation);
     });
+  }
+
+  // 7b. Restore mask type
+  if (data.alignment?.maskType !== undefined) {
+    maskType = data.alignment.maskType;
+    const btnT = document.getElementById('btn-mask-text');
+    const btnS = document.getElementById('btn-mask-svg');
+    const tcEl = document.getElementById('mask-text-controls');
+    const scEl = document.getElementById('mask-svg-controls');
+    if (btnT) btnT.classList.toggle('active', maskType === 'text');
+    if (btnS) btnS.classList.toggle('active', maskType === 'svg');
+    if (tcEl) tcEl.style.display = maskType === 'text' ? '' : 'none';
+    if (scEl) scEl.style.display = maskType === 'svg'  ? '' : 'none';
   }
 
   // 8. Restore mesh
@@ -1486,6 +1603,50 @@ function initModeToggle() {
     htmlImg.src = URL.createObjectURL(file);
   });
 
+  // ── Mask type toggle ───────────────────────────────────────────────────────
+
+  document.getElementById('btn-mask-text').addEventListener('click', () => {
+    maskType = 'text';
+    document.getElementById('btn-mask-text').classList.add('active');
+    document.getElementById('btn-mask-svg').classList.remove('active');
+    document.getElementById('mask-text-controls').style.display = '';
+    document.getElementById('mask-svg-controls').style.display  = 'none';
+    _scheduleActivePreview(0);
+  });
+
+  document.getElementById('btn-mask-svg').addEventListener('click', () => {
+    maskType = 'svg';
+    document.getElementById('btn-mask-svg').classList.add('active');
+    document.getElementById('btn-mask-text').classList.remove('active');
+    document.getElementById('mask-text-controls').style.display = 'none';
+    document.getElementById('mask-svg-controls').style.display  = '';
+    _scheduleActivePreview(0);
+  });
+
+  document.getElementById('svg-mask-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (svgMaskObjectUrl) URL.revokeObjectURL(svgMaskObjectUrl);
+    svgMaskObjectUrl = URL.createObjectURL(file);
+    const htmlImg = new Image();
+    htmlImg.onload = () => { svgMaskElement = htmlImg; _scheduleActivePreview(0); };
+    htmlImg.src = svgMaskObjectUrl;
+  });
+
+  ['svg-pos-x','svg-pos-y'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      svgPosX = parseInt(document.getElementById('svg-pos-x').value);
+      svgPosY = parseInt(document.getElementById('svg-pos-y').value);
+      _scheduleActivePreview(150);
+    });
+  });
+
+  document.getElementById('svg-scale').addEventListener('input', e => {
+    svgScale = parseFloat(e.target.value);
+    _scheduleActivePreview(150);
+  });
+
   // ── Shared typography controls ─────────────────────────────────────────────
 
   document.getElementById('txt-content').addEventListener('input', () => {
@@ -1591,20 +1752,25 @@ function renderTextComposition() {
     cc.fillStyle = '#111111'; cc.fillRect(0, 0, artW, artH);
   }
 
-  const maskCanvas = document.createElement('canvas');
-  maskCanvas.width = artW; maskCanvas.height = artH;
-  const mc = maskCanvas.getContext('2d');
-  mc.fillStyle = 'black'; mc.font = fontString; mc.textBaseline = 'top';
-  if ('letterSpacing' in mc) mc.letterSpacing = letterSpacing + 'px';
-  const totalTextH = lines.length * lineHeight;
-  const blockTop   = textYPct * artH - totalTextH / 2;
-  for (let i = 0; i < lines.length; i++) {
-    const lineW = _measureLine(mc, lines[i], letterSpacing);
-    const baseX = textXPct * artW;
-    const y     = blockTop + i * lineHeight;
-    const x     = textAlignment === 'center' ? baseX - lineW / 2 : textAlignment === 'right' ? baseX - lineW : baseX;
-    if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
-    else _drawSpaced(mc, lines[i], x, y, letterSpacing);
+  let maskCanvas;
+  if (maskType === 'svg') {
+    maskCanvas = _buildSvgMask(artW, artH);
+  } else {
+    maskCanvas = document.createElement('canvas');
+    maskCanvas.width = artW; maskCanvas.height = artH;
+    const mc = maskCanvas.getContext('2d');
+    mc.fillStyle = 'black'; mc.font = fontString; mc.textBaseline = 'top';
+    if ('letterSpacing' in mc) mc.letterSpacing = letterSpacing + 'px';
+    const totalTextH = lines.length * lineHeight;
+    const blockTop   = textYPct * artH - totalTextH / 2;
+    for (let i = 0; i < lines.length; i++) {
+      const lineW = _measureLine(mc, lines[i], letterSpacing);
+      const baseX = textXPct * artW;
+      const y     = blockTop + i * lineHeight;
+      const x     = textAlignment === 'center' ? baseX - lineW / 2 : textAlignment === 'right' ? baseX - lineW : baseX;
+      if ('letterSpacing' in mc) mc.fillText(lines[i], x, y);
+      else _drawSpaced(mc, lines[i], x, y, letterSpacing);
+    }
   }
 
   cc.globalCompositeOperation = 'destination-in';
