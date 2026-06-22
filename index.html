@@ -429,10 +429,10 @@
       <div class="section-title">Texture Colors</div>
 
       <div class="ctrl-label">Yellow Accent</div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <input type="color" id="inp-yellow-color" value="#FFD700"
                style="width:32px;height:26px;padding:1px;border:1px solid var(--gray3);border-radius:3px;cursor:pointer;background:none">
-        <span style="font-size:9px;font-family:var(--mono);color:var(--gray1)">Adjustable color</span>
+        <span style="font-size:9px;font-family:var(--mono);color:var(--gray1)">Color</span>
       </div>
       <div class="row">
         <label>Intensity</label>
@@ -440,16 +440,26 @@
                oninput="this.nextElementSibling.textContent=this.value">
         <span class="val">0</span>
       </div>
-
-      <div class="ctrl-label" style="margin-top:10px">White Bloom</div>
-      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:6px">
-        Adds highlights · boosts density &amp; length
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:10px">
+        <span style="font-size:9px;font-family:var(--mono);color:var(--gray1);flex:1">Points</span>
+        <button class="icon-btn" id="btn-yellow-remove" title="Remove yellow point">−</button>
+        <span id="yellow-count-display" style="font-size:10px;font-family:var(--mono);min-width:16px;text-align:center">0</span>
+        <button class="icon-btn" id="btn-yellow-add" title="Add yellow point">+</button>
       </div>
+
+      <div class="ctrl-label">White Bloom</div>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:4px">Boosts density &amp; length</div>
       <div class="row">
         <label>Intensity</label>
         <input type="range" id="inp-white-intensity" min="0" max="100" value="0" step="1"
                oninput="this.nextElementSibling.textContent=this.value">
         <span class="val">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span style="font-size:9px;font-family:var(--mono);color:var(--gray1);flex:1">Points</span>
+        <button class="icon-btn" id="btn-white-remove" title="Remove white point">−</button>
+        <span id="white-count-display" style="font-size:10px;font-family:var(--mono);min-width:16px;text-align:center">0</span>
+        <button class="icon-btn" id="btn-white-add" title="Add white point">+</button>
       </div>
     </div>
   </div>
