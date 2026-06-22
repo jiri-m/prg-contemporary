@@ -417,6 +417,43 @@
     <button id="btn-image-mode"    class="mode-btn">Image</button>
   </div>
 
+  <!-- Settings view toggle: Texture / Text -->
+  <div class="sub-toggle" id="settings-view-toggle" style="margin:6px 12px 0 12px">
+    <button class="sub-btn" id="btn-texture-view">Texture</button>
+    <button class="sub-btn active" id="btn-text-view">Text</button>
+  </div>
+
+  <!-- Texture Settings Panel -->
+  <div id="texture-panel" style="display:none">
+    <div class="section">
+      <div class="section-title">Texture Colors</div>
+
+      <div class="ctrl-label">Yellow Accent</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <input type="color" id="inp-yellow-color" value="#FFD700"
+               style="width:32px;height:26px;padding:1px;border:1px solid var(--gray3);border-radius:3px;cursor:pointer;background:none">
+        <span style="font-size:9px;font-family:var(--mono);color:var(--gray1)">Adjustable color</span>
+      </div>
+      <div class="row">
+        <label>Intensity</label>
+        <input type="range" id="inp-yellow-intensity" min="0" max="100" value="0" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+
+      <div class="ctrl-label" style="margin-top:10px">White Bloom</div>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:6px">
+        Adds highlights · boosts density &amp; length
+      </div>
+      <div class="row">
+        <label>Intensity</label>
+        <input type="range" id="inp-white-intensity" min="0" max="100" value="0" step="1"
+               oninput="this.nextElementSibling.textContent=this.value">
+        <span class="val">0</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════ SHARED TYPOGRAPHY (shown when On Text is active) ═══════════════ -->
   <div id="typography-section" class="section" style="display:none">
     <div class="section-title">Typography / Mask</div>
