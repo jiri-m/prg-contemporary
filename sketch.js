@@ -1701,6 +1701,11 @@ function initModeToggle() {
     _scheduleActivePreview(150);
   });
 
+  // ── Artboard size → refresh preview ────────────────────────────────────────
+  ['inp-artboard-w', 'inp-artboard-h'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => _scheduleActivePreview(400));
+  });
+
   // ── Shared typography controls ─────────────────────────────────────────────
 
   document.getElementById('txt-content').addEventListener('input', () => {
