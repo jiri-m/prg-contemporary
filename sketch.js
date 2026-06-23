@@ -263,9 +263,8 @@ function draw() {
     }
   }
 
-  const cs = getCanvasScale();
   canvasBuffer.clear();
-  canvasBuffer.strokeWeight(sldWeight.value() * exportScale * cs);
+  canvasBuffer.strokeWeight(sldWeight.value() * exportScale);
   canvasBuffer.noFill();
   for (let i = 0; i < activeBlades.length; i++) {
     if (!growthPaused) activeBlades[i].update();
@@ -1137,13 +1136,12 @@ class Blade {
     else if (roll < sldC1.value() + sldC2.value() + sldC3.value())      { basePct = sldS3.value(); tierJitter = sldR3.value(); }
     else                                                                  { basePct = sldS4.value(); tierJitter = sldR4.value(); }
 
-    const cs     = getCanvasScale();
     let jitter   = random(1 - tierJitter, 1 + tierJitter);
     const _whiteReduction = Math.max(0.05, 1 - parseFloat(document.getElementById('inp-white-intensity')?.value || 0) / 200);
-    this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale * cs * _whiteReduction;
+    this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale * _whiteReduction;
     this.windSensitivity = noise(x * 0.01, y * 0.01);
     this.currentLen      = 0;
-    this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value() * cs;
+    this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value();
     this.baseAngle       = -HALF_PI + random(-0.2, 0.2);
     const maxA           = sldOpacity.value();
     this.alpha           = random(maxA * 0.5, maxA);
@@ -1464,7 +1462,7 @@ window.exportEmbed = function () {
     r3: parseFloat(document.getElementById('sld-r3').value), r4: parseFloat(document.getElementById('sld-r4').value),
     mouseStrength: parseFloat(document.getElementById('sld-mouse-strength').value),
     mouseRadius:   parseFloat(document.getElementById('sld-mouse-radius').value),
-    canvasScale: getCanvasScale(),
+    canvasScale: 1,
     interactMode, autoStop: 35
   };
   const html = buildEmbedHTML(embedSourceBase64, S);
@@ -1701,6 +1699,11 @@ function initModeToggle() {
   document.getElementById('svg-scale').addEventListener('input', e => {
     svgScale = parseFloat(e.target.value);
     _scheduleActivePreview(150);
+  });
+
+  // ── Artboard size → refresh preview ────────────────────────────────────────
+  ['inp-artboard-w', 'inp-artboard-h'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => _scheduleActivePreview(400));
   });
 
   // ── Shared typography controls ─────────────────────────────────────────────
