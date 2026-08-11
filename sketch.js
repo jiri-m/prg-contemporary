@@ -1615,10 +1615,6 @@ function initVideoExport() {
 
 function downloadHighRes() { if (canvasBuffer) save(canvasBuffer, 'meadow.png'); }
 
-function keyPressed() {
-  if (key === 's' || key === 'S') downloadHighRes();
-}
-
 function collectSettings() {
   const sliderIds = [
     'inp-artboard-w','inp-artboard-h','sld-master-scale',
