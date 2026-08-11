@@ -1082,10 +1082,12 @@
         <label>View Zoom</label>
         <div style="display:flex;gap:4px;align-items:center;flex:1">
           <button class="btn btn-secondary" onclick="window.zoomOut()" style="padding:1px 8px;font-size:16px;line-height:1.4">−</button>
-          <span id="view-zoom-display" style="flex:1;text-align:center;font-size:12px;color:#555">100%</span>
+          <span id="view-zoom-display" onclick="window.zoomFit()" title="Click to fit the artboard in the window"
+                style="flex:1;text-align:center;font-size:12px;color:#555;cursor:pointer">100%</span>
           <button class="btn btn-secondary" onclick="window.zoomIn()" style="padding:1px 8px;font-size:16px;line-height:1.4">+</button>
         </div>
       </div>
+      <div class="hint">Artboard size only changes the canvas — nothing on it is rescaled. Click the % to fit.</div>
       <div class="row">
         <label>Master Scale</label>
         <input type="range" id="sld-master-scale" min="0.25" max="3.0" value="1.0" step="0.05"

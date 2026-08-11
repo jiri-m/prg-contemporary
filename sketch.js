@@ -104,7 +104,17 @@ function domSlider(id) {
 }
 function getArtboardW() { return parseInt(document.getElementById('inp-artboard-w').value) || 1200; }
 function getArtboardH() { return parseInt(document.getElementById('inp-artboard-h').value) || 800; }
-function getCanvasScale() { return getArtboardW() / 1200; }
+
+// Composition area: the artboard minus the margin on every side. Renders are
+// built at exactly this size so nothing is rescaled when the artboard changes —
+// a different format shows more or less of the same-sized artwork.
+function getContentW() { return Math.max(1, getArtboardW() - Math.round(sldMargin.value()) * 2); }
+function getContentH() { return Math.max(1, getArtboardH() - Math.round(sldMargin.value()) * 2); }
+
+// Screen pixels per artboard pixel at 100% zoom. Depends only on the window, so
+// changing the artboard never changes how big the artwork looks on screen.
+const VIEW_REFERENCE = 1200;
+function _baseViewScale() { return Math.min(width, height) / VIEW_REFERENCE; }
 
 // ── p5 lifecycle ───────────────────────────────────────────────────────────────
 
@@ -169,8 +179,15 @@ function restartGrowth() {
   _updateStopBtn();
 
   let mVal = sldMargin.value();
-  img.resize(getArtboardW() - mVal * 2, 0);
-  if (img.height > getArtboardH() - mVal * 2) img.resize(0, getArtboardH() - mVal * 2);
+  const contentW = getContentW(), contentH = getContentH();
+
+  // Compositions are already built at the content size, so they pass through
+  // untouched — no rescaling when the artboard changes. Only a dropped photo of
+  // some other size gets fitted into the same box.
+  if (img.width !== contentW || img.height !== contentH) {
+    img.resize(contentW, 0);
+    if (img.height > contentH) img.resize(0, contentH);
+  }
 
   let bufferW = (img.width  + mVal * 2) * exportScale;
   let bufferH = (img.height + mVal * 2) * exportScale;
@@ -272,10 +289,12 @@ function draw() {
     activeBlades[i].show();
   }
 
-  let fitW = width, fitH = (canvasBuffer.height / canvasBuffer.width) * width;
-  if (fitH > height) { fitH = height; fitW = (canvasBuffer.width / canvasBuffer.height) * height; }
-  dispW = fitW * viewZoom;
-  dispH = fitH * viewZoom;
+  // The artboard is NOT fitted to the window — one artboard pixel always maps to
+  // the same number of screen pixels, so a wider or taller artboard shows more
+  // area instead of shrinking what is on it. Use View Zoom to see the whole thing.
+  const viewScale = _baseViewScale() * viewZoom;
+  dispW = (canvasBuffer.width  / exportScale) * viewScale;
+  dispH = (canvasBuffer.height / exportScale) * viewScale;
   dispOX = (width  - dispW) / 2;
   dispOY = (height - dispH) / 2;
   bMouseX = map(mouseX, dispOX, dispOX + dispW, 0, canvasBuffer.width);
@@ -750,12 +769,20 @@ function _getSvgFrameInfo() {
   else                        { baseH = artH; baseW = artH * svgAspect; }
   const dw = baseW * svgScale, dh = baseH * svgScale;
   const cx = (svgPosX / 100) * artW, cy = (svgPosY / 100) * artH;
-  const scX = dispW / artW, scY = dispH / artH;
+  const { scX, scY, m } = _contentToScreen();
   return {
-    fx: dispOX + (cx - dw / 2) * scX,
-    fy: dispOY + (cy - dh / 2) * scY,
+    fx: dispOX + (m + cx - dw / 2) * scX,
+    fy: dispOY + (m + cy - dh / 2) * scY,
     fw: dw * scX, fh: dh * scY,
   };
+}
+
+// Content pixels → screen pixels, plus the margin offset that insets the
+// composition inside the artboard.
+function _contentToScreen() {
+  const bw = canvasBuffer ? canvasBuffer.width  / exportScale : getArtboardW();
+  const bh = canvasBuffer ? canvasBuffer.height / exportScale : getArtboardH();
+  return { scX: dispW / bw, scY: dispH / bh, m: Math.round(sldMargin.value()) };
 }
 
 function _drawSvgFrame() {
@@ -779,7 +806,7 @@ function _scheduleActivePreview(delay) {
 // ── Gradient previews ──────────────────────────────────────────────────────────
 
 function _renderGradientFullTexturePreviewSync() {
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   if (meshPoints.length < 2) return;
   if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
   gradientPreviewCanvas.width  = artW;
@@ -788,7 +815,7 @@ function _renderGradientFullTexturePreviewSync() {
 }
 
 function _renderGradientOnTextPreviewSync() {
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   const t = _getTypography();
   if (!gradientPreviewCanvas) gradientPreviewCanvas = document.createElement('canvas');
   gradientPreviewCanvas.width  = artW;
@@ -825,7 +852,7 @@ function _scheduleGradientPreview(delay) {
 }
 
 function renderGradientComposition() {
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   if (meshPoints.length < 2) return;
   const meshCanvas = _makeMeshCanvas(artW, artH);
   const dataURL = meshCanvas.toDataURL('image/jpeg', 0.92);
@@ -834,7 +861,7 @@ function renderGradientComposition() {
 }
 
 function renderGradientOnTextComposition() {
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   const t = _getTypography();
   if (meshPoints.length < 2) return;
   const meshCanvas = _makeMeshCanvas(artW, artH);
@@ -872,7 +899,7 @@ function renderTextPreviewSync() {
   const photoYPct  = parseInt(document.getElementById('txt-photo-y').value) / 100;
   const photoSc    = parseFloat(document.getElementById('txt-photo-scale').value);
 
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   const lineHeight = fontSize * lineHMult;
   const fontStr    = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
 
@@ -965,7 +992,7 @@ function _scheduleTextPreview(delay) {
 
 function _getPhotoFrameInfo() {
   if (!textPhotoElement || dispW <= 0) return null;
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   const photoXPct = parseInt(document.getElementById('txt-photo-x').value) / 100;
   const photoYPct = parseInt(document.getElementById('txt-photo-y').value) / 100;
   const photoSc   = parseFloat(document.getElementById('txt-photo-scale').value);
@@ -975,13 +1002,13 @@ function _getPhotoFrameInfo() {
   const dw   = srcW * fsc, dh = srcH * fsc;
   const panX = (photoXPct - 0.5) * (dw - artW);
   const panY = (photoYPct - 0.5) * (dh - artH);
-  const scX  = dispW / artW, scY = dispH / artH;
+  const { scX, scY, m } = _contentToScreen();
   return {
-    fx: dispOX + (artW / 2 - dw / 2 + panX) * scX,
-    fy: dispOY + (artH / 2 - dh / 2 + panY) * scY,
+    fx: dispOX + (m + artW / 2 - dw / 2 + panX) * scX,
+    fy: dispOY + (m + artH / 2 - dh / 2 + panY) * scY,
     fw: dw * scX, fh: dh * scY,
-    cx: dispOX + (artW / 2 + panX) * scX,
-    cy: dispOY + (artH / 2 + panY) * scY
+    cx: dispOX + (m + artW / 2 + panX) * scX,
+    cy: dispOY + (m + artH / 2 + panY) * scY
   };
 }
 
@@ -1194,7 +1221,8 @@ class Blade {
 //               what a video editor needs for a transparent background.
 
 let videoFormat  = 'webm';
-let frameCapture = null;   // { format, frames[], canvas, w, h, fps, max, transparent }
+let frameCapture = null;      // { format, frames[], canvas, w, h, fps, max, transparent }
+let encodingExport = false;   // muxing a finished capture — recording is idle but busy
 
 const VIDEO_FORMAT_HINT = {
   webm: 'VP9/VP8 in WebM. Small files, quick. Alpha depends on the browser — use MOV or PNG for reliable transparency.',
@@ -1252,6 +1280,7 @@ function _videoStatus(msg) {
 }
 
 function startRecording() {
+  if (isRecording || encodingExport) return;
   if (!imgLoaded || !canvasBuffer) { alert('Start growing something first.'); return; }
   const opts = _videoOpts();
   const { w, h } = _videoOutSize(opts);
@@ -1259,11 +1288,18 @@ function startRecording() {
   else                        _startFrameCapture(opts, w, h);
 }
 
+// Always leaves the recorder idle and ready to start again, whichever path was
+// running and whether or not the encode that follows succeeds.
 function stopRecording() {
-  if (frameCapture)                                        _finishFrameCapture();
-  else if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  const pending = frameCapture;
   isRecording = false;
+
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    try { mediaRecorder.stop(); } catch (e) { /* already stopping */ }
+  }
   _updateRecordBtn();
+
+  if (pending) _finishFrameCapture(pending);
 }
 
 // ── WebM (MediaRecorder) ───────────────────────────────────────────────────────
@@ -1282,15 +1318,23 @@ function _startWebmRecording(opts, w, h) {
   recordingCanvas.getContext('2d', { alpha: true });
   recordingCanvas._transparent = opts.transparent;
 
-  const stream = recordingCanvas.captureStream(opts.fps);
+  const stream  = recordingCanvas.captureStream(opts.fps);
+  const myCanvas = recordingCanvas;   // onstop fires late; never clobber a newer run
   mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: opts.mbps * 1_000_000 });
   recordingChunks = [];
   mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordingChunks.push(e.data); };
   mediaRecorder.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    if (recordingCanvas === myCanvas) recordingCanvas = null;
     const blob = new Blob(recordingChunks, { type: mimeType.split(';')[0] });
-    _downloadBlob(blob, 'meadow-' + _timeStamp() + '.webm');
-    _videoStatus('Saved WebM · ' + w + '×' + h + ' · ' + _fmtBytes(blob.size));
-    recordingCanvas = null;
+    recordingChunks = [];
+    if (blob.size > 0) {
+      _downloadBlob(blob, 'meadow-' + _timeStamp() + '.webm');
+      _videoStatus('Saved WebM · ' + w + '×' + h + ' · ' + _fmtBytes(blob.size));
+    } else {
+      _videoStatus('Nothing was captured — try a longer recording.');
+    }
+    _updateRecordBtn();
   };
   mediaRecorder.start(100);
   isRecording = true;
@@ -1325,28 +1369,45 @@ function _grabFrame() {
   if (fc.frames.length >= fc.max) stopRecording();
 }
 
-function _finishFrameCapture() {
-  const fc = frameCapture;
+function _finishFrameCapture(captured) {
+  const fc = captured || frameCapture;
   frameCapture = null;
-  if (!fc || !fc.frames.length) { _videoStatus('No frames captured.'); return; }
-
-  const stamp = _timeStamp();
-  try {
-    if (fc.format === 'png') {
-      const zip = _buildZip(fc.frames.map((data, i) => ({
-        name: 'meadow_' + String(i + 1).padStart(5, '0') + '.png', data,
-      })));
-      _downloadBlob(new Blob([zip], { type: 'application/zip' }), 'meadow-frames-' + stamp + '.zip');
-      _videoStatus('Saved ' + fc.frames.length + ' PNG frames · ' + _fmtBytes(zip.length));
-    } else {
-      const mov = _buildMovPNG(fc.frames, fc.w, fc.h, fc.fps);
-      _downloadBlob(new Blob([mov], { type: 'video/quicktime' }), 'meadow-' + stamp + '.mov');
-      _videoStatus('Saved MOV · ' + fc.frames.length + ' frames · ' + _fmtBytes(mov.length));
-    }
-  } catch (e) {
-    _videoStatus('Export failed: ' + e.message);
-    alert('Export failed: ' + e.message);
+  if (!fc || !fc.frames.length) {
+    encodingExport = false;
+    _videoStatus('No frames captured.');
+    _updateRecordBtn();
+    return;
   }
+
+  // Muxing hundreds of full-size PNGs blocks the main thread, so paint the
+  // "encoding" state first and do the work on the next tick.
+  encodingExport = true;
+  _videoStatus('Encoding ' + fc.frames.length + ' frames…');
+  _updateRecordBtn('Encoding…');
+
+  setTimeout(() => {
+    const stamp = _timeStamp();
+    try {
+      if (fc.format === 'png') {
+        const zip = _buildZip(fc.frames.map((data, i) => ({
+          name: 'meadow_' + String(i + 1).padStart(5, '0') + '.png', data,
+        })));
+        _downloadBlob(new Blob([zip], { type: 'application/zip' }), 'meadow-frames-' + stamp + '.zip');
+        _videoStatus('Saved ' + fc.frames.length + ' PNG frames · ' + _fmtBytes(zip.length));
+      } else {
+        const mov = _buildMovPNG(fc.frames, fc.w, fc.h, fc.fps);
+        _downloadBlob(new Blob([mov], { type: 'video/quicktime' }), 'meadow-' + stamp + '.mov');
+        _videoStatus('Saved MOV · ' + fc.frames.length + ' frames · ' + _fmtBytes(mov.length));
+      }
+    } catch (e) {
+      _videoStatus('Export failed: ' + e.message);
+      alert('Export failed: ' + e.message);
+    } finally {
+      fc.frames.length = 0;          // release the captured PNGs
+      encodingExport = false;
+      _updateRecordBtn();
+    }
+  }, 30);
 }
 
 function _dataURLToBytes(url) {
@@ -1724,13 +1785,26 @@ function initSettingsButtons() {
 
 let viewZoom = 1.0;
 
+// Multiplicative steps over a wide range: large artboards are shown at full
+// scale now, so they need far more zoom-out headroom than ±0.25 allowed.
 function zoomIn() {
-  viewZoom = Math.min(4.0, parseFloat((viewZoom + 0.25).toFixed(2)));
+  viewZoom = Math.min(8, parseFloat((viewZoom * 1.25).toFixed(4)));
   _updateZoomDisplay();
 }
 
 function zoomOut() {
-  viewZoom = Math.max(0.25, parseFloat((viewZoom - 0.25).toFixed(2)));
+  viewZoom = Math.max(0.05, parseFloat((viewZoom / 1.25).toFixed(4)));
+  _updateZoomDisplay();
+}
+
+// Snap the zoom so the whole artboard is visible in the window.
+function zoomFit() {
+  if (!canvasBuffer) { viewZoom = 1.0; _updateZoomDisplay(); return; }
+  const base = _baseViewScale();
+  const artPxW = canvasBuffer.width  / exportScale;
+  const artPxH = canvasBuffer.height / exportScale;
+  const fit = Math.min(width / (artPxW * base), height / (artPxH * base)) * 0.95;
+  viewZoom = Math.min(8, Math.max(0.05, parseFloat(fit.toFixed(4))));
   _updateZoomDisplay();
 }
 
@@ -1741,6 +1815,7 @@ function _updateZoomDisplay() {
 
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
+window.zoomFit = zoomFit;
 
 function loadSettings() {
   const raw = localStorage.getItem('meadow-settings');
@@ -1921,7 +1996,10 @@ window.saveSettings    = saveSettings;
 window.exportSettings  = exportSettings;
 window.resetSettings   = resetSettings;
 window.toggleGrowth    = function () { growthPaused = !growthPaused; _updateStopBtn(); };
-window.toggleRecording = function () { isRecording ? stopRecording() : startRecording(); };
+window.toggleRecording = function () {
+  if (encodingExport) return;                 // ignore clicks while a capture is muxing
+  isRecording ? stopRecording() : startRecording();
+};
 
 window.exportEmbed = function () {
   if (!embedSourceBase64) { alert('Render something first.'); return; }
@@ -1979,21 +2057,26 @@ function _updateStopBtn() {
   btn.style.border     = '1px solid #EF3330';
 }
 
-function _updateRecordBtn() {
+// The label and the pulsing dot are rebuilt together: writing textContent used to
+// delete the #rec-dot span, after which every later update bailed out on the
+// missing element and the button stayed stuck on "Stop Recording".
+function _updateRecordBtn(overrideLabel) {
   const btn = document.getElementById('btn-record');
-  const dot = document.getElementById('rec-dot');
-  if (!btn || !dot) return;
-  if (isRecording) {
-    btn.textContent = frameCapture
-      ? '■ Stop — ' + frameCapture.frames.length + ' frames'
-      : '■ Stop Recording';
-    btn.style.background = '#fff'; btn.style.color = '#EF3330'; btn.style.border = '1px solid #EF3330';
-    dot.classList.add('active');
-  } else {
-    btn.textContent = '● Record Video';
-    btn.style.background = ''; btn.style.color = ''; btn.style.border = '';
-    dot.classList.remove('active');
-  }
+  if (!btn) return;
+  const label = overrideLabel !== undefined ? overrideLabel
+    : isRecording
+      ? (frameCapture ? 'Stop — ' + frameCapture.frames.length + ' frames' : 'Stop Recording')
+      : 'Record Video';
+  const busy = isRecording || overrideLabel !== undefined;
+
+  const dot = document.createElement('span');
+  dot.id = 'rec-dot';
+  dot.classList.toggle('active', busy);
+  btn.replaceChildren(dot, document.createTextNode(label));
+
+  btn.style.background = busy ? '#fff' : '';
+  btn.style.color      = busy ? '#EF3330' : '';
+  btn.style.border     = busy ? '1px solid #EF3330' : '';
 }
 
 // ── Mode toggle ────────────────────────────────────────────────────────────────
@@ -2355,7 +2438,7 @@ function renderTextComposition() {
   const photoXPct     = parseInt(document.getElementById('txt-photo-x').value) / 100;
   const photoYPct     = parseInt(document.getElementById('txt-photo-y').value) / 100;
   const photoScale    = parseFloat(document.getElementById('txt-photo-scale').value);
-  const artW = getArtboardW(), artH = getArtboardH();
+  const artW = getContentW(), artH = getContentH();
   const lineHeight = fontSize * lineHMult;
   const fontString = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
 
