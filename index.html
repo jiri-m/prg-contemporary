@@ -1079,6 +1079,12 @@
         <input type="number" id="inp-artboard-h" value="1200" min="100" max="8000" step="50">
       </div>
       <div class="row">
+        <label>Artboard Color</label>
+        <input type="color" id="inp-artboard-color" value="#FFFFFF"
+               style="flex:1;height:22px;padding:0;border:1px solid var(--gray3);background:none;cursor:pointer">
+      </div>
+      <label class="chk"><input type="checkbox" id="inp-artboard-transparent"> Transparent artboard</label>
+      <div class="row">
         <label>View Zoom</label>
         <div style="display:flex;gap:4px;align-items:center;flex:1">
           <button class="btn btn-secondary" onclick="window.zoomOut()" style="padding:1px 8px;font-size:16px;line-height:1.4">−</button>
