@@ -21,6 +21,7 @@ let showGrowth = false;
 
 // Display geometry
 let dispW = 0, dispH = 0, dispOX = 0, dispOY = 0;
+let dispMapsTo = 'buffer';   // what dispW/dispH measure: 'preview' | 'buffer'
 let bMouseX = 0, bMouseY = 0;
 
 // Cursor interaction
@@ -82,9 +83,9 @@ const meshGreenTriads = [
 const meshAccents = ['#ff97d4', '#de92fa', '#9b73f9'];
 let meshYellowColor = '#FFD700';
 
-const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"25","inp-noise-scale":"4","sld-hue-shift":"10","sld-sat-shift":"7","sld-bri-shift":"18","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"0","inp-white-intensity":"0"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":0,"accentIdx":2,"greenTriads":[["#417F34","#749E5E","#8FB47D"]],"accents":["#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#FFD700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":1},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":1},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.083254187623456},{"x":0.03491823674560472,"y":0.43217836548920147,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3891274638291047,"y":0.8741928374651029,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751037},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":2},"weight":0.9583726481029374},{"x":0.6129384756102938,"y":0.7834019265748291,"slot":{"type":"accent","idx":0},"weight":1.0847362951038273}]}};
+const DEFAULT_SETTINGS = {"version": 3, "currentMode": "gradient", "gradientUseText": true, "imageUseText": true, "sliders": {"inp-artboard-w": "1200", "inp-artboard-h": "1200", "inp-artboard-color": "#FFFFFF", "sld-master-scale": "1", "sld-margin": "20", "sld-density": "41", "sld-cluster": "0", "sld-displace": "1", "sld-threshold": "242", "sld-len": "450", "sld-weight": "1.42", "sld-opacity": "160", "sld-sway": "2.4", "sld-spawn-freq": "5", "sld-draw-speed": "2", "sld-wind-speed": "8", "sld-s1": "0.04", "sld-s2": "0.14", "sld-s3": "0.19", "sld-s4": "0.24", "sld-c1": "62", "sld-c2": "7", "sld-c3": "1", "sld-c4": "1", "sld-r1": "0.8", "sld-r2": "0.36", "sld-r3": "0.15", "sld-r4": "0.48", "sld-mouse-strength": "1.3", "sld-mouse-radius": "0.25", "txt-font-size": "200", "txt-letter-spacing": "0", "txt-line-height": "1.2", "txt-pos-x": "50", "txt-pos-y": "50", "txt-photo-x": "50", "txt-photo-y": "50", "txt-photo-scale": "1", "inp-mesh-weight": "0.9", "inp-noise-strength": "25", "inp-noise-scale": "4", "sld-hue-shift": "10", "sld-sat-shift": "7", "sld-bri-shift": "18", "svg-pos-x": "50", "svg-pos-y": "50", "svg-scale": "1", "inp-yellow-intensity": "0", "inp-white-intensity": "0"}, "selects": {"txt-font-family": "'Times New Roman', serif", "txt-font-weight": "400"}, "text": {"txtContent": "MEADOW"}, "alignment": {"textAlignment": "center", "interactMode": "wind", "textRotation": 0, "maskType": "text"}, "mesh": {"greenTriad": 0, "accentIdx": 2, "greenTriads": [["#417F34", "#749E5E", "#8FB47D"]], "accents": ["#ff97d4", "#de92fa", "#9b73f9"], "yellowColor": "#FFD700", "points": [{"x": 0.11438110273678662, "y": 0.18482780589530273, "slot": {"type": "green", "shade": 0}, "weight": 0.8073965620252109}, {"x": 0.5829240761583745, "y": 0.1340470370792721, "slot": {"type": "green", "shade": 1}, "weight": 1.1141675917036584}, {"x": 0.8821237897341999, "y": 0.2450620327859004, "slot": {"type": "green", "shade": 2}, "weight": 1.0483603773630816}, {"x": 0.2340989922049636, "y": 0.5033105822095592, "slot": {"type": "green", "shade": 0}, "weight": 1.1875327184416173}, {"x": 0.7091985698994226, "y": 0.3798013682258998, "slot": {"type": "green", "shade": 1}, "weight": 0.9442466892673106}, {"x": 0.5307945653685134, "y": 0.5367713828758603, "slot": {"type": "green", "shade": 2}, "weight": 1.0542932426766123}, {"x": 0.13061959917055055, "y": 0.7406379192262323, "slot": {"type": "green", "shade": 0}, "weight": 1.12769541425788}, {"x": 0.48313513080326165, "y": 0.7142424274693371, "slot": {"type": "green", "shade": 1}, "weight": 1.1115264004542806}, {"x": 0.8274648873343197, "y": 0.6782280659710673, "slot": {"type": "green", "shade": 2}, "weight": 1.187032642093307}, {"x": 0.20892714438882562, "y": 0.97, "slot": {"type": "green", "shade": 0}, "weight": 0.9941670757650027}, {"x": 0.7329911231590134, "y": 0.8258871676582636, "slot": {"type": "green", "shade": 1}, "weight": 1.1638713285716442}, {"x": 0.36681222707423583, "y": 0.4379532223470534, "slot": {"type": "accent", "idx": 1}, "weight": 0.9292466875763805}, {"x": 0.7641921397379913, "y": 0.44448983760596467, "slot": {"type": "accent", "idx": 1}, "weight": 1.207297232696769}, {"x": 0.6712834590182847, "y": 0.07341928764023159, "slot": {"type": "green", "shade": 0}, "weight": 1.083254187623456}, {"x": 0.03491823674560472, "y": 0.43217836548920147, "slot": {"type": "green", "shade": 2}, "weight": 0.9217634082751934}, {"x": 0.9418372645109273, "y": 0.5834719263847261, "slot": {"type": "green", "shade": 1}, "weight": 1.1453829047263817}, {"x": 0.3891274638291047, "y": 0.8741928374651029, "slot": {"type": "green", "shade": 2}, "weight": 0.8974512638401982}, {"x": 0.8034819263748291, "y": 0.9263748201937465, "slot": {"type": "green", "shade": 0}, "weight": 1.0671839264751037}, {"x": 0.04728193647502938, "y": 0.8139274651038291, "slot": {"type": "green", "shade": 1}, "weight": 1.1293847561029384}, {"x": 0.1783920465738291, "y": 0.3047281936475029, "slot": {"type": "accent", "idx": 2}, "weight": 0.9583726481029374}, {"x": 0.6129384756102938, "y": 0.7834019265748291, "slot": {"type": "accent", "idx": 0}, "weight": 1.0847362951038273}]}, "artboardTransparent": false};
 
-const TEXTURE_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":false,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"74","sld-density":"25","sld-cluster":"100","sld-displace":"29","sld-threshold":"255","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"3.89","sld-spawn-freq":"12","sld-draw-speed":"3.7","sld-wind-speed":"8","sld-s1":"0.05","sld-s2":"0.18","sld-s3":"0.22","sld-s4":"0.35","sld-c1":"72","sld-c2":"9","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1","inp-noise-strength":"70","inp-noise-scale":"11.5","sld-hue-shift":"18","sld-sat-shift":"24","sld-bri-shift":"36","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"215","inp-white-intensity":"68"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":0,"accentIdx":2,"greenTriads":[["#417F34","#749E5E","#8FB47D"]],"accents":["#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#ffd700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.703893860546731,"y":0.3544491289287724,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":1},"weight":5},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":1},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.083254187623456},{"x":0.03491823674560472,"y":0.43217836548920147,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3975382463700107,"y":0.8708771642552439,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751037},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":2},"weight":0.9583726481029374},{"x":0.6601287728071995,"y":0.7501851314765715,"slot":{"type":"accent","idx":0},"weight":1.0847362951038273},{"x":0.28812552702118194,"y":0.7895737104421499,"slot":{"type":"yellow"},"weight":1},{"x":0.6539863003294716,"y":0.7482327449762968,"slot":{"type":"yellow"},"weight":1},{"x":0.6518005489622372,"y":0.3086066677449977,"slot":{"type":"yellow"},"weight":1},{"x":0.7769906793181801,"y":0.5743649281770018,"slot":{"type":"white"},"weight":1},{"x":0.38878522882210437,"y":0.20749804350638115,"slot":{"type":"white"},"weight":1.4},{"x":0.19740224946362206,"y":0.7314186136539697,"slot":{"type":"white"},"weight":1}]}};
+const TEXTURE_SETTINGS = {"version": 3, "currentMode": "gradient", "gradientUseText": false, "imageUseText": true, "sliders": {"inp-artboard-w": "1200", "inp-artboard-h": "1200", "inp-artboard-color": "#FFFFFF", "sld-master-scale": "1", "sld-margin": "74", "sld-density": "25", "sld-cluster": "100", "sld-displace": "29", "sld-threshold": "255", "sld-len": "450", "sld-weight": "1.42", "sld-opacity": "160", "sld-sway": "3.89", "sld-spawn-freq": "12", "sld-draw-speed": "3.7", "sld-wind-speed": "8", "sld-s1": "0.05", "sld-s2": "0.18", "sld-s3": "0.22", "sld-s4": "0.35", "sld-c1": "72", "sld-c2": "9", "sld-c3": "1", "sld-c4": "1", "sld-r1": "0.8", "sld-r2": "0.36", "sld-r3": "0.15", "sld-r4": "0.48", "sld-mouse-strength": "1.3", "sld-mouse-radius": "0.25", "txt-font-size": "200", "txt-letter-spacing": "0", "txt-line-height": "1.2", "txt-pos-x": "50", "txt-pos-y": "50", "txt-photo-x": "50", "txt-photo-y": "50", "txt-photo-scale": "1", "inp-mesh-weight": "1", "inp-noise-strength": "70", "inp-noise-scale": "11.5", "sld-hue-shift": "18", "sld-sat-shift": "24", "sld-bri-shift": "36", "svg-pos-x": "50", "svg-pos-y": "50", "svg-scale": "1", "inp-yellow-intensity": "215", "inp-white-intensity": "68"}, "selects": {"txt-font-family": "'Times New Roman', serif", "txt-font-weight": "400"}, "text": {"txtContent": "MEADOW"}, "alignment": {"textAlignment": "center", "interactMode": "wind", "textRotation": 0, "maskType": "text"}, "mesh": {"greenTriad": 0, "accentIdx": 2, "greenTriads": [["#417F34", "#749E5E", "#8FB47D"]], "accents": ["#ff97d4", "#de92fa", "#9b73f9"], "yellowColor": "#ffd700", "points": [{"x": 0.11438110273678662, "y": 0.18482780589530273, "slot": {"type": "green", "shade": 0}, "weight": 0.8073965620252109}, {"x": 0.5829240761583745, "y": 0.1340470370792721, "slot": {"type": "green", "shade": 1}, "weight": 1.1141675917036584}, {"x": 0.8821237897341999, "y": 0.2450620327859004, "slot": {"type": "green", "shade": 2}, "weight": 1.0483603773630816}, {"x": 0.2340989922049636, "y": 0.5033105822095592, "slot": {"type": "green", "shade": 0}, "weight": 1.1875327184416173}, {"x": 0.703893860546731, "y": 0.3544491289287724, "slot": {"type": "green", "shade": 1}, "weight": 0.9442466892673106}, {"x": 0.5307945653685134, "y": 0.5367713828758603, "slot": {"type": "green", "shade": 2}, "weight": 1.0542932426766123}, {"x": 0.13061959917055055, "y": 0.7406379192262323, "slot": {"type": "green", "shade": 0}, "weight": 1.12769541425788}, {"x": 0.48313513080326165, "y": 0.7142424274693371, "slot": {"type": "green", "shade": 1}, "weight": 1.1115264004542806}, {"x": 0.8274648873343197, "y": 0.6782280659710673, "slot": {"type": "green", "shade": 2}, "weight": 1.187032642093307}, {"x": 0.20892714438882562, "y": 0.97, "slot": {"type": "green", "shade": 0}, "weight": 0.9941670757650027}, {"x": 0.7329911231590134, "y": 0.8258871676582636, "slot": {"type": "green", "shade": 1}, "weight": 1.1638713285716442}, {"x": 0.36681222707423583, "y": 0.4379532223470534, "slot": {"type": "accent", "idx": 1}, "weight": 5}, {"x": 0.7641921397379913, "y": 0.44448983760596467, "slot": {"type": "accent", "idx": 1}, "weight": 1.207297232696769}, {"x": 0.6712834590182847, "y": 0.07341928764023159, "slot": {"type": "green", "shade": 0}, "weight": 1.083254187623456}, {"x": 0.03491823674560472, "y": 0.43217836548920147, "slot": {"type": "green", "shade": 2}, "weight": 0.9217634082751934}, {"x": 0.9418372645109273, "y": 0.5834719263847261, "slot": {"type": "green", "shade": 1}, "weight": 1.1453829047263817}, {"x": 0.3975382463700107, "y": 0.8708771642552439, "slot": {"type": "green", "shade": 2}, "weight": 0.8974512638401982}, {"x": 0.8034819263748291, "y": 0.9263748201937465, "slot": {"type": "green", "shade": 0}, "weight": 1.0671839264751037}, {"x": 0.04728193647502938, "y": 0.8139274651038291, "slot": {"type": "green", "shade": 1}, "weight": 1.1293847561029384}, {"x": 0.1783920465738291, "y": 0.3047281936475029, "slot": {"type": "accent", "idx": 2}, "weight": 0.9583726481029374}, {"x": 0.6601287728071995, "y": 0.7501851314765715, "slot": {"type": "accent", "idx": 0}, "weight": 1.0847362951038273}, {"x": 0.28812552702118194, "y": 0.7895737104421499, "slot": {"type": "yellow"}, "weight": 1}, {"x": 0.6539863003294716, "y": 0.7482327449762968, "slot": {"type": "yellow"}, "weight": 1}, {"x": 0.6518005489622372, "y": 0.3086066677449977, "slot": {"type": "yellow"}, "weight": 1}, {"x": 0.7769906793181801, "y": 0.5743649281770018, "slot": {"type": "white"}, "weight": 1}, {"x": 0.38878522882210437, "y": 0.20749804350638115, "slot": {"type": "white"}, "weight": 1.4}, {"x": 0.19740224946362206, "y": 0.7314186136539697, "slot": {"type": "white"}, "weight": 1}]}, "artboardTransparent": false};
 let meshPoints     = [];
 let meshGreenTriad = 0;
 let meshAccentIdx  = 2;
@@ -115,6 +116,16 @@ function getContentH() { return Math.max(1, getArtboardH() - Math.round(sldMargi
 // changing the artboard never changes how big the artwork looks on screen.
 const VIEW_REFERENCE = 1200;
 function _baseViewScale() { return Math.min(width, height) / VIEW_REFERENCE; }
+
+// Artboard background. Deliberately kept out of the composition that findSeeds()
+// reads — that image stays white-backed because brightness is what decides where
+// blades spawn. The colour is painted behind the finished blades instead.
+function getArtboardColor() {
+  return document.getElementById('inp-artboard-color')?.value || '#FFFFFF';
+}
+function isArtboardTransparent() {
+  return !!document.getElementById('inp-artboard-transparent')?.checked;
+}
 
 // ── p5 lifecycle ───────────────────────────────────────────────────────────────
 
@@ -236,16 +247,16 @@ function findSeeds() {
 // ── Draw loop ──────────────────────────────────────────────────────────────────
 
 function draw() {
-  // Gradient mode preview
+  // Gradient mode preview — same fixed scale as the growth view, so switching
+  // between them (or changing the artboard) never resizes the artwork.
   if (currentMode === 'gradient' && gradientPreviewCanvas && !showGrowth) {
     background(250);
-    const ar = gradientPreviewCanvas.width / gradientPreviewCanvas.height;
-    let fitW = width, fitH = width / ar;
-    if (fitH > height) { fitH = height; fitW = height * ar; }
-    let dW = fitW * viewZoom, dH = fitH * viewZoom;
-    dispOX = (width - dW) / 2; dispOY = (height - dH) / 2;
-    dispW = dW; dispH = dH;
-    drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dW, dH);
+    dispMapsTo = 'preview';
+    const s = _baseViewScale() * viewZoom;
+    dispW = gradientPreviewCanvas.width * s; dispH = gradientPreviewCanvas.height * s;
+    dispOX = (width - dispW) / 2; dispOY = (height - dispH) / 2;
+    _paintArtboardBackdrop();
+    drawingContext.drawImage(gradientPreviewCanvas, dispOX, dispOY, dispW, dispH);
     if (maskType === 'svg' && svgMaskElement && gradientUseText) _drawSvgFrame();
     cursor(ARROW);
     return;
@@ -254,13 +265,12 @@ function draw() {
   // Image + On Text preview
   if (currentMode === 'image' && imageUseText && textPreviewCanvas && !showGrowth) {
     background(250);
-    const arT = textPreviewCanvas.width / textPreviewCanvas.height;
-    let fitWt = width, fitHt = width / arT;
-    if (fitHt > height) { fitHt = height; fitWt = height * arT; }
-    let dWt = fitWt * viewZoom, dHt = fitHt * viewZoom;
-    dispOX = (width - dWt) / 2; dispOY = (height - dHt) / 2;
-    dispW = dWt; dispH = dHt;
-    drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dWt, dHt);
+    dispMapsTo = 'preview';
+    const s = _baseViewScale() * viewZoom;
+    dispW = textPreviewCanvas.width * s; dispH = textPreviewCanvas.height * s;
+    dispOX = (width - dispW) / 2; dispOY = (height - dispH) / 2;
+    _paintArtboardBackdrop();
+    drawingContext.drawImage(textPreviewCanvas, dispOX, dispOY, dispW, dispH);
     if (maskType === 'svg' && svgMaskElement) { _drawSvgFrame(); cursor(ARROW); }
     else if (textPhotoElement) { _drawPhotoFrame(); }
     else { cursor(ARROW); }
@@ -292,6 +302,7 @@ function draw() {
   // The artboard is NOT fitted to the window — one artboard pixel always maps to
   // the same number of screen pixels, so a wider or taller artboard shows more
   // area instead of shrinking what is on it. Use View Zoom to see the whole thing.
+  dispMapsTo = 'buffer';
   const viewScale = _baseViewScale() * viewZoom;
   dispW = (canvasBuffer.width  / exportScale) * viewScale;
   dispH = (canvasBuffer.height / exportScale) * viewScale;
@@ -320,15 +331,28 @@ function draw() {
     const rctx = recordingCanvas.getContext('2d');
     rctx.clearRect(0, 0, recordingCanvas.width, recordingCanvas.height);
     if (!recordingCanvas._transparent) {
-      rctx.fillStyle = '#f5f5f5';
+      rctx.fillStyle = _exportBackdrop();
       rctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
     }
     rctx.drawImage(canvasBuffer.elt, 0, 0, recordingCanvas.width, recordingCanvas.height);
   }
 
-  background(255);
+  background(250);
+  _paintArtboardBackdrop();
   imageMode(CENTER);
   image(canvasBuffer, width / 2, height / 2, dispW, dispH);
+}
+
+// Fills the on-screen artboard rectangle with the artboard colour, so the
+// surrounding app background stays distinct from the artwork.
+function _paintArtboardBackdrop() {
+  if (isArtboardTransparent() || dispW <= 0) return;
+  push();
+  noStroke();
+  rectMode(CORNER);
+  fill(getArtboardColor());
+  rect(dispOX, dispOY, dispW, dispH);
+  pop();
 }
 
 // ── HSL color helpers ──────────────────────────────────────────────────────────
@@ -777,9 +801,13 @@ function _getSvgFrameInfo() {
   };
 }
 
-// Content pixels → screen pixels, plus the margin offset that insets the
-// composition inside the artboard.
+// Content pixels → screen pixels. What is on screen is either the preview canvas
+// (already exactly the content size) or the render buffer (the full artboard, so
+// the content sits inside it offset by the margin).
 function _contentToScreen() {
+  if (dispMapsTo === 'preview') {
+    return { scX: dispW / getContentW(), scY: dispH / getContentH(), m: 0 };
+  }
   const bw = canvasBuffer ? canvasBuffer.width  / exportScale : getArtboardW();
   const bh = canvasBuffer ? canvasBuffer.height / exportScale : getArtboardH();
   return { scX: dispW / bw, scY: dispH / bh, m: Math.round(sldMargin.value()) };
@@ -796,6 +824,13 @@ function _drawSvgFrame() {
   rect(info.fx, info.fy, info.fw, info.fh);
   drawingContext.setLineDash([]);
   pop();
+}
+
+// Repaints whichever preview the current mode shows, including gradient
+// full-texture, which _scheduleActivePreview deliberately skips.
+function _refreshPreview(delay) {
+  if (currentMode === 'gradient') _scheduleGradientPreview(delay);
+  else if (currentMode === 'image' && imageUseText) _scheduleTextPreview(delay);
 }
 
 function _scheduleActivePreview(delay) {
@@ -821,8 +856,8 @@ function _renderGradientOnTextPreviewSync() {
   gradientPreviewCanvas.width  = artW;
   gradientPreviewCanvas.height = artH;
   const fc = gradientPreviewCanvas.getContext('2d');
-  fc.fillStyle = '#ffffff';
-  fc.fillRect(0, 0, artW, artH);
+  fc.clearRect(0, 0, artW, artH);
+  if (!isArtboardTransparent()) { fc.fillStyle = getArtboardColor(); fc.fillRect(0, 0, artW, artH); }
   if (meshPoints.length < 2) return;
   const meshCanvas = _makeMeshCanvas(artW, artH);
   fc.globalAlpha = 0.75;
@@ -907,8 +942,8 @@ function renderTextPreviewSync() {
   textPreviewCanvas.width  = artW;
   textPreviewCanvas.height = artH;
   const fc = textPreviewCanvas.getContext('2d');
-  fc.fillStyle = '#ffffff';
-  fc.fillRect(0, 0, artW, artH);
+  fc.clearRect(0, 0, artW, artH);
+  if (!isArtboardTransparent()) { fc.fillStyle = getArtboardColor(); fc.fillRect(0, 0, artW, artH); }
 
   if (textPhotoElement) {
     const srcW = textPhotoElement.naturalWidth, srcH = textPhotoElement.naturalHeight;
@@ -1358,7 +1393,7 @@ function _grabFrame() {
   const fc  = frameCapture;
   const ctx = fc.canvas.getContext('2d');
   ctx.clearRect(0, 0, fc.w, fc.h);
-  if (!fc.transparent) { ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, fc.w, fc.h); }
+  if (!fc.transparent) { ctx.fillStyle = _exportBackdrop(); ctx.fillRect(0, 0, fc.w, fc.h); }
   ctx.drawImage(canvasBuffer.elt, 0, 0, fc.w, fc.h);
   // toDataURL is synchronous, so frames stay in order no matter how slow encoding is.
   fc.frames.push(_dataURLToBytes(fc.canvas.toDataURL('image/png')));
@@ -1613,11 +1648,27 @@ function initVideoExport() {
 
 // ── Export & save ──────────────────────────────────────────────────────────────
 
-function downloadHighRes() { if (canvasBuffer) save(canvasBuffer, 'meadow.png'); }
+// A video export that is not explicitly transparent still needs something opaque
+// behind the blades; use the artboard colour, falling back to white.
+function _exportBackdrop() {
+  return isArtboardTransparent() ? '#FFFFFF' : getArtboardColor();
+}
+
+function downloadHighRes() {
+  if (!canvasBuffer) return;
+  if (isArtboardTransparent()) { save(canvasBuffer, 'meadow-' + _timeStamp() + '.png'); return; }
+  const out = document.createElement('canvas');
+  out.width = canvasBuffer.width; out.height = canvasBuffer.height;
+  const ctx = out.getContext('2d');
+  ctx.fillStyle = getArtboardColor();
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(canvasBuffer.elt, 0, 0);
+  out.toBlob(blob => _downloadBlob(blob, 'meadow-' + _timeStamp() + '.png'), 'image/png');
+}
 
 function collectSettings() {
   const sliderIds = [
-    'inp-artboard-w','inp-artboard-h','sld-master-scale',
+    'inp-artboard-w','inp-artboard-h','inp-artboard-color','sld-master-scale',
     'sld-margin','sld-density','sld-cluster','sld-displace','sld-threshold',
     'sld-len','sld-weight','sld-opacity','sld-sway','sld-spawn-freq','sld-draw-speed','sld-wind-speed',
     'sld-s1','sld-s2','sld-s3','sld-s4',
@@ -1649,6 +1700,7 @@ function collectSettings() {
     currentMode, gradientUseText, imageUseText,
     sliders, selects,
     fonts: { custom: customFonts },
+    artboardTransparent: isArtboardTransparent(),
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
     alignment: { textAlignment, interactMode, textRotation, maskType },
     video: _collectVideoSettings(),
@@ -1918,7 +1970,9 @@ function applySettings(data) {
     if (el) el.value = val;
   });
 
-  // 5b. Restore video/sequence export options
+  // 5b. Restore the artboard backdrop and video/sequence export options
+  const abT = document.getElementById('inp-artboard-transparent');
+  if (abT) abT.checked = !!data.artboardTransparent;
   _applyVideoSettings(data.video);
 
   // 6. Restore text
@@ -2267,9 +2321,15 @@ function initModeToggle() {
     _scheduleActivePreview(150);
   });
 
-  // ── Artboard size → refresh preview ────────────────────────────────────────
+  // ── Artboard size / backdrop → refresh preview ─────────────────────────────
   ['inp-artboard-w', 'inp-artboard-h'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', () => _scheduleActivePreview(400));
+    document.getElementById(id)?.addEventListener('input', () => _refreshPreview(400));
+  });
+  // Grown artwork already gets the backdrop painted live each frame, so only the
+  // pre-render previews need rebuilding — re-rendering here would throw the
+  // grass away and drop back to the mesh preview.
+  ['inp-artboard-color', 'inp-artboard-transparent'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => { if (!showGrowth) _refreshPreview(0); });
   });
 
   // ── Shared typography controls ─────────────────────────────────────────────
