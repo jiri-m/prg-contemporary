@@ -237,6 +237,31 @@
     .btn-secondary:hover { border-color: var(--black); color: var(--black); }
     .btn-accent { background: var(--accent); border: 1px solid var(--accent); color: var(--white); }
     .btn-accent:hover { background: #8560d9; border-color: #8560d9; }
+    /* Second click of a two-step (confirm) button */
+    .btn.armed { background: var(--red) !important; border-color: var(--red) !important; color: var(--white) !important; }
+    .btn.ok    { background: var(--white) !important; border-color: #4a9a6f !important; color: #4a9a6f !important; }
+
+    .hint {
+      font-size: 8px;
+      font-family: var(--mono);
+      color: var(--gray2);
+      line-height: 1.5;
+      margin: -2px 0 6px 0;
+    }
+
+    .chk {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray1);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .chk input[type=checkbox] { accent-color: var(--black); cursor: pointer; margin: 0; }
 
     /* ── Tiers table ── */
     .tier-table { width: 100%; border-collapse: collapse; }
@@ -448,7 +473,7 @@
       </div>
 
       <div class="ctrl-label">White Bloom</div>
-      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:4px">Boosts density &amp; length</div>
+      <div style="font-size:8px;font-family:var(--mono);color:var(--gray2);line-height:1.6;margin-bottom:4px">Thins density &amp; shortens blades</div>
       <div class="row">
         <label>Intensity</label>
         <input type="range" id="inp-white-intensity" min="0" max="200" value="0" step="1"
@@ -615,16 +640,6 @@
       <div class="ctrl-label">Green set</div>
       <div class="triad-row" id="triad-btns">
         <button class="triad-btn active" data-triad="0">
-          <div class="triad-swatch" style="background:#037342"></div>
-          <div class="triad-swatch" style="background:#2E944C"></div>
-          <div class="triad-swatch" style="background:#45B04B"></div>
-        </button>
-        <button class="triad-btn" data-triad="1">
-          <div class="triad-swatch" style="background:#525C29"></div>
-          <div class="triad-swatch" style="background:#ADBA6B"></div>
-          <div class="triad-swatch" style="background:#DDE3B6"></div>
-        </button>
-        <button class="triad-btn" data-triad="2">
           <div class="triad-swatch" style="background:#417F34"></div>
           <div class="triad-swatch" style="background:#749E5E"></div>
           <div class="triad-swatch" style="background:#8FB47D"></div>
@@ -633,17 +648,16 @@
 
       <div class="ctrl-label" style="margin-top:2px">Edit triad</div>
       <div style="display:flex;gap:3px;margin-bottom:8px">
-        <input type="color" class="triad-color-input" id="triad-c0" value="#037342" title="Shade 1">
-        <input type="color" class="triad-color-input" id="triad-c1" value="#2E944C" title="Shade 2">
-        <input type="color" class="triad-color-input" id="triad-c2" value="#45B04B" title="Shade 3">
+        <input type="color" class="triad-color-input" id="triad-c0" value="#417F34" title="Shade 1">
+        <input type="color" class="triad-color-input" id="triad-c1" value="#749E5E" title="Shade 2">
+        <input type="color" class="triad-color-input" id="triad-c2" value="#8FB47D" title="Shade 3">
       </div>
 
       <div class="ctrl-label">Accent</div>
       <div class="accent-row" id="accent-btns">
-        <input type="color" class="accent-btn"        data-accent="0" value="#ff95ae">
-        <input type="color" class="accent-btn"        data-accent="1" value="#ff97d4">
-        <input type="color" class="accent-btn active" data-accent="2" value="#de92fa">
-        <input type="color" class="accent-btn"        data-accent="3" value="#9b73f9">
+        <input type="color" class="accent-btn"        data-accent="0" value="#ff97d4">
+        <input type="color" class="accent-btn"        data-accent="1" value="#de92fa">
+        <input type="color" class="accent-btn active" data-accent="2" value="#9b73f9">
       </div>
 
       <div class="row">
@@ -724,7 +738,76 @@
     <button class="btn btn-primary"   onclick="window.saveHighRes()" style="background:#fff;color:#111;border-color:#111">Save High-Res</button>
     <button class="btn btn-secondary" id="btn-record" onclick="window.toggleRecording()"><span id="rec-dot"></span>Record Video</button>
     <button class="btn btn-secondary" onclick="window.exportEmbed()">Export Embed</button>
-    <button class="btn btn-secondary" onclick="window.exportSettings()">Export Settings</button>
+  </div>
+
+  <!-- ═══════════════ VIDEO EXPORT (collapsible) ═══════════════ -->
+  <div class="section collapsible">
+    <div class="section-header">
+      <span class="section-title">Video Export</span>
+      <span class="collapse-arrow">▸</span>
+    </div>
+    <div class="section-body">
+
+      <div class="ctrl-label">Format</div>
+      <div class="sub-toggle" id="vid-format-btns" style="margin-bottom:6px">
+        <button class="sub-btn active" data-fmt="webm">WebM</button>
+        <button class="sub-btn"        data-fmt="mov">MOV</button>
+        <button class="sub-btn"        data-fmt="png">PNG Seq</button>
+      </div>
+      <div class="hint" id="vid-format-hint"></div>
+
+      <label class="chk"><input type="checkbox" id="vid-transparent"> Transparent background</label>
+
+      <div class="text-field">
+        <label>Long Edge</label>
+        <select id="vid-resolution">
+          <option value="1080">1080 px</option>
+          <option value="1440">1440 px</option>
+          <option value="1920" selected>1920 px</option>
+          <option value="2560">2560 px</option>
+          <option value="3840">3840 px</option>
+          <option value="full">Full render buffer</option>
+        </select>
+      </div>
+
+      <div class="text-field">
+        <label>Frame Rate</label>
+        <select id="vid-fps">
+          <option value="24">24 fps</option>
+          <option value="25">25 fps</option>
+          <option value="30" selected>30 fps</option>
+          <option value="60">60 fps</option>
+        </select>
+      </div>
+
+      <div class="text-field" id="vid-quality-field">
+        <label>Bitrate</label>
+        <select id="vid-quality">
+          <option value="16">16 Mbps — small</option>
+          <option value="40" selected>40 Mbps — high</option>
+          <option value="80">80 Mbps — very high</option>
+          <option value="160">160 Mbps — maximum</option>
+        </select>
+      </div>
+
+      <div class="row" id="vid-frames-field">
+        <label>Max Frames</label>
+        <input type="number" id="vid-max-frames" value="300" min="10" max="3000" step="10">
+      </div>
+
+      <div class="hint" id="vid-status">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SETTINGS ═══════════════ -->
+  <div class="section">
+    <div class="section-title">Settings</div>
+    <button class="btn btn-secondary" id="btn-save-settings">Save Settings</button>
+    <div class="hint">Stores in this browser and downloads a dated .json backup. Click twice to confirm.</div>
+    <button class="btn btn-secondary" id="btn-load-settings">Load Settings File…</button>
+    <input type="file" id="settings-file-input" accept="application/json,.json" style="display:none">
+    <button class="btn btn-secondary" id="btn-reset-settings">Revert to Default</button>
+    <div class="hint" id="settings-status">&nbsp;</div>
   </div>
 
   <!-- ═══════════════ GROWTH (collapsible) ═══════════════ -->

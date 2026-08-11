@@ -77,17 +77,16 @@ let _gradientPreviewTimer = null;
 // ── Mesh gradient ─────────────────────────────────────────────────────────────
 
 const meshGreenTriads = [
-  ['#037342', '#2E944C', '#45B04B'],
-  ['#525C29', '#ADBA6B', '#DDE3B6'],
   ['#417F34', '#749E5E', '#8FB47D'],
 ];
-const meshAccents = ['#ff95ae', '#ff97d4', '#de92fa', '#9b73f9'];
+const meshAccents = ['#ff97d4', '#de92fa', '#9b73f9'];
 let meshYellowColor = '#FFD700';
 
-const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"25","inp-noise-scale":"4","sld-hue-shift":"10","sld-sat-shift":"7","sld-bri-shift":"18","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"0","inp-white-intensity":"0"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":2,"accentIdx":3,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#FFD700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":2},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.0832541876234561},{"x":0.03491823674560472,"y":0.43217836548920145,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3891274638291047,"y":0.8741928374651029,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751038},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":3},"weight":0.9583726481029374},{"x":0.6129384756102938,"y":0.7834019265748291,"slot":{"type":"accent","idx":1},"weight":1.0847362951038274}]}};
+const DEFAULT_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":true,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"20","sld-density":"41","sld-cluster":"0","sld-displace":"1","sld-threshold":"242","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"2.4","sld-spawn-freq":"5","sld-draw-speed":"2","sld-wind-speed":"8","sld-s1":"0.04","sld-s2":"0.14","sld-s3":"0.19","sld-s4":"0.24","sld-c1":"62","sld-c2":"7","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"0.9","inp-noise-strength":"25","inp-noise-scale":"4","sld-hue-shift":"10","sld-sat-shift":"7","sld-bri-shift":"18","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"0","inp-white-intensity":"0"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":0,"accentIdx":2,"greenTriads":[["#417F34","#749E5E","#8FB47D"]],"accents":["#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#FFD700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.7091985698994226,"y":0.3798013682258998,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":1},"weight":0.9292466875763805},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":1},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.083254187623456},{"x":0.03491823674560472,"y":0.43217836548920147,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3891274638291047,"y":0.8741928374651029,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751037},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":2},"weight":0.9583726481029374},{"x":0.6129384756102938,"y":0.7834019265748291,"slot":{"type":"accent","idx":0},"weight":1.0847362951038273}]}};
 
-const TEXTURE_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":false,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"74","sld-density":"25","sld-cluster":"100","sld-displace":"29","sld-threshold":"255","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"3.89","sld-spawn-freq":"12","sld-draw-speed":"3.7","sld-wind-speed":"8","sld-s1":"0.05","sld-s2":"0.18","sld-s3":"0.22","sld-s4":"0.35","sld-c1":"72","sld-c2":"9","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1","inp-noise-strength":"70","inp-noise-scale":"11.5","sld-hue-shift":"18","sld-sat-shift":"24","sld-bri-shift":"36","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"215","inp-white-intensity":"68"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":2,"accentIdx":3,"greenTriads":[["#037342","#2E944C","#45B04B"],["#525C29","#ADBA6B","#DDE3B6"],["#417F34","#749E5E","#8FB47D"]],"accents":["#ff95ae","#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#ffd700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.703893860546731,"y":0.3544491289287724,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":2},"weight":5},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":2},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.083254187623456},{"x":0.03491823674560472,"y":0.43217836548920147,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3975382463700107,"y":0.8708771642552439,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751037},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":3},"weight":0.9583726481029374},{"x":0.6601287728071995,"y":0.7501851314765715,"slot":{"type":"accent","idx":1},"weight":1.0847362951038273},{"x":0.28812552702118194,"y":0.7895737104421499,"slot":{"type":"yellow"},"weight":1},{"x":0.6539863003294716,"y":0.7482327449762968,"slot":{"type":"yellow"},"weight":1},{"x":0.6518005489622372,"y":0.3086066677449977,"slot":{"type":"yellow"},"weight":1},{"x":0.7769906793181801,"y":0.5743649281770018,"slot":{"type":"white"},"weight":1},{"x":0.38878522882210437,"y":0.20749804350638115,"slot":{"type":"white"},"weight":1.4},{"x":0.19740224946362206,"y":0.7314186136539697,"slot":{"type":"white"},"weight":1}]}};
-let meshGreenTriad = 1;
+const TEXTURE_SETTINGS = {"version":3,"currentMode":"gradient","gradientUseText":false,"imageUseText":true,"sliders":{"inp-artboard-w":"1200","inp-artboard-h":"1200","sld-master-scale":"1","sld-margin":"74","sld-density":"25","sld-cluster":"100","sld-displace":"29","sld-threshold":"255","sld-len":"450","sld-weight":"1.42","sld-opacity":"160","sld-sway":"3.89","sld-spawn-freq":"12","sld-draw-speed":"3.7","sld-wind-speed":"8","sld-s1":"0.05","sld-s2":"0.18","sld-s3":"0.22","sld-s4":"0.35","sld-c1":"72","sld-c2":"9","sld-c3":"1","sld-c4":"1","sld-r1":"0.8","sld-r2":"0.36","sld-r3":"0.15","sld-r4":"0.48","sld-mouse-strength":"1.3","sld-mouse-radius":"0.25","txt-font-size":"200","txt-letter-spacing":"0","txt-line-height":"1.2","txt-pos-x":"50","txt-pos-y":"50","txt-photo-x":"50","txt-photo-y":"50","txt-photo-scale":"1","inp-mesh-weight":"1","inp-noise-strength":"70","inp-noise-scale":"11.5","sld-hue-shift":"18","sld-sat-shift":"24","sld-bri-shift":"36","svg-pos-x":"50","svg-pos-y":"50","svg-scale":"1","inp-yellow-intensity":"215","inp-white-intensity":"68"},"selects":{"txt-font-family":"'Times New Roman', serif","txt-font-weight":"400"},"text":{"txtContent":"MEADOW"},"alignment":{"textAlignment":"center","interactMode":"wind","textRotation":0,"maskType":"text"},"mesh":{"greenTriad":0,"accentIdx":2,"greenTriads":[["#417F34","#749E5E","#8FB47D"]],"accents":["#ff97d4","#de92fa","#9b73f9"],"yellowColor":"#ffd700","points":[{"x":0.11438110273678662,"y":0.18482780589530273,"slot":{"type":"green","shade":0},"weight":0.8073965620252109},{"x":0.5829240761583745,"y":0.1340470370792721,"slot":{"type":"green","shade":1},"weight":1.1141675917036584},{"x":0.8821237897341999,"y":0.2450620327859004,"slot":{"type":"green","shade":2},"weight":1.0483603773630816},{"x":0.2340989922049636,"y":0.5033105822095592,"slot":{"type":"green","shade":0},"weight":1.1875327184416173},{"x":0.703893860546731,"y":0.3544491289287724,"slot":{"type":"green","shade":1},"weight":0.9442466892673106},{"x":0.5307945653685134,"y":0.5367713828758603,"slot":{"type":"green","shade":2},"weight":1.0542932426766123},{"x":0.13061959917055055,"y":0.7406379192262323,"slot":{"type":"green","shade":0},"weight":1.12769541425788},{"x":0.48313513080326165,"y":0.7142424274693371,"slot":{"type":"green","shade":1},"weight":1.1115264004542806},{"x":0.8274648873343197,"y":0.6782280659710673,"slot":{"type":"green","shade":2},"weight":1.187032642093307},{"x":0.20892714438882562,"y":0.97,"slot":{"type":"green","shade":0},"weight":0.9941670757650027},{"x":0.7329911231590134,"y":0.8258871676582636,"slot":{"type":"green","shade":1},"weight":1.1638713285716442},{"x":0.36681222707423583,"y":0.4379532223470534,"slot":{"type":"accent","idx":1},"weight":5},{"x":0.7641921397379913,"y":0.44448983760596467,"slot":{"type":"accent","idx":1},"weight":1.207297232696769},{"x":0.6712834590182847,"y":0.07341928764023159,"slot":{"type":"green","shade":0},"weight":1.083254187623456},{"x":0.03491823674560472,"y":0.43217836548920147,"slot":{"type":"green","shade":2},"weight":0.9217634082751934},{"x":0.9418372645109273,"y":0.5834719263847261,"slot":{"type":"green","shade":1},"weight":1.1453829047263817},{"x":0.3975382463700107,"y":0.8708771642552439,"slot":{"type":"green","shade":2},"weight":0.8974512638401982},{"x":0.8034819263748291,"y":0.9263748201937465,"slot":{"type":"green","shade":0},"weight":1.0671839264751037},{"x":0.04728193647502938,"y":0.8139274651038291,"slot":{"type":"green","shade":1},"weight":1.1293847561029384},{"x":0.1783920465738291,"y":0.3047281936475029,"slot":{"type":"accent","idx":2},"weight":0.9583726481029374},{"x":0.6601287728071995,"y":0.7501851314765715,"slot":{"type":"accent","idx":0},"weight":1.0847362951038273},{"x":0.28812552702118194,"y":0.7895737104421499,"slot":{"type":"yellow"},"weight":1},{"x":0.6539863003294716,"y":0.7482327449762968,"slot":{"type":"yellow"},"weight":1},{"x":0.6518005489622372,"y":0.3086066677449977,"slot":{"type":"yellow"},"weight":1},{"x":0.7769906793181801,"y":0.5743649281770018,"slot":{"type":"white"},"weight":1},{"x":0.38878522882210437,"y":0.20749804350638115,"slot":{"type":"white"},"weight":1.4},{"x":0.19740224946362206,"y":0.7314186136539697,"slot":{"type":"white"},"weight":1}]}};
+let meshPoints     = [];
+let meshGreenTriad = 0;
 let meshAccentIdx  = 2;
 let meshSelectedId = null;
 let _meshNextId    = 0;
@@ -139,6 +138,8 @@ function setup() {
 
   initModeToggle();
   initSettingsToggle();
+  initSettingsButtons();
+  initVideoExport();
   loadSettings();
 
   requestAnimationFrame(() => {
@@ -294,10 +295,15 @@ function draw() {
   windMagnitude   = Math.min(smoothMag / maxRaw, 1);
   windDirX        = smoothMag > 0.5 ? mouseVelX / smoothMag : 0;
 
-  if (isRecording && recordingCanvas) {
+  if (frameCapture) {
+    _grabFrame();
+  } else if (isRecording && recordingCanvas) {
     const rctx = recordingCanvas.getContext('2d');
-    rctx.fillStyle = '#f5f5f5';
-    rctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+    rctx.clearRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+    if (!recordingCanvas._transparent) {
+      rctx.fillStyle = '#f5f5f5';
+      rctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+    }
     rctx.drawImage(canvasBuffer.elt, 0, 0, recordingCanvas.width, recordingCanvas.height);
   }
 
@@ -529,7 +535,7 @@ function _updateTriadSwatches(t) {
   meshGreenTriads[t].forEach((c, i) => { if (swatches[i]) swatches[i].style.background = c; });
 }
 
-function _updateAllTriadSwatches() { [0, 1, 2].forEach(_updateTriadSwatches); }
+function _updateAllTriadSwatches() { meshGreenTriads.forEach((_, i) => _updateTriadSwatches(i)); }
 
 function _updateTriadEditRow() {
   const triad = meshGreenTriads[meshGreenTriad];
@@ -1179,34 +1185,369 @@ class Blade {
   }
 }
 
-// ── Video recording ────────────────────────────────────────────────────────────
+// ── Video / sequence export ────────────────────────────────────────────────────
+//
+// Two capture paths:
+//   webm      — MediaRecorder on a live canvas stream. Fast, real-time, lossy.
+//   mov / png — every draw() is grabbed as a PNG and muxed afterwards. Slower to
+//               record but frame-exact and losslessly alpha-preserving, which is
+//               what a video editor needs for a transparent background.
+
+let videoFormat  = 'webm';
+let frameCapture = null;   // { format, frames[], canvas, w, h, fps, max, transparent }
+
+const VIDEO_FORMAT_HINT = {
+  webm: 'VP9/VP8 in WebM. Small files, quick. Alpha depends on the browser — use MOV or PNG for reliable transparency.',
+  mov:  'QuickTime with the PNG codec: lossless RGBA, opens in Premiere / After Effects / Resolve. Large files.',
+  png:  'Numbered PNG frames in a .zip — import as an image sequence. Lossless RGBA, the safest transparency route.',
+};
+
+function _videoOpts() {
+  const v = id => document.getElementById(id);
+  return {
+    format:      videoFormat,
+    transparent: !!v('vid-transparent')?.checked,
+    resolution:  v('vid-resolution')?.value || '1920',
+    fps:         parseInt(v('vid-fps')?.value || '30', 10),
+    mbps:        parseInt(v('vid-quality')?.value || '40', 10),
+    maxFrames:   Math.max(10, parseInt(v('vid-max-frames')?.value || '300', 10)),
+  };
+}
+
+function _collectVideoSettings() {
+  const o = _videoOpts();
+  return { format: o.format, transparent: o.transparent, resolution: o.resolution,
+           fps: String(o.fps), mbps: String(o.mbps), maxFrames: String(o.maxFrames) };
+}
+
+function _applyVideoSettings(v) {
+  if (!v) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+  set('vid-resolution', v.resolution);
+  set('vid-fps',        v.fps);
+  set('vid-quality',    v.mbps);
+  set('vid-max-frames', v.maxFrames);
+  const t = document.getElementById('vid-transparent');
+  if (t && v.transparent !== undefined) t.checked = !!v.transparent;
+  if (v.format) _setVideoFormat(v.format);
+}
+
+// Output size derived from the render buffer's aspect, scaled so the longer edge
+// matches the chosen setting. Kept even — some encoders reject odd dimensions.
+function _videoOutSize(opts) {
+  const bw = canvasBuffer.width, bh = canvasBuffer.height;
+  let w = bw, h = bh;
+  if (opts.resolution !== 'full') {
+    const target = parseInt(opts.resolution, 10);
+    const scale  = target / Math.max(bw, bh);
+    w = Math.round(bw * scale);
+    h = Math.round(bh * scale);
+  }
+  return { w: Math.max(2, w - (w % 2)), h: Math.max(2, h - (h % 2)) };
+}
+
+function _videoStatus(msg) {
+  const el = document.getElementById('vid-status');
+  if (el) el.textContent = msg || ' ';
+}
 
 function startRecording() {
   if (!imgLoaded || !canvasBuffer) { alert('Start growing something first.'); return; }
-  const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-  const mimeType  = mimeTypes.find(t => MediaRecorder.isTypeSupported(t));
+  const opts = _videoOpts();
+  const { w, h } = _videoOutSize(opts);
+  if (opts.format === 'webm') _startWebmRecording(opts, w, h);
+  else                        _startFrameCapture(opts, w, h);
+}
+
+function stopRecording() {
+  if (frameCapture)                                        _finishFrameCapture();
+  else if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  isRecording = false;
+  _updateRecordBtn();
+}
+
+// ── WebM (MediaRecorder) ───────────────────────────────────────────────────────
+
+function _startWebmRecording(opts, w, h) {
+  // VP8 is the codec Chromium actually carries an alpha plane through; VP9 gives
+  // the better picture when the background is opaque anyway.
+  const candidates = opts.transparent
+    ? ['video/webm;codecs=vp8', 'video/webm;codecs=vp9', 'video/webm']
+    : ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  const mimeType = candidates.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
   if (!mimeType) { alert('Video recording not supported in this browser.\nUse Chrome or Firefox.'); return; }
-  const recW = Math.min(canvasBuffer.width, 1920);
-  const recH = Math.round(recW / (canvasBuffer.width / canvasBuffer.height));
+
   recordingCanvas = document.createElement('canvas');
-  recordingCanvas.width = recW; recordingCanvas.height = recH;
-  const stream = recordingCanvas.captureStream(30);
-  mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 25_000_000 });
+  recordingCanvas.width = w; recordingCanvas.height = h;
+  recordingCanvas.getContext('2d', { alpha: true });
+  recordingCanvas._transparent = opts.transparent;
+
+  const stream = recordingCanvas.captureStream(opts.fps);
+  mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: opts.mbps * 1_000_000 });
   recordingChunks = [];
   mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordingChunks.push(e.data); };
   mediaRecorder.onstop = () => {
     const blob = new Blob(recordingChunks, { type: mimeType.split(';')[0] });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'meadow.webm'; a.click();
-    URL.revokeObjectURL(a.href); recordingCanvas = null;
+    _downloadBlob(blob, 'meadow-' + _timeStamp() + '.webm');
+    _videoStatus('Saved WebM · ' + w + '×' + h + ' · ' + _fmtBytes(blob.size));
+    recordingCanvas = null;
   };
   mediaRecorder.start(100);
-  isRecording = true; _updateRecordBtn();
+  isRecording = true;
+  _videoStatus('Recording WebM ' + w + '×' + h + ' @ ' + opts.fps + ' fps…');
+  _updateRecordBtn();
 }
 
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-  isRecording = false; _updateRecordBtn();
+// ── Frame capture (MOV / PNG sequence) ─────────────────────────────────────────
+
+function _startFrameCapture(opts, w, h) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  frameCapture = { format: opts.format, frames: [], canvas, w, h,
+                   fps: opts.fps, max: opts.maxFrames, transparent: opts.transparent };
+  isRecording = true;
+  _videoStatus('Capturing frames at ' + w + '×' + h + '… (stops at ' + opts.maxFrames + ')');
+  _updateRecordBtn();
+}
+
+function _grabFrame() {
+  const fc  = frameCapture;
+  const ctx = fc.canvas.getContext('2d');
+  ctx.clearRect(0, 0, fc.w, fc.h);
+  if (!fc.transparent) { ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, fc.w, fc.h); }
+  ctx.drawImage(canvasBuffer.elt, 0, 0, fc.w, fc.h);
+  // toDataURL is synchronous, so frames stay in order no matter how slow encoding is.
+  fc.frames.push(_dataURLToBytes(fc.canvas.toDataURL('image/png')));
+  if (fc.frames.length % 10 === 0 || fc.frames.length === 1) {
+    _videoStatus('Captured ' + fc.frames.length + ' / ' + fc.max + ' frames…');
+    _updateRecordBtn();
+  }
+  if (fc.frames.length >= fc.max) stopRecording();
+}
+
+function _finishFrameCapture() {
+  const fc = frameCapture;
+  frameCapture = null;
+  if (!fc || !fc.frames.length) { _videoStatus('No frames captured.'); return; }
+
+  const stamp = _timeStamp();
+  try {
+    if (fc.format === 'png') {
+      const zip = _buildZip(fc.frames.map((data, i) => ({
+        name: 'meadow_' + String(i + 1).padStart(5, '0') + '.png', data,
+      })));
+      _downloadBlob(new Blob([zip], { type: 'application/zip' }), 'meadow-frames-' + stamp + '.zip');
+      _videoStatus('Saved ' + fc.frames.length + ' PNG frames · ' + _fmtBytes(zip.length));
+    } else {
+      const mov = _buildMovPNG(fc.frames, fc.w, fc.h, fc.fps);
+      _downloadBlob(new Blob([mov], { type: 'video/quicktime' }), 'meadow-' + stamp + '.mov');
+      _videoStatus('Saved MOV · ' + fc.frames.length + ' frames · ' + _fmtBytes(mov.length));
+    }
+  } catch (e) {
+    _videoStatus('Export failed: ' + e.message);
+    alert('Export failed: ' + e.message);
+  }
+}
+
+function _dataURLToBytes(url) {
+  const bin = atob(url.slice(url.indexOf(',') + 1));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function _fmtBytes(n) {
+  if (n > 1 << 30) return (n / (1 << 30)).toFixed(2) + ' GB';
+  if (n > 1 << 20) return (n / (1 << 20)).toFixed(1) + ' MB';
+  return Math.round(n / 1024) + ' KB';
+}
+
+// ── Byte helpers for the ZIP and MOV writers ──────────────────────────────────
+
+function _u8(...vals) { return new Uint8Array(vals); }
+function _u16le(n) { return new Uint8Array([n & 255, (n >> 8) & 255]); }
+function _u32le(n) { return new Uint8Array([n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]); }
+function _u16be(n) { return new Uint8Array([(n >> 8) & 255, n & 255]); }
+function _u32be(n) { return new Uint8Array([(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]); }
+function _ascii(s) { const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i) & 255; return b; }
+
+function _concat(parts) {
+  let total = 0;
+  for (const p of parts) total += p.length;
+  const out = new Uint8Array(total);
+  let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+const _CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function _crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = _CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ── ZIP writer (stored, no deflate — PNG is already compressed) ────────────────
+
+function _buildZip(files) {
+  const now  = new Date();
+  const time = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+  const date = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+
+  const local = [], central = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const name = _ascii(f.name);
+    const crc  = _crc32(f.data);
+    const head = _concat([
+      _u32le(0x04034b50), _u16le(20), _u16le(0), _u16le(0),   // sig, version, flags, method=store
+      _u16le(time), _u16le(date), _u32le(crc),
+      _u32le(f.data.length), _u32le(f.data.length),
+      _u16le(name.length), _u16le(0), name,
+    ]);
+    local.push(head, f.data);
+    central.push(_concat([
+      _u32le(0x02014b50), _u16le(20), _u16le(20), _u16le(0), _u16le(0),
+      _u16le(time), _u16le(date), _u32le(crc),
+      _u32le(f.data.length), _u32le(f.data.length),
+      _u16le(name.length), _u16le(0), _u16le(0), _u16le(0), _u16le(0),
+      _u32le(0), _u32le(offset), name,
+    ]));
+    offset += head.length + f.data.length;
+  });
+
+  const dir     = _concat(central);
+  const dirSize = dir.length;
+  const eocd    = _concat([
+    _u32le(0x06054b50), _u16le(0), _u16le(0),
+    _u16le(files.length), _u16le(files.length),
+    _u32le(dirSize), _u32le(offset), _u16le(0),
+  ]);
+  return _concat([...local, dir, eocd]);
+}
+
+// ── QuickTime writer: PNG-in-MOV, 32-bit depth so alpha survives ──────────────
+
+function _atom(type, ...parts) {
+  const body = _concat(parts);
+  return _concat([_u32be(body.length + 8), _ascii(type), body]);
+}
+
+const _QT_EPOCH_OFFSET = 2082844800;   // 1904-01-01 → 1970-01-01, in seconds
+const _QT_MATRIX = _concat([
+  _u32be(0x00010000), _u32be(0), _u32be(0),
+  _u32be(0), _u32be(0x00010000), _u32be(0),
+  _u32be(0), _u32be(0), _u32be(0x40000000),
+]);
+
+function _buildMovPNG(frames, w, h, fps) {
+  const mdatSize = frames.reduce((n, f) => n + f.length, 0) + 8;
+  if (mdatSize > 0xFFFFFFF0) {
+    throw new Error('sequence too large for a 32-bit MOV — lower the resolution or frame count');
+  }
+
+  const t        = Math.floor(Date.now() / 1000) + _QT_EPOCH_OFFSET;
+  const n        = frames.length;
+  const duration = n;                       // timescale = fps, one tick per frame
+
+  const ftyp = _atom('ftyp', _ascii('qt  '), _u32be(0x20050300), _ascii('qt  '));
+
+  // mdat is written first so every chunk offset is known before moov is built.
+  const mdat = _concat([_u32be(mdatSize), _ascii('mdat'), ...frames]);
+  const base = ftyp.length + 8;             // first sample starts after mdat's header
+  const offsets = [];
+  let running = base;
+  frames.forEach(f => { offsets.push(running); running += f.length; });
+
+  const mvhd = _atom('mvhd', _concat([
+    _u32be(0), _u32be(t), _u32be(t), _u32be(fps), _u32be(duration),
+    _u32be(0x00010000), _u16be(0x0100), new Uint8Array(10), _QT_MATRIX,
+    _u32be(0), _u32be(0), _u32be(0), _u32be(0), _u32be(0), _u32be(0),
+    _u32be(2),
+  ]));
+
+  const tkhd = _atom('tkhd', _concat([
+    _u32be(0x0000000F), _u32be(t), _u32be(t), _u32be(1), _u32be(0), _u32be(duration),
+    new Uint8Array(8), _u16be(0), _u16be(0), _u16be(0), _u16be(0),
+    _QT_MATRIX, _u32be(w << 16), _u32be(h << 16),
+  ]));
+
+  const mdhd = _atom('mdhd', _concat([
+    _u32be(0), _u32be(t), _u32be(t), _u32be(fps), _u32be(duration), _u16be(0), _u16be(0),
+  ]));
+
+  const hdlrMedia = _atom('hdlr', _concat([
+    _u32be(0), _ascii('mhlr'), _ascii('vide'), _u32be(0), _u32be(0), _u32be(0), _u8(0),
+  ]));
+
+  const vmhd = _atom('vmhd', _concat([_u32be(0x00000001), _u16be(0), _u16be(0), _u16be(0), _u16be(0)]));
+  const dref = _atom('dref', _concat([_u32be(0), _u32be(1), _atom('url ', _u32be(1))]));
+  const dinf = _atom('dinf', dref);
+
+  const compressor = new Uint8Array(32);
+  compressor.set(_ascii('PNG'), 1);
+  compressor[0] = 3;                        // Pascal-style counted string
+
+  const pngEntry = _concat([
+    _u32be(86), _ascii('png '), new Uint8Array(6), _u16be(1),
+    _u16be(0), _u16be(0), _u32be(0),
+    _u32be(0), _u32be(512),
+    _u16be(w), _u16be(h),
+    _u32be(0x00480000), _u32be(0x00480000),
+    _u32be(0), _u16be(1),
+    compressor,
+    _u16be(32),                             // depth 32 = colour + alpha
+    _u16be(0xFFFF),
+  ]);
+
+  const stsd = _atom('stsd', _concat([_u32be(0), _u32be(1), pngEntry]));
+  const stts = _atom('stts', _concat([_u32be(0), _u32be(1), _u32be(n), _u32be(1)]));
+  const stsc = _atom('stsc', _concat([_u32be(0), _u32be(1), _u32be(1), _u32be(1), _u32be(1)]));
+  const stsz = _atom('stsz', _concat([_u32be(0), _u32be(0), _u32be(n), ...frames.map(f => _u32be(f.length))]));
+  const stco = _atom('stco', _concat([_u32be(0), _u32be(n), ...offsets.map(_u32be)]));
+
+  const stbl = _atom('stbl', stsd, stts, stsc, stsz, stco);
+  const minf = _atom('minf', vmhd, dinf, stbl);
+  const mdia = _atom('mdia', mdhd, hdlrMedia, minf);
+  const trak = _atom('trak', tkhd, mdia);
+  const moov = _atom('moov', mvhd, trak);
+
+  return _concat([ftyp, mdat, moov]);
+}
+
+// ── Video export UI ────────────────────────────────────────────────────────────
+
+function _setVideoFormat(fmt) {
+  videoFormat = fmt;
+  document.querySelectorAll('#vid-format-btns .sub-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.fmt === fmt);
+  });
+  const hint = document.getElementById('vid-format-hint');
+  if (hint) hint.textContent = VIDEO_FORMAT_HINT[fmt] || '';
+  const qf = document.getElementById('vid-quality-field');
+  const ff = document.getElementById('vid-frames-field');
+  if (qf) qf.style.display = fmt === 'webm' ? '' : 'none';
+  if (ff) ff.style.display = fmt === 'webm' ? 'none' : '';
+}
+
+function initVideoExport() {
+  document.querySelectorAll('#vid-format-btns .sub-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (isRecording) return;
+      _setVideoFormat(btn.dataset.fmt);
+    });
+  });
+  _setVideoFormat('webm');
 }
 
 // ── Export & save ──────────────────────────────────────────────────────────────
@@ -1239,12 +1580,21 @@ function collectSettings() {
   sliderIds.forEach(id => { const el = document.getElementById(id); if (el) sliders[id] = el.value; });
   const selects = {};
   selectIds.forEach(id => { const el = document.getElementById(id); if (el) selects[id] = el.value; });
+  // Fonts added at runtime are options the saved select value depends on, so the
+  // names travel with the settings and get re-registered on load.
+  const customFonts = [...document.querySelectorAll('#txt-font-family option')]
+    .filter(o => o.textContent.endsWith('(custom)'))
+    .map(o => o.textContent.replace(/ \(custom\)$/, ''));
+
   return {
-    version: 3,
+    version: 4,
+    savedAt: new Date().toISOString(),
     currentMode, gradientUseText, imageUseText,
     sliders, selects,
+    fonts: { custom: customFonts },
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
     alignment: { textAlignment, interactMode, textRotation, maskType },
+    video: _collectVideoSettings(),
     mesh: {
       greenTriad: meshGreenTriad,
       accentIdx:  meshAccentIdx,
@@ -1256,24 +1606,120 @@ function collectSettings() {
   };
 }
 
-function exportSettings() {
-  const blob = new Blob([JSON.stringify(collectSettings(), null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'meadow-settings.json';
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(a.href);
+function _clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+function _timeStamp() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+         '_' + p(d.getHours()) + '-' + p(d.getMinutes()) + '-' + p(d.getSeconds());
 }
 
+function _downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+let _settingsStatusTimer = null;
+function _settingsStatus(msg, tone) {
+  const el = document.getElementById('settings-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = tone === 'bad' ? '#EF3330' : tone === 'good' ? '#4a9a6f' : '';
+  if (_settingsStatusTimer) clearTimeout(_settingsStatusTimer);
+  _settingsStatusTimer = setTimeout(() => { el.innerHTML = '&nbsp;'; el.style.color = ''; }, 6000);
+}
+
+function exportSettings(data) {
+  const payload = (data && data.sliders) ? data : collectSettings();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const name = 'meadow-settings-' + _timeStamp() + '.json';
+  _downloadBlob(blob, name);
+  return name;
+}
+
+// Save = persist in this browser AND drop a dated backup file, so a bad session
+// can never be the only copy.
 function saveSettings() {
-  localStorage.setItem('meadow-settings', JSON.stringify(collectSettings()));
-  const btn = document.getElementById('btn-save-settings');
+  const data = collectSettings();
+  let stored = true;
+  try { localStorage.setItem('meadow-settings', JSON.stringify(data)); }
+  catch (e) { stored = false; }
+  const name = exportSettings(data);
+  _settingsStatus(stored ? 'Saved · ' + name : 'Downloaded ' + name + ' — browser storage refused (quota).',
+                  stored ? 'good' : 'bad');
+}
+
+function resetSettings() {
+  try { localStorage.removeItem('meadow-settings'); } catch (e) { /* private mode */ }
+  applySettings(_clone(DEFAULT_SETTINGS));
+  _updateTextureCounts();
+  _meshEditorUpdate();
+  const btnText = document.getElementById('btn-text-view');
+  const btnTex  = document.getElementById('btn-texture-view');
+  if (btnText) btnText.classList.add('active');
+  if (btnTex)  btnTex.classList.remove('active');
+  _settingsStatus('Reverted to default settings.', 'good');
+}
+
+function importSettingsFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { _settingsStatus('That file is not valid JSON.', 'bad'); return; }
+    if (!data || typeof data !== 'object' || !data.sliders) {
+      _settingsStatus('That JSON is not a MEADOW settings file.', 'bad');
+      return;
+    }
+    applySettings(data);
+    _updateTextureCounts();
+    _meshEditorUpdate();
+    _settingsStatus('Loaded ' + file.name, 'good');
+  };
+  reader.onerror = () => _settingsStatus('Could not read that file.', 'bad');
+  reader.readAsText(file);
+}
+
+// Confirm-on-second-click. The label swaps to `confirmLabel` and reverts after
+// 5s of inactivity, so a stray click can never overwrite or wipe a session.
+function _twoStepButton(id, confirmLabel, run) {
+  const btn = document.getElementById(id);
   if (!btn) return;
-  const prev = btn.textContent;
-  btn.textContent = 'Saved ✓';
-  btn.style.color = '#4a9a6f'; btn.style.borderColor = '#4a9a6f';
-  setTimeout(() => { btn.textContent = prev; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
+  const idleLabel = btn.textContent;
+  let timer = null;
+  const disarm = () => {
+    btn._armed = false;
+    btn.classList.remove('armed');
+    btn.textContent = idleLabel;
+    if (timer) { clearTimeout(timer); timer = null; }
+  };
+  btn._disarm = disarm;
+  btn.addEventListener('click', () => {
+    if (btn._armed) { disarm(); run(); return; }
+    document.querySelectorAll('.btn.armed').forEach(b => b._disarm && b._disarm());
+    btn._armed = true;
+    btn.classList.add('armed');
+    btn.textContent = confirmLabel;
+    timer = setTimeout(disarm, 5000);
+  });
+}
+
+function initSettingsButtons() {
+  _twoStepButton('btn-save-settings',  'Click again to save',   saveSettings);
+  _twoStepButton('btn-reset-settings', 'Click again to revert', resetSettings);
+
+  const fileInput = document.getElementById('settings-file-input');
+  document.getElementById('btn-load-settings')?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', e => {
+    importSettingsFile(e.target.files[0]);
+    e.target.value = '';
+  });
 }
 
 let viewZoom = 1.0;
@@ -1301,11 +1747,39 @@ function loadSettings() {
   if (raw) {
     try { applySettings(JSON.parse(raw)); return; } catch(e) { /* ignore corrupt data */ }
   }
-  applySettings(DEFAULT_SETTINGS);
+  applySettings(_clone(DEFAULT_SETTINGS));
+}
+
+// Older saves carried 3 green triads and 4 accents. The first two triads and the
+// first accent were retired, so fold legacy payloads onto the current palette
+// before anything reads indices out of them.
+function _migrateSettings(data) {
+  const mesh = data?.mesh;
+  if (!mesh) return data;
+  if (Array.isArray(mesh.greenTriads) && mesh.greenTriads.length > meshGreenTriads.length) {
+    const drop = mesh.greenTriads.length - meshGreenTriads.length;
+    mesh.greenTriads = mesh.greenTriads.slice(drop);
+    mesh.greenTriad  = Math.max(0, (mesh.greenTriad ?? 0) - drop);
+  }
+  if (Array.isArray(mesh.accents) && mesh.accents.length > meshAccents.length) {
+    const drop = mesh.accents.length - meshAccents.length;
+    mesh.accents   = mesh.accents.slice(drop);
+    mesh.accentIdx = Math.max(0, (mesh.accentIdx ?? 0) - drop);
+    (mesh.points || []).forEach(pt => {
+      if (pt.slot?.type === 'accent') pt.slot.idx = Math.max(0, (pt.slot.idx ?? 0) - drop);
+    });
+  }
+  mesh.greenTriad = Math.min(Math.max(0, mesh.greenTriad ?? 0), meshGreenTriads.length - 1);
+  mesh.accentIdx  = Math.min(Math.max(0, mesh.accentIdx  ?? 0), meshAccents.length - 1);
+  (mesh.points || []).forEach(pt => {
+    if (pt.slot?.type === 'accent') pt.slot.idx = Math.min(pt.slot.idx ?? 0, meshAccents.length - 1);
+  });
+  return data;
 }
 
 function applySettings(data) {
   if (!data) return;
+  _migrateSettings(data);
 
   // 1. Restore palette color arrays (mutate in-place)
   if (Array.isArray(data.mesh?.greenTriads)) {
@@ -1360,11 +1834,21 @@ function applySettings(data) {
     el.dispatchEvent(new Event('input'));
   });
 
+  // 4b. Re-register custom fonts before the select value that names one is restored
+  (data.fonts?.custom || []).forEach(name => {
+    const exists = [...document.querySelectorAll('#txt-font-family option')]
+      .some(o => o.textContent === name + ' (custom)');
+    if (!exists) loadCustomFont(name);
+  });
+
   // 5. Restore selects
   Object.entries(data.selects || {}).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (el) el.value = val;
   });
+
+  // 5b. Restore video/sequence export options
+  _applyVideoSettings(data.video);
 
   // 6. Restore text
   const txtEl = document.getElementById('txt-content');
@@ -1435,6 +1919,7 @@ function applySettings(data) {
 window.saveHighRes     = downloadHighRes;
 window.saveSettings    = saveSettings;
 window.exportSettings  = exportSettings;
+window.resetSettings   = resetSettings;
 window.toggleGrowth    = function () { growthPaused = !growthPaused; _updateStopBtn(); };
 window.toggleRecording = function () { isRecording ? stopRecording() : startRecording(); };
 
@@ -1499,7 +1984,9 @@ function _updateRecordBtn() {
   const dot = document.getElementById('rec-dot');
   if (!btn || !dot) return;
   if (isRecording) {
-    btn.textContent = '■ Stop Recording';
+    btn.textContent = frameCapture
+      ? '■ Stop — ' + frameCapture.frames.length + ' frames'
+      : '■ Stop Recording';
     btn.style.background = '#fff'; btn.style.color = '#EF3330'; btn.style.border = '1px solid #EF3330';
     dot.classList.add('active');
   } else {
@@ -1827,12 +2314,12 @@ function initSettingsToggle() {
 
   btnTexture.addEventListener('click', () => {
     _applyView('texture');
-    applySettings(TEXTURE_SETTINGS);
+    applySettings(_clone(TEXTURE_SETTINGS));
     _updateTextureCounts();
   });
   btnText.addEventListener('click', () => {
     _applyView('text');
-    applySettings(DEFAULT_SETTINGS);
+    applySettings(_clone(DEFAULT_SETTINGS));
     _updateTextureCounts();
   });
 
