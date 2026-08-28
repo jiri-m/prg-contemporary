@@ -19,6 +19,22 @@ let windTime = 0;
 let growthPaused = false;
 let showGrowth = false;
 
+// Growth animation. When it is off the meadow is built complete on the first
+// frame — no draw-in — which is what an embed on a page normally wants.
+function isGrowthAnimated() { return !!document.getElementById('chk-grow-anim')?.checked; }
+function growthEase()       { return document.getElementById('sel-grow-ease')?.value || 'inout'; }
+
+// Blades extend along an eased 0..1 curve rather than at a constant rate, so a
+// fast growth still reads as something that grew instead of something that
+// snapped out. 'inout' is the "easy ease" default.
+function _ease(t, mode) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  if (mode === 'linear') return t;
+  if (mode === 'out')    return 1 - Math.pow(1 - t, 3);
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 // Display geometry
 let dispW = 0, dispH = 0, dispOX = 0, dispOY = 0;
 let dispMapsTo = 'buffer';   // what dispW/dispH measure: 'preview' | 'buffer'
@@ -103,6 +119,53 @@ const SIDEBAR_W = 260;
 function domSlider(id) {
   return { value: () => parseFloat(document.getElementById(id).value) };
 }
+
+// Sliders carrying data-log-min / data-log-max hold a position on a logarithmic
+// track rather than the value itself: Spawn Frequency has to reach tens of
+// thousands of blades per frame for a dense texture to land in a few hundredths
+// of a second, and on a linear track everything from 1 to 50 would share the
+// first pixel. The position is what gets saved; the value is derived.
+function _logSpec(id) {
+  const el = document.getElementById(id);
+  if (!el || !el.dataset.logMin) return null;
+  return {
+    el,
+    lo: parseFloat(el.dataset.logMin),
+    hi: parseFloat(el.dataset.logMax),
+    dp: parseInt(el.dataset.logDp || '0', 10),
+    span: parseFloat(el.max) || 1000,
+  };
+}
+function logToValue(id, pos) {
+  const c = _logSpec(id);
+  if (!c) return parseFloat(pos);
+  const v = c.lo * Math.pow(c.hi / c.lo, Math.min(1, Math.max(0, pos / c.span)));
+  return parseFloat(v.toFixed(c.dp));
+}
+function valueToLog(id, value) {
+  const c = _logSpec(id);
+  if (!c) return value;
+  const v = Math.min(c.hi, Math.max(c.lo, parseFloat(value)));
+  return Math.round(c.span * Math.log(v / c.lo) / Math.log(c.hi / c.lo));
+}
+function logSlider(id) {
+  return { value: () => logToValue(id, parseFloat(document.getElementById(id).value)) };
+}
+
+// The readout has to be wired before any settings are applied, because
+// applySettings refreshes every span by dispatching 'input'.
+function initLogSliders() {
+  ['sld-spawn-freq', 'sld-draw-speed'].forEach(id => {
+    const c = _logSpec(id);
+    if (!c) return;
+    const paint = () => {
+      const span = c.el.nextElementSibling;
+      if (span) span.textContent = logToValue(id, parseFloat(c.el.value)).toFixed(c.dp);
+    };
+    c.el.addEventListener('input', paint);
+    paint();
+  });
+}
 function getArtboardW() { return parseInt(document.getElementById('inp-artboard-w').value) || 1200; }
 function getArtboardH() { return parseInt(document.getElementById('inp-artboard-h').value) || 800; }
 
@@ -140,8 +203,8 @@ function setup() {
   sldWeight      = domSlider('sld-weight');
   sldOpacity     = domSlider('sld-opacity');
   sldSway        = domSlider('sld-sway');
-  sldSpawnFreq   = domSlider('sld-spawn-freq');
-  sldDrawSpeed   = domSlider('sld-draw-speed');
+  sldSpawnFreq   = logSlider('sld-spawn-freq');
+  sldDrawSpeed   = logSlider('sld-draw-speed');
   sldWindSpeed   = domSlider('sld-wind-speed');
   sldDensity     = domSlider('sld-density');
   sldCluster     = domSlider('sld-cluster');
@@ -161,6 +224,8 @@ function setup() {
   initSettingsToggle();
   initSettingsButtons();
   initVideoExport();
+  initGrowthToggle();
+  initLogSliders();
   loadSettings();
 
   requestAnimationFrame(() => {
@@ -172,6 +237,18 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth - (sidebarVisible ? SIDEBAR_W : 0), windowHeight);
+}
+
+// Flipping Animate Growth acts on what is already on the canvas: switching it on
+// replays the draw-in from scratch, switching it off completes it in place.
+function initGrowthToggle() {
+  const el = document.getElementById('chk-grow-anim');
+  if (!el) return;
+  el.addEventListener('change', () => {
+    if (!imgLoaded) return;
+    if (el.checked) restartGrowth();
+    else            completeGrowthInstantly();
+  });
 }
 
 // ── File handling ──────────────────────────────────────────────────────────────
@@ -210,12 +287,15 @@ function restartGrowth() {
   imgLoaded = true;
   showGrowth = true;
   findSeeds();
+  if (!isGrowthAnimated()) completeGrowthInstantly();
 
   try {
     const tmpC = document.createElement('canvas');
     tmpC.width = img.width; tmpC.height = img.height;
     tmpC.getContext('2d').drawImage(img.canvas, 0, 0);
-    embedSourceBase64 = tmpC.toDataURL('image/jpeg', 0.92);
+    // The compositions are already baked to JPEG; re-encoding that decoded bitmap
+    // at 0.92 would compress it twice and dull the colours the embed grows from.
+    embedSourceBase64 = tmpC.toDataURL('image/jpeg', 0.98);
   } catch (e) { /* silent */ }
 }
 
@@ -242,6 +322,17 @@ function findSeeds() {
     }
   }
   allSeeds = shuffle(allSeeds);
+}
+
+// Spawns every remaining seed and snaps every blade to full length, so the very
+// next frame shows the finished meadow. Used when Animate Growth is off, and when
+// it is switched off mid-draw-in.
+function completeGrowthInstantly() {
+  while (seedIndex < allSeeds.length) {
+    const s = allSeeds[seedIndex++];
+    activeBlades.push(new Blade(s.x, s.y, s.col));
+  }
+  for (const b of activeBlades) b.finish();
 }
 
 // ── Draw loop ──────────────────────────────────────────────────────────────────
@@ -282,7 +373,8 @@ function draw() {
   cursor(ARROW);
   windTime += sldWindSpeed.value() * 0.0005;
 
-  if (!growthPaused) {
+  const animating = isGrowthAnimated();
+  if (animating && !growthPaused) {
     for (let i = 0; i < sldSpawnFreq.value(); i++) {
       if (seedIndex < allSeeds.length) {
         let s = allSeeds[seedIndex++];
@@ -295,7 +387,7 @@ function draw() {
   canvasBuffer.strokeWeight(sldWeight.value() * exportScale);
   canvasBuffer.noFill();
   for (let i = 0; i < activeBlades.length; i++) {
-    if (!growthPaused) activeBlades[i].update();
+    if (animating && !growthPaused) activeBlades[i].update();
     activeBlades[i].show();
   }
 
@@ -1209,15 +1301,23 @@ class Blade {
     this.maxLen          = basePct * jitter * sldLen.value() * sldMasterScale.value() * exportScale * _whiteReduction;
     this.windSensitivity = noise(x * 0.01, y * 0.01);
     this.currentLen      = 0;
+    this.growT           = 0;
     this.baseGrowthRate  = random(5, 15) * exportScale * sldMasterScale.value();
+    // Per-blade rate normalised against its own length, so the eased curve keeps
+    // the same spread of finishing times the linear version had.
+    this.growStep        = this.maxLen > 0 ? (this.baseGrowthRate * 0.1) / this.maxLen : 1;
     this.baseAngle       = -HALF_PI + random(-0.2, 0.2);
     const maxA           = sldOpacity.value();
     this.alpha           = random(maxA * 0.5, maxA);
   }
 
   update() {
-    if (this.currentLen < this.maxLen) this.currentLen += this.baseGrowthRate * sldDrawSpeed.value() * 0.1;
+    if (this.growT >= 1) return;
+    this.growT = Math.min(1, this.growT + this.growStep * sldDrawSpeed.value());
+    this.currentLen = this.maxLen * _ease(this.growT, growthEase());
   }
+
+  finish() { this.growT = 1; this.currentLen = this.maxLen; }
 
   show() {
     canvasBuffer.stroke(this.drawR, this.drawG, this.drawB, this.alpha);
@@ -1683,7 +1783,7 @@ function collectSettings() {
     'svg-pos-x','svg-pos-y','svg-scale',
     'inp-yellow-intensity','inp-white-intensity',
   ];
-  const selectIds = ['txt-font-family','txt-font-weight'];
+  const selectIds = ['txt-font-family','txt-font-weight','sel-grow-ease','sel-embed-fit'];
   const sliders = {};
   sliderIds.forEach(id => { const el = document.getElementById(id); if (el) sliders[id] = el.value; });
   const selects = {};
@@ -1695,12 +1795,13 @@ function collectSettings() {
     .map(o => o.textContent.replace(/ \(custom\)$/, ''));
 
   return {
-    version: 4,
+    version: 5,
     savedAt: new Date().toISOString(),
     currentMode, gradientUseText, imageUseText,
     sliders, selects,
     fonts: { custom: customFonts },
     artboardTransparent: isArtboardTransparent(),
+    toggles: { growAnim: isGrowthAnimated() },
     text: { txtContent: document.getElementById('txt-content')?.value || '' },
     alignment: { textAlignment, interactMode, textRotation, maskType },
     video: _collectVideoSettings(),
@@ -1877,6 +1978,17 @@ function loadSettings() {
 // first accent were retired, so fold legacy payloads onto the current palette
 // before anything reads indices out of them.
 function _migrateSettings(data) {
+  // Before version 5 these two sliders stored the value itself. The elements now
+  // hold a position on a logarithmic track, so an old payload has to be converted
+  // or "5 blades per frame" would be read as "position 5" — very nearly zero.
+  if (data && data.sliders && (data.version || 0) < 5) {
+    data.sliders = { ...data.sliders };
+    ['sld-spawn-freq', 'sld-draw-speed'].forEach(id => {
+      if (data.sliders[id] !== undefined) data.sliders[id] = String(valueToLog(id, data.sliders[id]));
+    });
+    data.version = 5;
+  }
+
   const mesh = data?.mesh;
   if (!mesh) return data;
   if (Array.isArray(mesh.greenTriads) && mesh.greenTriads.length > meshGreenTriads.length) {
@@ -1973,6 +2085,12 @@ function applySettings(data) {
   // 5b. Restore the artboard backdrop and video/sequence export options
   const abT = document.getElementById('inp-artboard-transparent');
   if (abT) abT.checked = !!data.artboardTransparent;
+  // Growth playback and the embed fit are preferences rather than part of a look,
+  // so they are restored only from a payload that actually carries them. The
+  // built-in Texture/Text presets carry neither, and so leave the user's choice
+  // alone; a fresh browser falls through to the markup default, already grown.
+  const gaEl = document.getElementById('chk-grow-anim');
+  if (gaEl && typeof data.toggles?.growAnim === 'boolean') gaEl.checked = data.toggles.growAnim;
   _applyVideoSettings(data.video);
 
   // 6. Restore text
@@ -2064,8 +2182,8 @@ window.exportEmbed = function () {
     len:         parseFloat(document.getElementById('sld-len').value),
     weight:      parseFloat(document.getElementById('sld-weight').value),
     sway:        parseFloat(document.getElementById('sld-sway').value),
-    spawnFreq:   parseFloat(document.getElementById('sld-spawn-freq').value),
-    drawSpeed:   parseFloat(document.getElementById('sld-draw-speed').value),
+    spawnFreq:   sldSpawnFreq.value(),
+    drawSpeed:   sldDrawSpeed.value(),
     windSpeed:   parseFloat(document.getElementById('sld-wind-speed').value),
     s1: parseFloat(document.getElementById('sld-s1').value), s2: parseFloat(document.getElementById('sld-s2').value),
     s3: parseFloat(document.getElementById('sld-s3').value), s4: parseFloat(document.getElementById('sld-s4').value),
@@ -2075,7 +2193,19 @@ window.exportEmbed = function () {
     r3: parseFloat(document.getElementById('sld-r3').value), r4: parseFloat(document.getElementById('sld-r4').value),
     mouseStrength: parseFloat(document.getElementById('sld-mouse-strength').value),
     mouseRadius:   parseFloat(document.getElementById('sld-mouse-radius').value),
-    canvasScale: 1,
+    // Per-blade colour variation, blade alpha and the white-bloom thinning are
+    // what give the tool's blades their depth; without them the embed renders
+    // every blade in the flat source colour at a fixed alpha range.
+    opacity:        parseFloat(document.getElementById('sld-opacity').value),
+    hueShift:       parseFloat(document.getElementById('sld-hue-shift').value),
+    satShift:       parseFloat(document.getElementById('sld-sat-shift').value),
+    briShift:       parseFloat(document.getElementById('sld-bri-shift').value),
+    whiteIntensity: parseFloat(document.getElementById('inp-white-intensity').value),
+    bgColor:     getArtboardColor(),
+    transparent: isArtboardTransparent(),
+    growAnim:    isGrowthAnimated(),
+    growEase:    growthEase(),
+    fit:         document.getElementById('sel-embed-fit')?.value || 'contain',
     interactMode, autoStop: 35
   };
   const html = buildEmbedHTML(embedSourceBase64, S);
@@ -2588,22 +2718,170 @@ function loadCustomFont(name) {
 }
 
 // ── Embed HTML generator ───────────────────────────────────────────────────────
+//
+// The exported page is a standalone reimplementation of the growth renderer, so
+// it has to track this file's Blade exactly — per-blade HSL variation, the blade
+// alpha range, the white-bloom length reduction and the eased growth curve all
+// live here too. Leave one out and the embed renders visibly flatter than the
+// tool it came from.
+//
+// It also deliberately refuses to take part in scrolling. p5 binds `wheel` (and
+// the touch events) to `window` with `{passive:false}`; a non-passive wheel
+// listener makes the browser wait for this sketch's busy main thread before it
+// will scroll, which is what makes a page feel stuck while the cursor is over
+// the embed. The guard below drops those registrations before p5 ever gets to
+// make them — the sketch only ever needed the cursor position.
 
 function buildEmbedHTML(base64, S) {
   const cfg = JSON.stringify(S);
-  return '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n<style>\n*{margin:0;padding:0;box-sizing:border-box}\nhtml,body{width:100%;height:100%;overflow:hidden;background:#ffffff}\ncanvas{display:block}\n</style>\n</head>\n<body>\n' +
-'<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"><' + '/script>\n<script>\n' +
-'var C=' + cfg + ';\nvar SRC="' + base64 + '";\n' +
-'var img,buf,blades=[],seeds=[],si=0,wt=0,going=false;\n' +
-'var ES=4,bMX=0,bMY=0,dW=0,dH=0,dOX=0,dOY=0;\n' +
-'var growStart=0,growDone=false;\nvar mVX=0,mVY=0,pMX=0,pMY=0,wMag=0,wDir=0;\n' +
-'function setup(){createCanvas(windowWidth,windowHeight);background(255);loadImage(SRC,function(i){img=i;boot();});}\n' +
-'function windowResized(){resizeCanvas(windowWidth,windowHeight);}\n' +
-'function boot(){var m=C.margin;img.resize(C.artW-m*2,0);if(img.height>C.artH-m*2)img.resize(0,C.artH-m*2);var bW=(img.width+m*2)*ES,bH=(img.height+m*2)*ES;buf=createGraphics(bW,bH);buf.clear();blades=[];seeds=[];si=0;wt=0;seeds=findSeeds();going=true;}\n' +
-'function findSeeds(){var s=2,m=C.margin,dt=C.density,cs=C.cluster/100,wl=C.threshold,da=C.displace;img.loadPixels();var out=[];for(var x=s;x<img.width-s;x+=s){for(var y=s;y<img.height-s;y+=s){var c=img.get(x,y),br=(red(c)+green(c)+blue(c))/3;if(br>=wl)continue;var cn=noise(x*.04,y*.04),fc=map(cn,0,1,-cs,cs);if(random(100)<(dt+fc*100)){out.push({x:(x+m+random(-da,da))*ES,y:(y+m+random(-da,da))*ES,col:c});}}}return shuffle(out);}\n' +
-'function draw(){if(!going)return;if(growStart===0)growStart=millis();if(!growDone&&(millis()-growStart)/1000>C.autoStop)growDone=true;wt+=C.windSpeed*0.0005;var csc=C.canvasScale||1;if(!growDone){for(var i=0;i<C.spawnFreq;i++){if(si<seeds.length){var s=seeds[si++];blades.push(new Blade(s.x,s.y,s.col));}}}buf.clear();buf.strokeWeight(C.weight*ES*csc);buf.noFill();dW=width;dH=(buf.height/buf.width)*width;if(dH>height){dH=height;dW=(buf.width/buf.height)*height;}dOX=(width-dW)/2;dOY=(height-dH)/2;bMX=map(mouseX,dOX,dOX+dW,0,buf.width);bMY=map(mouseY,dOY,dOY+dH,0,buf.height);var bSc=buf.width/dW;var rVX=(mouseX-pMX)*bSc,rVY=(mouseY-pMY)*bSc;pMX=mouseX;pMY=mouseY;var rMag=Math.sqrt(rVX*rVX+rVY*rVY);var mxR=buf.width*0.025,cl=rMag>mxR?mxR/rMag:1;mVX=mVX*0.9+rVX*cl*0.1;mVY=mVY*0.9+rVY*cl*0.1;var sm=Math.sqrt(mVX*mVX+mVY*mVY);wMag=Math.min(sm/mxR,1);wDir=sm>0.5?mVX/sm:0;for(var j=0;j<blades.length;j++){if(!growDone)blades[j].upd();blades[j].shw();}background(255);imageMode(CENTER);image(buf,width/2,height/2,dW,dH);}\n' +
-'function Blade(x,y,c){this.x=x;this.y=y;this.c=c;var csc=C.canvasScale||1;var roll=random(0,C.c1+C.c2+C.c3+C.c4),bp,tj;if(roll<C.c1){bp=C.s1;tj=C.r1;}else if(roll<C.c1+C.c2){bp=C.s2;tj=C.r2;}else if(roll<C.c1+C.c2+C.c3){bp=C.s3;tj=C.r3;}else{bp=C.s4;tj=C.r4;}var j=random(1-tj,1+tj);this.ml=(bp*j)*C.len*C.masterScale*ES*csc;this.ws=noise(x*.01,y*.01);this.cl=0;this.gr=random(5,15)*ES*C.masterScale*csc;this.ba=-HALF_PI+random(-.2,.2);this.al=random(80,160);}\n' +
-'Blade.prototype.upd=function(){if(this.cl<this.ml)this.cl+=this.gr*C.drawSpeed*0.1;};\n' +
-'Blade.prototype.shw=function(){var c=this.c;buf.stroke(red(c),green(c),blue(c),this.al);var nv=noise(this.x/ES*.005,this.y/ES*.005,wt);var sw=C.sway*this.ws,wb=map(nv,0,1,-sw,sw);var dx=this.x-bMX,dy=this.y-bMY;var d=max(1,sqrt(dx*dx+dy*dy));var mr=buf.width*C.mouseRadius,mf=max(0,1-d/mr);var mb;if(C.interactMode==="attract"){mb=mf*C.mouseStrength*(-dx/d);}else if(C.interactMode==="wind"){mb=mf*C.mouseStrength*wDir*wMag;}else{mb=mf*C.mouseStrength*(dx/d);}var fa=this.ba+wb+mb;var cpx=this.x+cos(this.ba)*(this.cl*.5),cpy=this.y+sin(this.ba)*(this.cl*.5);var tx=this.x+cos(fa)*this.cl,ty=this.y+sin(fa)*this.cl;buf.beginShape();buf.vertex(this.x,this.y);buf.quadraticVertex(cpx,cpy,tx,ty);buf.endShape();};\n' +
-'<' + '/script>\n</body>\n</html>';
+  const pageBG = S.transparent ? 'transparent' : (S.bgColor || '#ffffff');
+
+  const guard = [
+    '(function(){',
+    'var W=window,add=W.addEventListener,rem=W.removeEventListener;',
+    'var DROP={wheel:1,mousewheel:1,DOMMouseScroll:1,scroll:1};',
+    'var SOFT={touchstart:1,touchmove:1,touchend:1,touchcancel:1,pointerdown:1,pointermove:1,pointerup:1};',
+    'W.addEventListener=function(t,f,o){',
+    'if(DROP[t])return;',
+    'if(SOFT[t]){o=(o&&typeof o==="object")?Object.assign({},o,{passive:true}):{capture:!!o,passive:true};}',
+    'return add.call(W,t,f,o);};',
+    'W.removeEventListener=function(t,f,o){if(DROP[t])return;return rem.call(W,t,f,o);};',
+    '})();'
+  ].join('');
+
+  const sketch = [
+    'var C=' + cfg + ';',
+    'var SRC="' + base64 + '";',
+    'var ES=4;',
+    'var img,buf,blades=[],seeds=[],si=0,wt=0,ready=false,growDone=false,growStart=0;',
+    'var dW=0,dH=0,dOX=0,dOY=0,bMX=0,bMY=0;',
+    'var mVX=0,mVY=0,pMX=0,pMY=0,wMag=0,wDir=0;',
+
+    // ── colour helpers (mirror _rgbToHSL / _hslToRGB) ──
+    'function r2h(r,g,b){r/=255;g/=255;b/=255;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2;',
+    'if(mx!==mn){var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);',
+    'if(mx===r)h=((g-b)/d+(g<b?6:0))/6;else if(mx===g)h=((b-r)/d+2)/6;else h=((r-g)/d+4)/6;}',
+    'return [h*360,s,l];}',
+    'function h2r(h,s,l){h/=360;if(s===0){var v=Math.round(l*255);return [v,v,v];}',
+    'var q=l<0.5?l*(1+s):l+s-l*s,p=2*l-q;',
+    'function f(t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}',
+    'return [Math.round(f(h+1/3)*255),Math.round(f(h)*255),Math.round(f(h-1/3)*255)];}',
+
+    // ── easing (mirrors _ease) ──
+    'function ez(t,m){if(t<=0)return 0;if(t>=1)return 1;if(m==="linear")return t;',
+    'if(m==="out")return 1-Math.pow(1-t,3);return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}',
+
+    // ── lifecycle ──
+    'function setup(){var c=createCanvas(windowWidth,windowHeight);c.elt.style.display="block";',
+    'c.elt.style.touchAction="pan-y";loadImage(SRC,function(i){img=i;boot();});}',
+    'function windowResized(){resizeCanvas(windowWidth,windowHeight);}',
+
+    'function boot(){var m=C.margin,cw=Math.max(1,C.artW-m*2),ch=Math.max(1,C.artH-m*2);',
+    'if(img.width!==cw||img.height!==ch){img.resize(cw,0);if(img.height>ch)img.resize(0,ch);}',
+    'buf=createGraphics((img.width+m*2)*ES,(img.height+m*2)*ES);buf.clear();',
+    'blades=[];si=0;wt=0;growStart=0;growDone=false;seeds=findSeeds();',
+    'if(!C.growAnim){while(si<seeds.length){var s=seeds[si++];var b=new Blade(s.x,s.y,s.col);b.fin();blades.push(b);}growDone=true;}',
+    'ready=true;}',
+
+    'function findSeeds(){var st=2,m=C.margin,dt=C.density,cs=C.cluster/100,wl=C.threshold,da=C.displace;',
+    'var wp=(C.whiteIntensity||0)*0.35;img.loadPixels();var out=[];',
+    'for(var x=st;x<img.width-st;x+=st){for(var y=st;y<img.height-st;y+=st){',
+    'var c=img.get(x,y),br=(red(c)+green(c)+blue(c))/3;if(br>=wl)continue;',
+    'var cn=noise(x*0.04,y*0.04),fc=map(cn,0,1,-cs,cs);',
+    'if(random(100)<dt+fc*100-wp){out.push({x:(x+m+random(-da,da))*ES,y:(y+m+random(-da,da))*ES,col:c});}',
+    '}}return shuffle(out);}',
+
+    'function draw(){if(!ready)return;wt+=C.windSpeed*0.0005;',
+    'if(C.growAnim&&!growDone){if(growStart===0)growStart=millis();',
+    'if((millis()-growStart)/1000>C.autoStop)growDone=true;',
+    'for(var i=0;i<C.spawnFreq;i++){if(si<seeds.length){var s=seeds[si++];blades.push(new Blade(s.x,s.y,s.col));}}',
+    'if(si>=seeds.length){var done=true;for(var k=0;k<blades.length;k++){if(blades[k].t<1){done=false;break;}}if(done)growDone=true;}}',
+    'buf.clear();buf.strokeWeight(C.weight*ES);buf.noFill();',
+    // Contain fits the whole artboard inside the window; cover fills it edge to
+    // edge. Either way the artwork is centred on both axes.
+    'var ar=buf.width/buf.height;dW=width;dH=width/ar;',
+    'if(C.fit==="cover"){if(dH<height){dH=height;dW=height*ar;}}else{if(dH>height){dH=height;dW=height*ar;}}',
+    'dOX=(width-dW)/2;dOY=(height-dH)/2;',
+    'bMX=map(mouseX,dOX,dOX+dW,0,buf.width);bMY=map(mouseY,dOY,dOY+dH,0,buf.height);',
+    'var bSc=buf.width/dW,rVX=(mouseX-pMX)*bSc,rVY=(mouseY-pMY)*bSc;pMX=mouseX;pMY=mouseY;',
+    'var rMag=Math.sqrt(rVX*rVX+rVY*rVY),mxR=buf.width*0.025,cl=rMag>mxR?mxR/rMag:1;',
+    'mVX=mVX*0.9+rVX*cl*0.1;mVY=mVY*0.9+rVY*cl*0.1;',
+    'var sm=Math.sqrt(mVX*mVX+mVY*mVY);wMag=Math.min(sm/mxR,1);wDir=sm>0.5?mVX/sm:0;',
+    'for(var j=0;j<blades.length;j++){if(!growDone)blades[j].upd();blades[j].shw();}',
+    'if(C.transparent)clear();else background(C.bgColor);',
+    'imageMode(CENTER);image(buf,width/2,height/2,dW,dH);}',
+
+    'function Blade(x,y,c){this.x=x;this.y=y;',
+    'var dr=red(c),dg=green(c),db=blue(c);',
+    'if(C.hueShift>0||C.satShift>0||C.briShift>0){var a=r2h(dr,dg,db),h=a[0],s=a[1],l=a[2];',
+    'h=((h+(Math.random()-0.5)*2*C.hueShift)%360+360)%360;',
+    's=Math.max(0,Math.min(1,s+(Math.random()-0.5)*2*C.satShift/100));',
+    'l=Math.max(0,Math.min(1,l+(Math.random()-0.5)*2*C.briShift/100));',
+    'var o=h2r(h,s,l);dr=o[0];dg=o[1];db=o[2];}',
+    'this.r=dr;this.g=dg;this.b=db;',
+    'var roll=random(0,C.c1+C.c2+C.c3+C.c4),bp,tj;',
+    'if(roll<C.c1){bp=C.s1;tj=C.r1;}else if(roll<C.c1+C.c2){bp=C.s2;tj=C.r2;}',
+    'else if(roll<C.c1+C.c2+C.c3){bp=C.s3;tj=C.r3;}else{bp=C.s4;tj=C.r4;}',
+    'var j=random(1-tj,1+tj),wr=Math.max(0.05,1-(C.whiteIntensity||0)/200);',
+    'this.ml=bp*j*C.len*C.masterScale*ES*wr;',
+    'this.ws=noise(x*0.01,y*0.01);this.cl=0;this.t=0;',
+    'this.gr=random(5,15)*ES*C.masterScale;',
+    'this.step=this.ml>0?(this.gr*0.1)/this.ml:1;',
+    'this.ba=-HALF_PI+random(-0.2,0.2);',
+    'this.al=random(C.opacity*0.5,C.opacity);}',
+    'Blade.prototype.fin=function(){this.t=1;this.cl=this.ml;};',
+    'Blade.prototype.upd=function(){if(this.t>=1)return;this.t=Math.min(1,this.t+this.step*C.drawSpeed);this.cl=this.ml*ez(this.t,C.growEase);};',
+    'Blade.prototype.shw=function(){buf.stroke(this.r,this.g,this.b,this.al);',
+    'var nv=noise(this.x/ES*0.005,this.y/ES*0.005,wt),sw=C.sway*this.ws,wb=map(nv,0,1,-sw,sw);',
+    'var dx=this.x-bMX,dy=this.y-bMY,d=max(1,sqrt(dx*dx+dy*dy));',
+    'var mr=buf.width*C.mouseRadius,mf=max(0,1-d/mr),mb;',
+    'if(C.interactMode==="attract"){mb=mf*C.mouseStrength*(-dx/d);}',
+    'else if(C.interactMode==="wind"){mb=mf*C.mouseStrength*wDir*wMag;}',
+    'else{mb=mf*C.mouseStrength*(dx/d);}',
+    'var fa=this.ba+wb+mb;',
+    'var cpx=this.x+cos(this.ba)*(this.cl*0.5),cpy=this.y+sin(this.ba)*(this.cl*0.5);',
+    'var tx=this.x+cos(fa)*this.cl,ty=this.y+sin(fa)*this.cl;',
+    'buf.beginShape();buf.vertex(this.x,this.y);buf.quadraticVertex(cpx,cpy,tx,ty);buf.endShape();};',
+
+    // Nothing to animate while the tab is hidden.
+    'document.addEventListener("visibilitychange",function(){document.hidden?noLoop():loop();});'
+  ].join('\n');
+
+  return [
+    '<!DOCTYPE html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
+    '<title>Meadow</title>',
+    '<!--',
+    '  MEADOW embed - one self-contained file, nothing to host alongside it.',
+    '',
+    '  It fills whatever window it is given and centres the artwork in it, so put it',
+    '  on a page in an iframe sized the way you want the piece to sit:',
+    '',
+    '      <iframe src="meadow-embed.html" title="Meadow" loading="lazy"',
+    '              scrolling="no" style="display:block;border:0;width:100%;height:100vh"></iframe>',
+    '',
+    '  height:100vh gives a full-screen band; any fixed height works the same way.',
+    '',
+    '  The sketch reacts to the cursor only. It registers no wheel or scroll',
+    '  listeners, so the page around it scrolls exactly as it would without it.',
+    '-->',
+    '<style>',
+    '*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}',
+    'html,body{width:100%;height:100%;overflow:hidden;background:' + pageBG + '}',
+    'body{display:flex;align-items:center;justify-content:center}',
+    'canvas{display:block;touch-action:pan-y}',
+    '</style>',
+    '<script>' + guard + '<\/script>',
+    '</head>',
+    '<body>',
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"><\/script>',
+    '<script>',
+    sketch,
+    '<\/script>',
+    '</body>',
+    '</html>'
+  ].join('\n');
 }
